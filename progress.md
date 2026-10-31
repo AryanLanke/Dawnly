@@ -4,8 +4,31 @@
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
 
-**Current phase:** Phase 0 (setup), almost done. The debug build works; the phone still needs to be connected.
+**Current phase:** Phase 1 (feasibility test), not started. Phase 0 is done.
 **Last updated:** 2026-10-31
+
+---
+
+## ▶ Next session: start here (tasks for 2026-11-01)
+
+**Before starting (user):**
+- [ ] Open the Clock app and set an alarm for sometime later that day, so Dawnly has one to read and dismiss.
+- [ ] Plug in the Nothing Phone over USB and run `adb devices`. It should show `00069348R000717  device`.
+
+**The plan, in order:**
+1. [ ] Read PLAN.md and this file. Run `git status`: the working tree should be clean, with everything pushed to `origin main` on 2026-10-31.
+2. [ ] Confirm the package name with the user. Current answer (2026-10-31): keep `com.dawnly.app` unless the user owns or plans to buy `dawnly.app`, in which case use `app.dawnly`. They asked about "app.dawnly.com"; that is the domain `com.dawnly.app` already corresponds to.
+3. [ ] Build the Phase 1 test screen (checklist under "Phase 1" below): show the next alarm time and the app that owns it, plus a "Dismiss next alarm" button with a fallback.
+4. [ ] `gradlew installDebug`, then test it on the Nothing Phone with the user. Fill in the Nothing Phone row of the results table.
+5. [ ] Ask the user about access to a Samsung and a Xiaomi phone for the other two rows. Phase 2 must not start until the table is filled in, or the user explicitly decides to skip a phone.
+6. [ ] Update this file, write the Phase 1 summary, and ask before committing and pushing.
+
+**Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing):
+```
+.\gradlew.bat assembleDebug        # build
+.\gradlew.bat installDebug         # build + install on the phone
+adb shell am start -n com.dawnly.app/.MainActivity   # launch
+```
 
 ---
 
@@ -13,8 +36,8 @@
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0 | Setup: SDK, Compose project, mockups, Hello screen running on the phone | 🟡 In progress |
-| 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ⬜ Not started |
+| 0 | Setup: SDK, Compose project, mockups, Hello screen running on the phone | ✅ Done (2026-10-31) |
+| 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ⬜ Next |
 | 2 | Watch window: settings, exact-alarm scheduling, foreground service | ⬜ Not started |
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ⬜ Not started |
 | 4 | Notification and one-tap dismiss, plus the fallback | ⬜ Not started |
@@ -23,35 +46,24 @@
 
 ---
 
-## Phase 0 — Setup
+## Phase 0 — Setup ✅ Done
+
+### Summary
+The Compose project builds and runs on the user's Nothing Phone (2a). "Hello from Dawnly" follows the system theme: dark mode was verified by screenshot (`#050A1A` background) and light mode by the user. The code is committed and pushed to https://github.com/AryanLanke/Dawnly.
 
 ### Done
-- [x] Android Studio 2026.2.2 installed through winget. Its bundled JDK is **JBR 25**, at `C:\Program Files\Android\Android Studio\jbr`. Use it as `JAVA_HOME`; no separate JDK is installed.
+- [x] Android Studio 2026.2.2 installed through winget. Its bundled JDK is **JBR 25**, at `C:\Program Files\Android\Android Studio\jbr`. Used as `JAVA_HOME`; no separate JDK is installed.
 - [x] Appendix A saved exactly as-is to `design/mockups.html`.
-- [x] Compose project scaffolded (details under "Project facts" below).
-- [x] Gradle wrapper 9.8.2 added. The `gradle-wrapper.jar` SHA-256 matches Gradle's published checksum, and `distributionSha256Sum` is set.
-- [x] Hello screen: `ui/HelloScreen.kt` shows "Hello from Dawnly" with a minimal light/dark `DawnlyTheme`.
-- [x] `git init` done and `.gitignore` added. **Nothing is committed yet.**
-
+- [x] Compose project scaffolded (details under "Project facts" below). Gradle wrapper 9.8.2; the `gradle-wrapper.jar` SHA-256 is verified and `distributionSha256Sum` is set.
+- [x] Hello screen: `ui/HelloScreen.kt` with a minimal light/dark `DawnlyTheme`.
 - [x] Studio setup wizard run (2026-10-31). The SDK is at `C:\Users\aryan\AppData\Local\Android\Sdk` with platform `android-37.0`, build-tools 36.0.0, and the licenses accepted.
 - [x] `local.properties` created. The backslashes must be doubled in the file; a single `\U` silently breaks the path and gives "Invalid file path".
-- [x] `assembleDebug` succeeds (2026-10-31). Fixed `settings.gradle.kts`: the regex escapes `"com\.android.*"` must be written `"com\\.android.*"` in Kotlin. None of the "Risks" below came up.
-
-- [x] Phone connected (2026-10-31): Nothing Phone (2a), model A142, Android 16, serial `00069348R000717`. `adb devices` shows it as `device`.
-- [x] `installDebug` works. "Hello from Dawnly" shows on the phone in **dark mode** (verified by screenshot).
-
-### Remaining
-- [ ] **User:** check light mode by hand. `adb shell cmd uimode night no` had no effect, probably because Nothing's Bedtime mode was on and forcing dark. `Theme.kt` follows `isSystemInDarkTheme()`, so this should just work.
-- [x] User env vars set (2026-10-31): `JAVA_HOME` = Studio's `jbr`, `ANDROID_HOME` = the SDK, and `%ANDROID_HOME%\platform-tools` appended to the user `PATH` (kept as `REG_EXPAND_SZ`). They apply only to terminals opened after this change.
-- [x] First commit made on branch `main`, with `.gitattributes` added so `gradlew` keeps LF line endings.
-- [ ] Push to GitHub. Waiting on the user for the repo URL; `gh` isn't installed.
-- [ ] Mark Phase 0 done here and write the phase summary.
-
-### Risks to check on the first build
-- **AGP 9 has built-in Kotlin.** The project does *not* apply `org.jetbrains.kotlin.android`. The Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose` 2.4.21) is declared in the root build file so it pulls KGP 2.4.21 onto the classpath. If the build complains about the Kotlin version, look here first.
-- `compileSdk = 37` uses the old-style DSL. If AGP 9.4 requires the new `compileSdk { version = release(37) }` form, switch to it.
-- `org.gradle.configuration-cache=true` is on. If a plugin is incompatible with the configuration cache, turn it off.
-- JDK 25 (the JBR) with Gradle 9.8.2 should work. If it doesn't, add a Gradle toolchain.
+- [x] First build fixed: in `settings.gradle.kts`, the regex `"com\.android.*"` must be written `"com\.android.*"` in Kotlin. None of the planned first-build risks (AGP 9's built-in Kotlin, the `compileSdk` DSL, the configuration cache, JDK 25) came up.
+- [x] Phone connected: Nothing Phone (2a), model A142, Android 16, serial `00069348R000717`. `installDebug` works.
+- [x] Light and dark mode both verified on the phone. Note: `adb shell cmd uimode night no` does nothing while Nothing's Bedtime mode is on, so check light mode by hand.
+- [x] User env vars set: `JAVA_HOME` = Studio's `jbr`, `ANDROID_HOME` = the SDK, and `%ANDROID_HOME%\platform-tools` appended to the user `PATH` (kept as `REG_EXPAND_SZ`).
+- [x] Branch renamed `master` → `main`. `.gitattributes` added so `gradlew` keeps LF line endings for Linux and CI.
+- [x] First commit `2108df3` pushed to https://github.com/AryanLanke/Dawnly (`origin`; `main` tracks `origin/main`). `gh` isn't installed; plain `git push` works through the user's Git Credential Manager login.
 
 ---
 
@@ -59,7 +71,7 @@
 
 | Item | Value |
 |---|---|
-| Package / applicationId | `com.dawnly.app`. Confirm with the user before Phase 1; it can't change after the app is published. |
+| Package / applicationId | `com.dawnly.app`. The user is leaning towards keeping it; get final confirmation at the start of Phase 1 (see "Next session"). It can't change after the app is published. |
 | AGP | 9.4.1. 9.5.0 exists but was skipped because its release notes weren't published yet. |
 | Gradle | 9.8.2 (wrapper) |
 | Kotlin | 2.4.21 |
@@ -142,11 +154,12 @@ The `data/`, `domain/`, and `service/` packages from PLAN.md section 5 will be c
 ---
 
 ## Open questions for the user
-- Is the package name `com.dawnly.app` OK?
-- Make the first git commit after Phase 0 is verified?
+- Final confirmation of the package name `com.dawnly.app` (or `app.dawnly` if they own `dawnly.app`).
+- Can the user get hold of a Samsung and a Xiaomi phone for Phase 1 testing?
 - Not v1: what should happen if the user falls back asleep after dismissing? (PLAN.md section 4)
 
 ## Environment notes (this PC)
 - Windows 11. Tools available: PowerShell, Git Bash, winget, git, Node, Python 3.11.
-- Nothing Android-related was installed before 2026-10-29. Android Studio is the only addition.
+- Nothing Android-related was installed before 2026-10-29. Android Studio and its SDK are the only additions.
+- Test phone: Nothing Phone (2a) (A142), Android 16, Google Clock assumed; confirm the clock app in Phase 1.
 - The project lives in OneDrive (`Desktop\Dawnly`). If OneDrive sync locks or slows the `build/` and `.gradle/` folders, consider moving the project out of OneDrive.
