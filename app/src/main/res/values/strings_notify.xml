@@ -1,0 +1,16 @@
+<resources>
+    <!-- Phase 4: the "You're up early" prompt. -->
+    <string name="channel_awake">Up before your alarm</string>
+    <string name="channel_awake_description">Asks whether to dismiss your alarm when you\'re up before it. Dawnly never dismisses it on its own.</string>
+    <string name="awake_title">You\'re up early</string>
+    <string name="awake_text">Dismiss your %1$s alarm so it doesn\'t ring?</string>
+    <string name="action_dismiss_alarm">Dismiss alarm</string>
+    <string name="action_not_yet">Not yet</string>
+
+    <!-- After tapping Dismiss alarm, when the request isn't sent as asked. -->
+    <string name="dismiss_alarm_passed">That alarm time has passed, so nothing was dismissed.</string>
+    <string name="dismiss_alarm_gone">That alarm is already off.</string>
+    <string name="dismiss_alarm_changed">That alarm was already dismissed or changed, so nothing was dismissed.</string>
+    <string name="dismiss_opened_clock">%1$s can\'t take dismiss requests. Dismiss your alarm here.</string>
+    <string name="dismiss_no_clock">No Clock app found. Your alarm will still ring.</string>
+</resources>

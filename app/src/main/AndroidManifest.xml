@@ -64,6 +64,21 @@
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- Phase 4: the prompt's "Dismiss alarm" button opens this straight from the notification
+             (not a trampoline). No UI: it checks the alarm, then forwards to the Clock app. -->
+        <activity
+            android:name=".notify.DismissAlarmActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Phase 4: the prompt's "Not yet" button. -->
+        <receiver
+            android:name=".notify.NotYetReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

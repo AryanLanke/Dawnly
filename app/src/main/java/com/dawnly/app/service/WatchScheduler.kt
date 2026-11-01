@@ -12,6 +12,7 @@ import com.dawnly.app.data.settings.SettingsRepository
 import com.dawnly.app.data.watch.ArmedAlarmStore
 import com.dawnly.app.domain.watch.WatchPlanner
 import com.dawnly.app.domain.watch.WatchState
+import com.dawnly.app.notify.AwakeNotifier
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.delay
@@ -58,8 +59,11 @@ class WatchScheduler(
      *   lets Android start the service from the background, so if it fails there it isn't retried.
      */
     suspend fun reconcile(fromCheckAlarm: Boolean = false): WatchState = mutex.withLock {
+        val nextAlarmAt = nextAlarms.current()?.triggerAt
+        // A "You're up early" prompt about any other alarm would dismiss the wrong one.
+        AwakeNotifier.cancelIfStale(appContext, nextAlarmAt)
         val state = WatchPlanner.decide(
-            alarmAt = nextAlarms.current()?.triggerAt,
+            alarmAt = nextAlarmAt,
             window = settings.watchWindow.first(),
             now = Instant.now(),
             armedFor = armed.armedFor.first(),
