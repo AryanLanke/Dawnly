@@ -97,7 +97,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ✅ Done (2026-11-01), with the user's changes: no unlock sign; apps opened, movement, music added; additive score. Real detection worked on the phone |
 | 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (not device-tested yet), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
-| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Retro |
+| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Flute |
 
 ---
 
@@ -351,7 +351,7 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 - The app icon is adaptive (`mipmap-anydpi`, minSdk 26), with a themed-icon monochrome layer. `ic_notification` uses the same ring-and-sun glyph.
 
 **Notification sound (added 2026-11-01, after the user's device test):**
-- Settings → **Notification sound** opens a picker: **Phone default** plus 17 Mixkit sounds the user chose, under our own short names (Flute, Sparkle, Bubble, Fizz, Pop, Bloop, Simmer, Potion, Timer, Beep, Click, Level up, Retro, Score, Jump, Jackpot, Pixel). Tapping one selects and previews it on the notification stream. Default: **Retro** (the user's pick in the Phase 6 session; it was Phone default until then).
+- Settings → **Notification sound** opens a picker: **Phone default** plus 17 Mixkit sounds the user chose, under our own short names (Flute, Sparkle, Bubble, Fizz, Pop, Bloop, Simmer, Potion, Timer, Beep, Click, Level up, Retro, Score, Jump, Jackpot, Pixel). Tapping one selects and previews it on the notification stream. Default: **Flute** (the user's pick in the Phase 6 session; it was Phone default until then).
 - Files: `res/raw/sound_*`, with silence trimmed and loudness matched, kept at 44.1 kHz stereo (about 3.6 MB). Licence: Mixkit Sound Effects Free License, credited in `assets/licenses/mixkit_sounds.txt`.
 - `data/sound/AlertSound` + `SoundStore` (its own DataStore; fold into settings later).
 - **Phase 4's prompt now plays the chosen sound** (user's decision; it was silent). Android fixes a channel's sound once it exists, so `AwakeNotifier.useSound()` keeps one channel per sound (`awake_<sound>`), deletes the old ones, and the app re-syncs it on start. Still no vibration. Checked on the phone: the channel followed the saved sound, and the prompt showed as heads-up.
@@ -396,7 +396,7 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 - [x] Checked that A and B had merged: they hadn't. The user then asked this session to do both lists itself (see the Phase 3 and Phase 4 sections).
 - [x] **README.md**: the problem, how it works (with the sign table), architecture, tech stack, screenshots (`docs/screenshots/`, Home watching, Settings and the prompt, each in light and dark), the demo GIF (`docs/demo.gif`, 9 s, 3 MB), "Challenges I solved" (background limits, exact alarms and the 1-hour delay, Samsung and Xiaomi battery killers, FGS types, the Skipped rule, one channel per sound, the wrong-alarm guard, auto-dismiss from the background), and how to build and run.
 - [x] Screenshots with `adb exec-out screencap`, the GIF with `adb shell screenrecord`, converted with ffmpeg (installed with the user's OK: `winget install Gyan.FFmpeg`, at `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gyan.FFmpeg_…\ffmpeg-9.0.2-full_build\bin`; open a new terminal to have it on `PATH`). A throwaway "Dawnly demo" alarm was set with `SET_ALARM` and dismissed in the GIF.
-- [x] **Default notification sound: Retro** (user's choice). `AlertSound.DEFAULT`; nothing saved, or a removed sound, gives Retro. The user's own phone is set to Flute.
+- [x] **Default notification sound: Flute** (user's choice; Retro was picked first, then changed to Flute). `AlertSound.DEFAULT`; nothing saved, or a removed sound, gives Flute.
 - [x] Removed the Phase 1/2 feasibility strings from `strings.xml`. Lint now only reports `BatteryLife` (known, see Phase 5) and a newer AGP.
 - [x] Fixed on the way: settings saved before the new signs existed now get the apps and movement goals of the user's sensitivity level, so Settings still shows that level after an update. `Sensitivity` moved to `domain/wake`.
 - [x] Worktrees `Dawnly-ui`, `Dawnly-notify`, `Dawnly-wake` removed (all clean and merged first).

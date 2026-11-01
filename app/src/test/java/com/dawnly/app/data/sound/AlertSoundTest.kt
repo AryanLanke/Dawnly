@@ -5,8 +5,8 @@ import org.junit.Test
 
 class AlertSoundTest {
     @Test
-    fun `nothing saved means Dawnly's default sound, Retro`() {
-        assertEquals(AlertSound.Retro, AlertSound.DEFAULT)
+    fun `nothing saved means Dawnly's default sound, Flute`() {
+        assertEquals(AlertSound.Flute, AlertSound.DEFAULT)
         assertEquals(AlertSound.DEFAULT, AlertSound.fromKey(null))
     }
 
