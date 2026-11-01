@@ -4,46 +4,26 @@
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
 >
-> **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 run **in parallel** in three coding sessions, one git worktree each. See "Parallel work" below.
+> **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 ran **in parallel** in three coding sessions, one git worktree each. That's over: everything is merged into `main` and the worktrees are removed.
 
-**Current phase:** Phases 4 and 5 merged into `main` (2026-11-01). Next: a session B follow-up, then session A (Phase 3 + changes), then a new Phase 6 session. See "Handoff" below.
+**Current phase:** All phases done (2026-11-01). Phase 6 finished in one session, which also did session B's and session A's follow-up lists (the user's request). See "Where things stand" below.
 **Last updated:** 2026-11-01
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
 
 ---
 
-## ▶ Handoff (2026-11-01, end of session C): the user's plan from here
+## ▶ Where things stand (2026-11-01, end of the Phase 6 session)
 
-Session C is closed: Phase 5 and the app icon are merged and pushed. The user's order:
+The user asked the Phase 6 session to do session B's and A's lists itself, then Phase 6. All three are done, merged into `main` (fast-forward, no merge commits), and the worktrees `Dawnly-ui`, `Dawnly-notify` and `Dawnly-wake` are removed. The branches `phase-3-wake`, `phase-4-notify` and `phase-5-ui` still exist, fully merged; delete them whenever (`git branch -d <name>`).
 
-1. **Session B** (`C:\Users\aryan\dev\Dawnly-notify`): Phase 4 follow-up changes, then merge.
-2. **Session A** (`C:\Users\aryan\dev\Dawnly-wake`): finish Phase 3 with the changes below, then merge.
-3. **A new Phase 6 session** (in `C:\Users\aryan\dev\Dawnly`, today or tomorrow): the portfolio finish.
-
-**Before anything else in B or A: `git rebase main`.** `main` has moved (Phase 4 + Phase 5). Phase 5's `ui/` files are no longer locked to session C. Edit them as needed, but build with the components in `ui/glass/`, use the colours in `ui/theme/`, and keep UI strings in `strings_ui.xml`. Phase 5's summary (further down) explains how the UI is built.
-
-### Session B: Phase 4 follow-up
-- **Optional auto-dismiss** (user approved): a Settings switch, **off by default**. When the user seems awake, post "Dismissing your 5:30 alarm in 1 minute" with **Not yet**, then dismiss. Starting the Clock app from the background is blocked on Android 10+, so this needs "Display over other apps" (`SYSTEM_ALERT_WINDOW`). Ask for it only when the switch is turned on, with a short reason. Keep `DismissGuard`'s wrong-alarm check.
-- **Hide Google Clock during a dismiss:** try `AlarmClock.EXTRA_SKIP_UI` on `ACTION_DISMISS_ALARM` (documented only for setting alarms, so it may be ignored), then bring Dawnly back or finish straight away. The user wants no Clock screen; a flicker may be the best possible. Applies to both the prompt and Home's "Dismiss alarm" (`ClockApp.dismissNextAlarm`).
-- Prompt copy: the user liked "Up already?" / "Looks like you're awake. Dismiss your 5:30 alarm?". Decide with them.
-- The prompt already plays the sound chosen in Settings (`AwakeNotifier.useSound`, one channel per sound). Keep that working.
-- Update PLAN.md section 4 ("Never dismiss silently" becomes "never without asking, unless the user turns on auto-dismiss").
-
-### Session A: Phase 3 with the user's changes
-- **Drop "Phone unlocked" as a sign** (user's finding: the phone can be unlocked while they sleep).
-- **Add:** movement (accelerometer or significant motion; no permission needed), music playing (`AudioManager.isMusicActive`; counts **only together with movement**, since people fall asleep to music), and active phone use through Usage access (`UsageStatsManager`, the closest safe stand-in for "touches"; an accessibility service was rejected). Keep steps and screen use.
-- Contract change: `WakeSignals` / `WakeSignalSettings` get the new fields and lose unlock. Update the users in the same branch: `ui/home/HomeUiState.kt` (+ its tests), `ui/settings/SettingsScreen.kt` (switch rows) and `Sensitivity.kt` (the `Sign` enum), the onboarding and Settings permission lists (`ui/permissions/AppPermission.kt`) for Usage access, and the debug screen.
-- Switch Home's "You're up early" hint (`HomeStatus.Watching.allSignsSeen`) to the real wake scorer, so Home and the prompt agree.
-- Update PLAN.md section 4 ("Awake means...") and section 7.
-- Phase 6 CI is also A's (already on `phase-3-wake`).
-
-### New Phase 6 session (after A merges)
-- README with screenshots, a demo GIF, and "Challenges I solved" (background limits, exact alarms, OEM differences, FGS types, the "Skipped" rule, channel sounds).
-- Pick Dawnly's house default sound (the user will choose; it's "Phone default" until then).
-- Remove the leftover feasibility strings from `res/values/strings.xml`. Lint lists them as unused.
-- Optional: the reboot test from Phase 2.
-- Remove the worktrees once all branches are merged: `git worktree remove ..\Dawnly-ui` (C is done, so it can go now), `..\Dawnly-notify`, `..\Dawnly-wake`.
+**Open items:**
+- **Auto-dismiss isn't tested on a device yet.** Steps are in the Phase 6 section ("Device test still to do").
+- **Samsung and Xiaomi** are still untested (no phones). Test before sharing the app.
+- **The reboot test** from Phase 2: the user chose to skip it.
+- **Delete the "Dawnly demo" alarm** in Google Clock (it was dismissed, so it's off, but still in the list).
+- **No licence file.** Without a LICENSE the code is "all rights reserved". Add one if others should be able to reuse it.
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for the hobbyist release).
 
 ## Earlier: Parallel work (Phases 3, 4, 5)
 
@@ -114,10 +94,10 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 0 | Setup: SDK, Compose project, mockups, Hello screen running on the phone | ✅ Done (2026-10-31) |
 | 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ✅ Passed on Nothing Phone (2026-11-01). Samsung and Xiaomi not tested yet |
 | 2 | Watch window: settings, exact-alarm scheduling, foreground service | ✅ Done (2026-11-01). Reboot not tested yet |
-| 3 | Wake detection: signals, scoring + unit tests, debug screen | ⬜ Not started |
-| 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01), merged first. Tested through the debug adb trigger; the real trigger arrives with Phase 3 |
+| 3 | Wake detection: signals, scoring + unit tests, debug screen | ✅ Done (2026-11-01), with the user's changes: no unlock sign; apps opened, movement, music added; additive score. Real detection worked on the phone |
+| 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (not device-tested yet), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
-| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | 🟡 App icon done (session C). CI with session A; README after all three merge |
+| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Retro |
 
 ---
 
@@ -263,7 +243,7 @@ Dawnly starts a quiet foreground service when the watch window opens, and stops 
 4. Either let the alarm ring (the notification goes away at the alarm time), or tap **Dismiss next alarm** in Dawnly (it goes away at once).
 5. Logs: `adb logcat -s WatchScheduler SystemEventsReceiver ClockApp`. Service: `adb shell dumpsys activity services com.dawnly.app`.
 
-### Phase 3 — Wake detection ✅ Code done (session A's branch `phase-3-wake`, finished in the Phase 6 session, 2026-11-01). Device test pending
+### Phase 3 — Wake detection ✅ Done (session A's branch `phase-3-wake`, finished in the Phase 6 session, 2026-11-01)
 
 #### Summary
 While the watch window is open, `WatchService` runs a `WakeWatcher`. It feeds phone events into the pure `WakeTracker`, publishes the readings to `WatchSession` (Home and the debug screen), and calls `AwakeNotifier.onUserAwake()` once `WakeScore` says the user is up. That happens at most once per window, even across a process restart, because progress is saved in `WakeProgressStore`.
@@ -293,7 +273,7 @@ While the watch window is open, `WatchService` runs a `WakeWatcher`. It feeds ph
 - [x] Debug-only screen with live values (`ui/debug/DebugScreen.kt`), opened by the "Dawnly debug" launcher icon. It can switch signs and change goals for quick tests.
 - [x] Phase 6 CI: `.github/workflows/ci.yml` runs `testDebugUnitTest assembleDebug lintDebug` on push and PR.
 - [x] Clean hook for the future "Still awake?" nudge (`WakeWatcher.onAwake`).
-- [ ] Device test (see the Phase 6 section).
+- [x] Device test (Nothing Phone (2a), 2026-11-01, 5-min window, Medium): someone used the phone during the window, and at 23:06:10 Dawnly counted them awake from 3 min 10 s of screen use (63%) plus 45 s of movement (38%). The prompt went out once.
 
 ### Phase 4 — Notification & dismiss ✅ Done (2026-11-01, session B, branch `phase-4-notify`)
 
@@ -344,7 +324,7 @@ The user asked the Phase 6 session to do B's and A's lists itself.
 - **Display over other apps** (`SYSTEM_ALERT_WINDOW`): Android 10+ only lets an app start the Clock app from the background with it. It's a new `AppPermission.Overlay`, not in onboarding (`askedUpFront = false`). Turning the switch on without it shows a one-line reason and an Allow pill; the switch turns on once it's granted. Settings → Permissions lists it only while auto-dismiss is on.
 - **Hiding Google Clock:** the dismiss request now carries `EXTRA_SKIP_UI`. `QuietDismiss` waits up to 5 s for the next alarm to move on, then brings Dawnly back to the front with a "Your 5:30 alarm is dismissed" toast. If the alarm doesn't move, the Clock app stays open so the user sees why. Used by the prompt, auto-dismiss, and Home's Dismiss alarm.
 - `SettingsRepository` gained `autoDismiss` (it was frozen only during the parallel phases). PLAN.md sections 3, 4 and 7 updated.
-- **Device test: pending** (see the Phase 6 section for the combined test steps).
+- **Device test (Nothing Phone (2a), Google Clock, 2026-11-01):** the new prompt copy shows. Dismiss alarm from the prompt: the guard said Ok, Google Clock dismissed the alarm, and Dawnly came back to the front 80 ms after the Clock screen appeared (23:06:47.12 → 47.20). Android allowed that through its grace period (`BAL_ALLOW_GRACE_PERIOD`), so it works without "Display over other apps". The "Your 11:19 pm alarm is dismissed" toast showed. `EXTRA_SKIP_UI` is ignored by Google Clock, as expected. **Auto-dismiss is not device-tested yet** (see Phase 6).
 
 ### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Done (2026-11-01)
 
@@ -371,7 +351,7 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 - The app icon is adaptive (`mipmap-anydpi`, minSdk 26), with a themed-icon monochrome layer. `ic_notification` uses the same ring-and-sun glyph.
 
 **Notification sound (added 2026-11-01, after the user's device test):**
-- Settings → **Notification sound** opens a picker: **Phone default** plus 17 Mixkit sounds the user chose, under our own short names (Flute, Sparkle, Bubble, Fizz, Pop, Bloop, Simmer, Potion, Timer, Beep, Click, Level up, Retro, Score, Jump, Jackpot, Pixel). Tapping one selects and previews it on the notification stream. Default: Phone default, until the user picks a house sound.
+- Settings → **Notification sound** opens a picker: **Phone default** plus 17 Mixkit sounds the user chose, under our own short names (Flute, Sparkle, Bubble, Fizz, Pop, Bloop, Simmer, Potion, Timer, Beep, Click, Level up, Retro, Score, Jump, Jackpot, Pixel). Tapping one selects and previews it on the notification stream. Default: **Retro** (the user's pick in the Phase 6 session; it was Phone default until then).
 - Files: `res/raw/sound_*`, with silence trimmed and loudness matched, kept at 44.1 kHz stereo (about 3.6 MB). Licence: Mixkit Sound Effects Free License, credited in `assets/licenses/mixkit_sounds.txt`.
 - `data/sound/AlertSound` + `SoundStore` (its own DataStore; fold into settings later).
 - **Phase 4's prompt now plays the chosen sound** (user's decision; it was silent). Android fixes a channel's sound once it exists, so `AwakeNotifier.useSound()` keeps one channel per sound (`awake_<sound>`), deletes the old ones, and the app re-syncs it on start. Still no vibration. Checked on the phone: the channel followed the saved sound, and the prompt showed as heads-up.
@@ -408,10 +388,29 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 5. **Motion:** the background shapes drift slowly; tabs, segments, and switches spring. With Developer options → Animator duration scale → Off, everything should be still.
 6. **Icon:** the launcher icon is a blue tile with a glass ring and a rising sun. Long-press the home screen → themed icons to see the monochrome layer.
 
-### Phase 6 — Portfolio finish (CI: session A. Icon: session C. README: after all three merge)
-- [ ] README with screenshots and a demo GIF, plus a "Challenges I solved" section.
-- [ ] GitHub Actions CI that builds and runs the unit tests.
-- [ ] App icon (session C). The manifest has no icon yet, so the default is used. Also replace the placeholder `ic_notification`.
+### Phase 6 — Portfolio finish ✅ Done (2026-11-01)
+
+#### Summary
+Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Challenges I solved" section, and build steps. CI runs on GitHub Actions. The app icon came from session C. Session B's and A's follow-up lists were done first, in this same session.
+
+- [x] Checked that A and B had merged: they hadn't. The user then asked this session to do both lists itself (see the Phase 3 and Phase 4 sections).
+- [x] **README.md**: the problem, how it works (with the sign table), architecture, tech stack, screenshots (`docs/screenshots/`, Home watching, Settings and the prompt, each in light and dark), the demo GIF (`docs/demo.gif`, 9 s, 3 MB), "Challenges I solved" (background limits, exact alarms and the 1-hour delay, Samsung and Xiaomi battery killers, FGS types, the Skipped rule, one channel per sound, the wrong-alarm guard, auto-dismiss from the background), and how to build and run.
+- [x] Screenshots with `adb exec-out screencap`, the GIF with `adb shell screenrecord`, converted with ffmpeg (installed with the user's OK: `winget install Gyan.FFmpeg`, at `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gyan.FFmpeg_…\ffmpeg-9.0.2-full_build\bin`; open a new terminal to have it on `PATH`). A throwaway "Dawnly demo" alarm was set with `SET_ALARM` and dismissed in the GIF.
+- [x] **Default notification sound: Retro** (user's choice). `AlertSound.DEFAULT`; nothing saved, or a removed sound, gives Retro. The user's own phone is set to Flute.
+- [x] Removed the Phase 1/2 feasibility strings from `strings.xml`. Lint now only reports `BatteryLife` (known, see Phase 5) and a newer AGP.
+- [x] Fixed on the way: settings saved before the new signs existed now get the apps and movement goals of the user's sensitivity level, so Settings still shows that level after an update. `Sensitivity` moved to `domain/wake`.
+- [x] Worktrees `Dawnly-ui`, `Dawnly-notify`, `Dawnly-wake` removed (all clean and merged first).
+- [x] `.gitignore` now ignores JVM crash logs (`hs_err_pid*.log`, `replay_pid*.log`). The PC ran low on memory during builds while another big Python job was running; building with `--max-workers=2 -Pkotlin.compiler.execution.strategy=in-process` worked.
+- [x] CI: see the result in "Where things stand" once pushed.
+- [ ] Reboot test (Phase 2): skipped by the user.
+
+#### Device test still to do: auto-dismiss
+1. Open Dawnly → **Settings** → turn on **Dismiss automatically**. A short reason and an **Allow** button appear. Tap **Allow**, find **Dawnly** in the list, turn on **Allow display over other apps**, then press Back. The switch should now be on.
+2. Set a throwaway Clock alarm about **12 minutes** away. In Settings keep the window at **Custom → 5 min**.
+3. When watching starts, use the phone for a few minutes (or run `adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app`).
+4. The notification should say "Dismissing your … alarm in 1 minute." with a countdown. Try **Not yet** once (nothing should happen after the minute). Then trigger again and let the minute run out: the Clock app flickers, Dawnly comes back, and the alarm is dismissed.
+5. Also try swiping the countdown away: that must stop the dismiss too.
+6. Logs: `adb logcat -s AwakeNotifier AutoDismiss DismissAlarmActivity QuietDismiss ClockApp`.
 
 ---
 
