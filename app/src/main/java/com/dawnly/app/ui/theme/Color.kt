@@ -26,6 +26,8 @@ data class DawnlyColors(
     val edge: Color,
     /** The bright line along the top edge of glass. */
     val highlight: Color,
+    /** The soft shadow under selected pills. */
+    val selectedShadow: Color,
     /** Dividers between rows. */
     val line: Color,
     /** Empty part of the ring, switches when off, step dots. */
@@ -49,6 +51,7 @@ val LightColors = DawnlyColors(
     glassFallback = Color.White.copy(alpha = 0.5f),
     edge = Color.White.copy(alpha = 0.75f),
     highlight = Color.White.copy(alpha = 0.95f),
+    selectedShadow = Color(0xFF0A1E5A).copy(alpha = 0.15f),
     line = Navy.copy(alpha = 0.10f),
     track = Navy.copy(alpha = 0.12f),
     accent = Blue,
@@ -66,6 +69,7 @@ val DarkColors = DawnlyColors(
     glassFallback = Color(0xFF14204A).copy(alpha = 0.6f),
     edge = Color.White.copy(alpha = 0.32f),
     highlight = Color.White.copy(alpha = 0.6f),
+    selectedShadow = Color.Black.copy(alpha = 0.25f),
     line = Color.White.copy(alpha = 0.14f),
     track = Color.White.copy(alpha = 0.18f),
     accent = Color.White,

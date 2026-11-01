@@ -16,6 +16,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -36,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -166,6 +173,7 @@ private fun MainTabs(
                 )
             }
         }
+        StatusBarFade(Modifier.align(Alignment.TopCenter))
         GlassTabBar(
             tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
             selected = tab,
@@ -179,6 +187,25 @@ private fun MainTabs(
 }
 
 private const val TODAY = 0
+
+/** Fades scrolled content out under the status bar, so its icons stay readable. */
+@Composable
+private fun StatusBarFade(modifier: Modifier = Modifier) {
+    val wall = DawnlyTheme.colors.wall
+    Box(
+        modifier
+            .fillMaxWidth()
+            .windowInsetsTopHeight(WindowInsets.statusBars)
+            .background(Brush.verticalGradient(listOf(wall, wall.copy(alpha = 0.85f)))),
+    )
+    Box(
+        modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .height(20.dp)
+            .background(Brush.verticalGradient(listOf(wall.copy(alpha = 0.85f), wall.copy(alpha = 0f)))),
+    )
+}
 
 /** Keeps clear of the status bar, cutouts and navigation bar, plus [bottomExtra]. */
 @Composable

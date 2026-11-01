@@ -47,14 +47,18 @@ fun GlassTabBar(
     GlassSurface(modifier = modifier, shape = GlassShapes.Pill) {
         Box(Modifier.padding(5.dp).width(IntrinsicSize.Max).onSizeChanged { width = it.width }) {
             if (width > 0) {
-                Box(
-                    Modifier
-                        .offset { IntOffset((position * tabWidth).roundToInt(), 0) }
-                        .width(tabWidthDp)
-                        .fillMaxHeight()
-                        .clip(GlassShapes.Pill)
-                        .background(DawnlyTheme.colors.glassStrong),
-                )
+                // matchParentSize: the pill takes the tabs' height without making the bar taller.
+                Box(Modifier.matchParentSize()) {
+                    Box(
+                        Modifier
+                            .offset { IntOffset((position * tabWidth).roundToInt(), 0) }
+                            .width(tabWidthDp)
+                            .fillMaxHeight()
+                            .outerShadow(GlassShapes.Pill, DawnlyTheme.colors.selectedShadow)
+                            .clip(GlassShapes.Pill)
+                            .background(DawnlyTheme.colors.glassStrong),
+                    )
+                }
             }
             Row(Modifier.selectableGroup()) {
                 tabs.forEachIndexed { index, label ->

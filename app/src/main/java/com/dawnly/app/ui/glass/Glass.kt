@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.ui.theme.DawnlyColors
 import com.dawnly.app.ui.theme.DawnlyTheme
@@ -148,3 +150,29 @@ private fun Modifier.glassRim(shape: Shape, colors: DawnlyColors): Modifier = th
         ),
         shape = shape,
     )
+
+/**
+ * A soft shadow drawn only outside [shape], like CSS box-shadow, so it doesn't grey out the
+ * translucent glass on top. Gives selected pills their edge on the light wall.
+ */
+fun Modifier.outerShadow(shape: Shape, color: Color, blur: Dp = 8.dp, offsetY: Dp = 2.dp): Modifier =
+    drawWithCache {
+        val path = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
+        // Blurred fills are only drawn with hardware acceleration from Android 9.
+        val paint = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && blur > 0.dp) {
+            android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = color.toArgb()
+                maskFilter = BlurMaskFilter(blur.toPx() / 2, BlurMaskFilter.Blur.NORMAL)
+            }
+        } else {
+            null
+        }
+        val shadow = android.graphics.Path(path.asAndroidPath()).apply { offset(0f, offsetY.toPx()) }
+        onDrawBehind {
+            if (paint != null) {
+                clipPath(path, ClipOp.Difference) {
+                    drawIntoCanvas { it.nativeCanvas.drawPath(shadow, paint) }
+                }
+            }
+        }
+    }

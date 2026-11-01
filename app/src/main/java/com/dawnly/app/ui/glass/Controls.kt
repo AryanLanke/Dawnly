@@ -189,6 +189,7 @@ fun GlassSegmented(
                         .width(segmentDp)
                         .height(40.dp)
                         .graphicsLayer { alpha = indicatorAlpha }
+                        .outerShadow(GlassShapes.Segment, colors.selectedShadow)
                         .clip(GlassShapes.Segment)
                         .background(colors.glassStrong)
                         .border(1.dp, colors.edge.copy(alpha = colors.edge.alpha * 0.6f), GlassShapes.Segment),
