@@ -3,31 +3,68 @@
 > Progress tracker for [PLAN.md](PLAN.md). **PLAN.md is still the full brief and the single source of truth.** Read it first: the requirements, design system, technical approach, and Appendix A are all there. This file records where the work stands and what to do next.
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
+>
+> **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 run **in parallel** in three coding sessions, one git worktree each. See "Parallel work" below.
 
-**Current phase:** Phase 2 (watch window) done and tested on the Nothing Phone. Phase 3 (wake detection) is next.
+**Current phase:** Phase 2 done and committed. Phases 3, 4, and 5 run in parallel next (sessions A, B, C).
 **Last updated:** 2026-11-01
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
 
 ---
 
-## ▶ Next session: start here
+## ▶ Next session: start here — Parallel work (Phases 3, 4, 5)
 
-**Before starting (user):**
-- [ ] Open VS Code in `C:\Users\aryan\dev\Dawnly` (not the old OneDrive folder).
-- [ ] Plug in the Nothing Phone over USB and run `adb devices`. It should show `00069348R000717  device`.
+Phase 2 is committed and pushed. The shared "contract" files the three sessions build on are on `main` (see below). Each session has its own git worktree and branch, already created:
 
-**Done so far (2026-10-31):**
-- [x] Working tree was clean and in sync with `origin/main`.
-- [x] Package name confirmed by the user: **`com.dawnly.app`** (final).
-- [x] Phase 1 test screen built (see the Phase 1 checklist below) and installed. It launches; with no alarm set it shows "No alarm set" and "Dismiss goes to Clock (com.google.android.deskclock)", so the Nothing Phone uses Google Clock.
+| Session | Work | Folder (open VS Code here) | Branch |
+|---|---|---|---|
+| **A** | Phase 3 wake detection + Phase 6 CI | `C:\Users\aryan\dev\Dawnly-wake` | `phase-3-wake` |
+| **B** | Phase 4 notification and dismiss | `C:\Users\aryan\dev\Dawnly-notify` | `phase-4-notify` |
+| **C** | Phase 5 UI polish + Phase 6 app icon | `C:\Users\aryan\dev\Dawnly-ui` | `phase-5-ui` |
 
-**The plan, in order:**
-1. [x] Phase 1 done, committed as `a42e43e` and pushed (2026-11-01). Samsung and Xiaomi skipped for now (user's decision); test them before sharing the app (PLAN.md section 9).
-2. [x] Phase 2 built and tested on the Nothing Phone with the user (2026-11-01). See the Phase 2 section.
-3. [ ] Ask before committing and pushing Phase 2. Nothing from Phase 2 is committed yet.
-4. [ ] Optional: reboot test (reboot during a window; watching should resume).
-5. [ ] Start Phase 3.
+The original folder `C:\Users\aryan\dev\Dawnly` keeps `main` checked out. Don't work in it; it's where merges land.
+
+### Shared contracts (on `main`; don't change their signatures)
+- `domain/wake/WakeSignals.kt`: `WakeSignals` (live readings) and `WakeSignalSettings` (which signals count, and the goals). A may add fields **with defaults**.
+- `service/WatchSession.kt`: `WatchSession.signals: StateFlow<WakeSignals?>`. A publishes to it from `WatchService`; C reads it on Home. null when not watching.
+- `notify/AwakeNotifier.kt`: `AwakeNotifier.onUserAwake(context, alarmAt)`. A calls it **at most once per watch window**; B implements it.
+- `data/settings/SettingsRepository.kt`: `watchWindow`, `wakeSignals`, and `appearance` (with setters). C builds the Settings screen on these; A reads `wakeSignals`. Treat this file as frozen.
+- `ui/debug/DebugScreen.kt`: a stub. A fills it in.
+- Manifest: `ACTIVITY_RECOGNITION` is already declared, so C's onboarding can request it before A merges.
+
+### File ownership (only edit your own; anything else is add-only and needs a reason in the commit message)
+| Owner | Files |
+|---|---|
+| A | `domain/wake/` (scoring + tests), `service/WatchService.kt`, `ui/debug/`, `app/src/debug/` (`DebugActivity` with its own "Dawnly debug" launcher icon, so A needs nothing from C's navigation), `.github/workflows/`, `res/values/strings_wake.xml` |
+| B | `notify/` (everything for Phase 4), `service/WatchScheduler.kt` (e.g. cancel the prompt when the next alarm changes), `res/values/strings_notify.xml`, manifest entries for B's own components. B's debug trigger: an `adb`-callable receiver in `app/src/debug/AndroidManifest.xml` (A adds to that file too; whoever merges second keeps both entries) |
+| C | `ui/` except `ui/debug/`, `MainActivity.kt`, `ui/theme/`, `res/font/`, launcher icon resources, `res/values/themes.xml`, `res/values/strings_ui.xml`, `ic_notification.xml` (artwork only), the manifest `icon`/`roundIcon`/`theme` attributes. C deletes `ui/feasibility/` once Home and Settings cover it |
+| Shared, add-only | `gradle/libs.versions.toml`, `app/build.gradle.kts`, `AndroidManifest.xml`, `DawnlyApp.kt`, `res/values/strings.xml` (don't edit; use your own strings file) |
+| Frozen | `domain/watch/`, `data/` (except as above), `SettingsRepository.kt`, `WatchSession.kt`, `AwakeNotifier`'s signature |
+
+### Rules for all three sessions
+1. **One phone, one app.** All three builds install as `com.dawnly.app`, so each install replaces the last. Build and unit test as much as you like, but **ask the user before `installDebug`**, and tell them what to test.
+2. **progress.md:** edit only your own phase section below. Don't touch the overview table or this block; the merge step updates them.
+3. Commit on your branch whenever a step works (no need to ask). **Ask the user before merging into `main` and pushing.**
+4. Before merging, run `.\gradlew.bat testDebugUnitTest assembleDebug lintDebug`, and get the user to confirm the device test.
+5. End with a phase summary and device test steps, as PLAN.md asks.
+
+### How to merge (first finished, first merged; any order works)
+Run in your own worktree once the user says go. `main` is shared by all worktrees, so there's nothing to fetch.
+```
+git rebase main                     # take in whatever merged first; fix conflicts (usually strings, manifest, progress.md)
+.\gradlew.bat testDebugUnitTest assembleDebug lintDebug
+git -C C:\Users\aryan\dev\Dawnly merge --ff-only <your-branch>
+git -C C:\Users\aryan\dev\Dawnly push origin main
+```
+Then update your row in the overview table and push that too. Fast-forward only keeps history linear, with no merge commits. After all three merge, remove the worktrees: `git worktree remove ..\Dawnly-wake` and the same for the other two.
+
+### After all three have merged (one session, any of them)
+Phase 6 finish: README with screenshots, a demo GIF, and a "Challenges I solved" section (background limits, exact alarms, OEM differences, FGS types, the "Skipped" rule), then the optional reboot test from Phase 2.
+
+### Earlier history
+- Phase 1 done, committed as `a42e43e` (2026-11-01). Samsung and Xiaomi skipped for now (user's decision); test them before sharing the app (PLAN.md section 9).
+- Phase 2 done, committed as `16b7cd5` (2026-11-01).
 
 **Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing):
 ```
@@ -194,32 +231,39 @@ Dawnly starts a quiet foreground service when the watch window opens, and stops 
 4. Either let the alarm ring (the notification goes away at the alarm time), or tap **Dismiss next alarm** in Dawnly (it goes away at once).
 5. Logs: `adb logcat -s WatchScheduler SystemEventsReceiver ClockApp`. Service: `adb shell dumpsys activity services com.dawnly.app`.
 
-### Phase 3 — Wake detection
+### Phase 3 — Wake detection (session A, branch `phase-3-wake`)
 - [ ] Unlock: register `ACTION_USER_PRESENT` dynamically inside the service.
 - [ ] Screen use: count minutes between `ACTION_SCREEN_ON` and `ACTION_SCREEN_OFF`.
 - [ ] Steps: `Sensor.TYPE_STEP_COUNTER`, which needs the `ACTIVITY_RECOGNITION` permission.
-- [ ] Pure-Kotlin scoring class in `domain/` with unit tests. A quick 3 AM time check must not trigger it. Add JUnit to the catalog; it's already covered by PLAN.md's "Tests" item.
-- [ ] Hidden or debug-only screen showing live signal values.
+- [ ] Pure-Kotlin scoring class in `domain/wake/` with unit tests (JUnit is already set up). A quick 3 AM time check must not trigger it. Use `WakeSignalSettings` for which signals count and their goals.
+- [ ] Publish live readings to `WatchSession`, and call `AwakeNotifier.onUserAwake()` at most once per window.
+- [ ] Revisit the FGS type now that steps need `ACTIVITY_RECOGNITION` (Phase 2 chose `specialUse`). Explain any change to the user.
+- [ ] Debug-only screen showing live signal values: `ui/debug/DebugScreen.kt`, opened by a debug-only `DebugActivity` with its own launcher icon.
+- [ ] Phase 6 CI (also session A): GitHub Actions workflow that runs `testDebugUnitTest assembleDebug lintDebug` on push and PR.
 - [ ] Leave a clean hook for the future "Still awake?" nudge. It's not in v1.
 
-### Phase 4 — Notification & dismiss
+### Phase 4 — Notification & dismiss (session B, branch `phase-4-notify`)
+- [ ] Implement `AwakeNotifier.onUserAwake()`. Test it before Phase 3 lands with a debug-only receiver you can call from `adb`.
+- [ ] "Not yet" just closes the prompt; `AwakeNotifier` is called at most once per window anyway.
 - [ ] Gentle notification: "You're up early" / "Dismiss your 5:30 alarm so it doesn't ring?", with the actions **Dismiss alarm** and **Not yet**.
 - [ ] Dismiss action uses `PendingIntent.getActivity` straight to `ACTION_DISMISS_ALARM`, with no trampoline because Android 12+ blocks those.
 - [ ] Fallback when the Clock app can't dismiss. Never dismiss silently.
 - [ ] **Guard against dismissing the wrong alarm** (found in Phase 1 testing). `ALARM_SEARCH_MODE_NEXT` dismisses whatever alarm is next. If today's alarm was already dismissed or has already rung, a stale notification would skip *tomorrow's* alarm. Before sending the dismiss, check that `getNextAlarmClock()` still returns the alarm the notification is about. Cancel the notification when the next alarm changes. This probably needs a small activity that checks first and then forwards the request; launch it straight from the notification, which is allowed because it isn't a trampoline.
 
-### Phase 5 — UI polish
-- [ ] Ask the user before adding Haze (it's listed in PLAN.md) and the Figtree font (Google Fonts; bundle it so the app stays offline).
+### Phase 5 — UI polish (session C, branch `phase-5-ui`)
+- [x] Haze and Figtree approved (2026-11-01; both are in PLAN.md). Use Haze's latest stable release, and bundle Figtree in `res/font/` so the app stays offline.
 - [ ] Glass design system matching `design/mockups.html`: colours, glass alpha values, 28dp cards, pills.
 - [ ] Flowing background shapes: three radial-gradient circles animated with `rememberInfiniteTransition`. Keep them still when reduce-motion is on.
-- [ ] Screens: onboarding (4 permission steps), Home (progress ring), Settings, floating glass tab bar.
+- [ ] Screens: onboarding (4 permission steps: notifications, Alarms & reminders, activity recognition, battery optimization), Home (progress ring), Settings, floating glass tab bar. Onboarding must make a strong case for Alarms & reminders (see Phase 2: without it, watching can start an hour late).
+- [ ] Home reads `WatchScheduler.state` and `WatchSession.signals`; Settings uses `SettingsRepository` (window, wake signals, appearance). After changing the window, call `watchScheduler.reconcile()`. Keep the `reconcile()` call in `MainActivity.onResume`.
+- [ ] Use previews with fake `WakeSignals` until Phase 3 merges. Delete `ui/feasibility/` once Home and Settings cover it.
 - [ ] Appearance setting: Light / Dark / System, default System. Non-blur fallback below Android 12.
 - [ ] OEM battery guidance for Xiaomi and Samsung (dontkillmyapp.com).
 
-### Phase 6 — Portfolio finish
+### Phase 6 — Portfolio finish (CI: session A. Icon: session C. README: after all three merge)
 - [ ] README with screenshots and a demo GIF, plus a "Challenges I solved" section.
 - [ ] GitHub Actions CI that builds and runs the unit tests.
-- [ ] App icon. The manifest has no icon yet, so the default is used.
+- [ ] App icon (session C). The manifest has no icon yet, so the default is used. Also replace the placeholder `ic_notification`.
 
 ---
 
