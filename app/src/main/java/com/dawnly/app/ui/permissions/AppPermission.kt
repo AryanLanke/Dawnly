@@ -1,6 +1,7 @@
 package com.dawnly.app.ui.permissions
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
@@ -36,6 +37,7 @@ enum class AppPermission {
         }
 
     /** The runtime permission behind a system dialog, or null when it's granted in system settings. */
+    @get:SuppressLint("InlinedApi") // Only read where isApplicable says the permission exists.
     val runtimePermission: String?
         get() = when (this) {
             Notifications -> if (isApplicable) Manifest.permission.POST_NOTIFICATIONS else null

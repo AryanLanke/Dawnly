@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -249,7 +250,7 @@ private fun signalValue(row: SignalRow): String {
             if (current == null) stringResource(R.string.home_signal_minutes_goal, row.goal)
             else stringResource(R.string.home_signal_minutes_of, current, row.goal)
         SignalKind.Steps ->
-            if (current == null) stringResource(R.string.home_signal_steps_goal, row.goal)
+            if (current == null) pluralStringResource(R.plurals.home_signal_steps_goal, row.goal, row.goal)
             else stringResource(R.string.home_signal_steps_of, current, row.goal)
     }
 }

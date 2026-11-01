@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App icon foreground (also the themed-icon monochrome layer): a glass disc holding the Home
+     screen's progress ring and a sun rising over the horizon. Kept inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Glass disc -->
+    <path
+        android:fillColor="#29FFFFFF"
+        android:strokeColor="#A6FFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M54,24a30,30 0,1 1,0 60a30,30 0,1 1,0 -60z" />
+    <!-- Ring track -->
+    <path
+        android:strokeColor="#59FFFFFF"
+        android:strokeWidth="3.2"
+        android:pathData="M54,31a23,23 0,1 1,0 46a23,23 0,1 1,0 -46z" />
+    <!-- Ring progress, two thirds of the way round -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M54,31A23,23 0,1 1,34.08 65.5" />
+    <!-- Rising sun and horizon -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M45.5,57A8.5,8.5 0,0 1,62.5 57z" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M43,61.5H65" />
+</vector>

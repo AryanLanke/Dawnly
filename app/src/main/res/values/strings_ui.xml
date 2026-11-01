@@ -32,7 +32,10 @@
     <string name="home_signal_minutes_of">%1$d of %2$d min</string>
     <string name="home_signal_steps_of">%1$d of %2$d</string>
     <string name="home_signal_minutes_goal">%1$d min</string>
-    <string name="home_signal_steps_goal">%1$d steps</string>
+    <plurals name="home_signal_steps_goal">
+        <item quantity="one">%1$d step</item>
+        <item quantity="other">%1$d steps</item>
+    </plurals>
     <string name="home_signal_seen">Seen</string>
     <string name="home_exact_off_title">Watching may start late</string>
     <string name="home_exact_off_body">Allow Alarms &amp; reminders so Dawnly starts on time.</string>
@@ -50,9 +53,15 @@
     <string name="settings_signals_label">Signs you\'re awake</string>
     <string name="settings_unlock">Phone unlocked</string>
     <string name="settings_screen">Screen use</string>
-    <string name="settings_screen_goal">At least %1$d minutes</string>
+    <plurals name="settings_screen_goal">
+        <item quantity="one">At least %1$d minute</item>
+        <item quantity="other">At least %1$d minutes</item>
+    </plurals>
     <string name="settings_steps">Steps walked</string>
-    <string name="settings_steps_goal">At least %1$d steps</string>
+    <plurals name="settings_steps_goal">
+        <item quantity="one">At least %1$d step</item>
+        <item quantity="other">At least %1$d steps</item>
+    </plurals>
     <string name="settings_signals_min">Keep at least one sign on.</string>
     <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
     <string name="settings_sensitivity_label">Sensitivity</string>
@@ -92,7 +101,6 @@
     <string name="onboarding_allow_exact_alarms">Allow alarms &amp; reminders</string>
     <string name="onboarding_allow_activity">Allow physical activity</string>
     <string name="onboarding_allow_battery">Allow background use</string>
-    <string name="onboarding_open_settings">Open settings</string>
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_not_now">Not now</string>
     <string name="onboarding_get_started">Get started</string>

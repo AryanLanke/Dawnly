@@ -154,7 +154,7 @@ fun GlassSwitch(
     ) {
         Box(
             Modifier
-                .offset(x = thumbOffset, y = 3.dp)
+                .offset { IntOffset(thumbOffset.roundToPx(), 3.dp.roundToPx()) }
                 .size(20.dp)
                 .shadow(1.5.dp, CircleShape)
                 .background(thumb, CircleShape),

@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -202,14 +203,15 @@ private fun SignalsSection(
             }
             GlassRow(
                 title = stringResource(R.string.settings_screen),
-                subtitle = stringResource(R.string.settings_screen_goal, signals.screenTimeGoal.toMinutes().toInt()),
+                subtitle = signals.screenTimeGoal.toMinutes().toInt()
+                    .let { pluralStringResource(R.plurals.settings_screen_goal, it, it) },
                 divider = true,
             ) {
                 GlassSwitch(signals.useScreenTime, { toggle(Sign.ScreenTime, it) })
             }
             GlassRow(
                 title = stringResource(R.string.settings_steps),
-                subtitle = stringResource(R.string.settings_steps_goal, signals.stepsGoal),
+                subtitle = pluralStringResource(R.plurals.settings_steps_goal, signals.stepsGoal, signals.stepsGoal),
                 divider = true,
             ) {
                 GlassSwitch(signals.useSteps, { on -> if (on) onStepsOn() else toggle(Sign.Steps, false) })
