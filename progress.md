@@ -18,10 +18,9 @@
 The user asked the Phase 6 session to do session B's and A's lists itself, then Phase 6. All three are done, merged into `main` (fast-forward, no merge commits), and the worktrees `Dawnly-ui`, `Dawnly-notify` and `Dawnly-wake` are removed. The branches `phase-3-wake`, `phase-4-notify` and `phase-5-ui` still exist, fully merged; delete them whenever (`git branch -d <name>`).
 
 **Open items:**
-- **Auto-dismiss isn't tested on a device yet.** Steps are in the Phase 6 section ("Device test still to do").
 - **Samsung and Xiaomi** are still untested (no phones). Test before sharing the app.
 - **The reboot test** from Phase 2: the user chose to skip it.
-- **Delete the "Dawnly demo" alarm** in Google Clock (it was dismissed, so it's off, but still in the list).
+- **Delete the two test alarms** in Google Clock, "Dawnly demo" (11:19 pm) and "Dawnly test" (11:40 pm). Both were dismissed, so they're off, but still in the list.
 - **No licence file.** Without a LICENSE the code is "all rights reserved". Add one if others should be able to reuse it.
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for the hobbyist release).
 
@@ -95,7 +94,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ✅ Passed on Nothing Phone (2026-11-01). Samsung and Xiaomi not tested yet |
 | 2 | Watch window: settings, exact-alarm scheduling, foreground service | ✅ Done (2026-11-01). Reboot not tested yet |
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ✅ Done (2026-11-01), with the user's changes: no unlock sign; apps opened, movement, music added; additive score. Real detection worked on the phone |
-| 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (not device-tested yet), Clock screen cut to a flicker |
+| 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (device-tested), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
 | 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Flute |
 | 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | ⬜ Not started. See "Phase 7" |
@@ -325,7 +324,7 @@ The user asked the Phase 6 session to do B's and A's lists itself.
 - **Display over other apps** (`SYSTEM_ALERT_WINDOW`): Android 10+ only lets an app start the Clock app from the background with it. It's a new `AppPermission.Overlay`, not in onboarding (`askedUpFront = false`). Turning the switch on without it shows a one-line reason and an Allow pill; the switch turns on once it's granted. Settings → Permissions lists it only while auto-dismiss is on.
 - **Hiding Google Clock:** the dismiss request now carries `EXTRA_SKIP_UI`. `QuietDismiss` waits up to 5 s for the next alarm to move on, then brings Dawnly back to the front with a "Your 5:30 alarm is dismissed" toast. If the alarm doesn't move, the Clock app stays open so the user sees why. Used by the prompt, auto-dismiss, and Home's Dismiss alarm.
 - `SettingsRepository` gained `autoDismiss` (it was frozen only during the parallel phases). PLAN.md sections 3, 4 and 7 updated.
-- **Device test (Nothing Phone (2a), Google Clock, 2026-11-01):** the new prompt copy shows. Dismiss alarm from the prompt: the guard said Ok, Google Clock dismissed the alarm, and Dawnly came back to the front 80 ms after the Clock screen appeared (23:06:47.12 → 47.20). Android allowed that through its grace period (`BAL_ALLOW_GRACE_PERIOD`), so it works without "Display over other apps". The "Your 11:19 pm alarm is dismissed" toast showed. `EXTRA_SKIP_UI` is ignored by Google Clock, as expected. **Auto-dismiss is not device-tested yet** (see Phase 6).
+- **Device test (Nothing Phone (2a), Google Clock, 2026-11-01):** the new prompt copy shows. Dismiss alarm from the prompt: the guard said Ok, Google Clock dismissed the alarm, and Dawnly came back to the front 80 ms after the Clock screen appeared (23:06:47.12 → 47.20). Android allowed that through its grace period (`BAL_ALLOW_GRACE_PERIOD`), so it works without "Display over other apps". The "Your 11:19 pm alarm is dismissed" toast showed. `EXTRA_SKIP_UI` is ignored by Google Clock, as expected. Auto-dismiss was tested the same night; see "Device test: auto-dismiss" in Phase 6.
 
 ### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Done (2026-11-01)
 
@@ -405,21 +404,25 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 - [x] Pushed to GitHub (`d0f564c`). The CI result couldn't be read without the user's login (see Phase 7).
 - [ ] Reboot test (Phase 2): skipped by the user.
 
-#### Device test still to do: auto-dismiss
-1. Open Dawnly → **Settings** → turn on **Dismiss automatically**. A short reason and an **Allow** button appear. Tap **Allow**, find **Dawnly** in the list, turn on **Allow display over other apps**, then press Back. The switch should now be on.
-2. Set a throwaway Clock alarm about **12 minutes** away. In Settings keep the window at **Custom → 5 min**.
-3. When watching starts, use the phone for a few minutes (or run `adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app`).
-4. The notification should say "Dismissing your … alarm in 1 minute." with a countdown. Try **Not yet** once (nothing should happen after the minute). Then trigger again and let the minute run out: the Clock app flickers, Dawnly comes back, and the alarm is dismissed.
-5. Also try swiping the countdown away: that must stop the dismiss too.
-6. Logs: `adb logcat -s AwakeNotifier AutoDismiss DismissAlarmActivity QuietDismiss ClockApp`.
+#### Device test: auto-dismiss (Nothing Phone (2a), Google Clock, 2026-11-01, 23:30–23:39)
+| Test | Result |
+|---|---|
+| Turn on **Dismiss automatically** | ✅ The one-line reason and **Allow** appeared; the switch stayed off. Allow opened Android's "Display over other apps" screen. On Android 11+ that's the list of all apps, not Dawnly's own page, so the user has to tap **Dawnly** first. Back in Dawnly, the switch turned on by itself, and Settings → Permissions listed "Display over other apps" |
+| Countdown | ✅ "Up already?" / "Dismissing your 11:40 pm alarm in 1 minute." with a live 00:57 countdown, **Dismiss alarm** and **Not yet** |
+| Swipe the countdown away (from the shade) | ✅ "Auto-dismiss stopped" at 23:36:00, ten seconds before it was due. Nothing fired; the alarm stayed on |
+| **Not yet** | ✅ Stopped at 23:36:40. Nothing fired; the alarm stayed on |
+| Let the minute run out, with Dawnly in the background (home screen) | ✅ At 23:38:51.4, exactly 60 s after the warning: `DismissGuard` Ok → Google Clock dismissed the 11:40 pm alarm → Dawnly back in front 0.5 s later (`BAL_ALLOW_SAW_PERMISSION`). Next alarm moved to tomorrow 4:40 pm |
+
+After the test, auto-dismiss was turned off again and "Display over other apps" reset, so the phone is as it was.
 
 ### Phase 7 — Release prep (next, not started)
 Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through Google's free hobbyist account (up to 20 devices) first, maybe the Play Store later.
 
 **Checks to finish**
 - [ ] **CI on GitHub:** open github.com/AryanLanke/Dawnly → **Actions** tab → the top run ("Make Flute the default prompt sound", `d0f564c`) should have a green tick. If it's red, open it and copy the error into a new session.
-- [ ] **Auto-dismiss device test:** the steps are just above ("Device test still to do: auto-dismiss").
-- [ ] **Delete the demo alarm:** Clock app → **Alarm** tab → touch and hold the 11:19 pm "Dawnly demo" alarm → **Delete**.
+- [x] **Auto-dismiss device test:** passed (2026-11-01), see "Device test: auto-dismiss" in Phase 6.
+- [ ] **Small fix:** on Android 11+ the Allow button for auto-dismiss opens the list of all apps, not Dawnly's page. Make the reason text say "find Dawnly and turn it on", or show a short hint after tapping Allow.
+- [ ] **Delete the test alarms:** Clock app → **Alarm** tab → touch and hold the 11:19 pm "Dawnly demo" alarm → **Delete**. Do the same for the 11:40 pm "Dawnly test" alarm.
 - [ ] **Reboot test** (Phase 2), if wanted: restart the phone during a watch window and check watching carries on.
 
 **Before sharing the app**
