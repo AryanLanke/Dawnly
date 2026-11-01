@@ -6,7 +6,7 @@
 >
 > **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 ran **in parallel** in three coding sessions, one git worktree each. That's over: everything is merged into `main` and the worktrees are removed.
 
-**Current phase:** All phases done (2026-11-01). Phase 6 finished in one session, which also did session B's and session A's follow-up lists (the user's request). See "Where things stand" below.
+**Current phase:** Phase 7, release prep (not started). Phases 0–6 are done (2026-11-01); Phase 6 finished in one session, which also did session B's and session A's follow-up lists (the user's request). See "Where things stand" below and the Phase 7 checklist.
 **Last updated:** 2026-11-01
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
@@ -98,6 +98,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (not device-tested yet), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
 | 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Flute |
+| 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | ⬜ Not started. See "Phase 7" |
 
 ---
 
@@ -401,7 +402,7 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 - [x] Fixed on the way: settings saved before the new signs existed now get the apps and movement goals of the user's sensitivity level, so Settings still shows that level after an update. `Sensitivity` moved to `domain/wake`.
 - [x] Worktrees `Dawnly-ui`, `Dawnly-notify`, `Dawnly-wake` removed (all clean and merged first).
 - [x] `.gitignore` now ignores JVM crash logs (`hs_err_pid*.log`, `replay_pid*.log`). The PC ran low on memory during builds while another big Python job was running; building with `--max-workers=2 -Pkotlin.compiler.execution.strategy=in-process` worked.
-- [x] CI: see the result in "Where things stand" once pushed.
+- [x] Pushed to GitHub (`d0f564c`). The CI result couldn't be read without the user's login (see Phase 7).
 - [ ] Reboot test (Phase 2): skipped by the user.
 
 #### Device test still to do: auto-dismiss
@@ -411,6 +412,27 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 4. The notification should say "Dismissing your … alarm in 1 minute." with a countdown. Try **Not yet** once (nothing should happen after the minute). Then trigger again and let the minute run out: the Clock app flickers, Dawnly comes back, and the alarm is dismissed.
 5. Also try swiping the countdown away: that must stop the dismiss too.
 6. Logs: `adb logcat -s AwakeNotifier AutoDismiss DismissAlarmActivity QuietDismiss ClockApp`.
+
+### Phase 7 — Release prep (next, not started)
+Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through Google's free hobbyist account (up to 20 devices) first, maybe the Play Store later.
+
+**Checks to finish**
+- [ ] **CI on GitHub:** open github.com/AryanLanke/Dawnly → **Actions** tab → the top run ("Make Flute the default prompt sound", `d0f564c`) should have a green tick. If it's red, open it and copy the error into a new session.
+- [ ] **Auto-dismiss device test:** the steps are just above ("Device test still to do: auto-dismiss").
+- [ ] **Delete the demo alarm:** Clock app → **Alarm** tab → touch and hold the 11:19 pm "Dawnly demo" alarm → **Delete**.
+- [ ] **Reboot test** (Phase 2), if wanted: restart the phone during a watch window and check watching carries on.
+
+**Before sharing the app**
+- [ ] **Samsung and Xiaomi:** run the Phase 1 test steps (read and dismiss the next alarm) and the onboarding battery screens on each. Record the results in the Phase 1 table.
+- [ ] **Release build:** a signing key (keep it out of git), `assembleRelease`, and a check that R8 didn't break anything (DataStore, notifications, the receivers).
+- [ ] **Version:** set `versionName` / `versionCode` for the first shared build (now 0.1.0).
+- [ ] **Licence:** pick one (for example MIT) and add a LICENSE file, or leave the code "all rights reserved".
+- [ ] **Hobbyist sharing:** set up the Google developer account and send the build to testers.
+
+**Before the Play Store (later)**
+- [ ] Play policy reasons for `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `SYSTEM_ALERT_WINDOW`, `PACKAGE_USAGE_STATS`, and the `specialUse` foreground service.
+- [ ] A privacy policy (Dawnly is fully offline and collects nothing, but Play still asks for one), store listing, and screenshots (the README ones can be reused).
+- [ ] Not v1, from PLAN.md section 4: a "Still awake?" nudge for falling back asleep after dismissing. The hook is `WakeWatcher.onAwake`.
 
 ---
 
