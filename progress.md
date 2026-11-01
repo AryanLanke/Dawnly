@@ -284,15 +284,55 @@ When wake detection calls `AwakeNotifier.onUserAwake()`, Dawnly shows "You're up
 
 **Merge note:** A also adds to `app/src/debug/AndroidManifest.xml`. Whoever merges second keeps both `<application>` entries.
 
-### Phase 5 — UI polish (session C, branch `phase-5-ui`)
+### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Built, waiting for the user's device test
+
+#### Summary
+The glass design from `design/mockups.html` is now the real app: onboarding, Home (Today), and Settings, in light and dark, with the flowing background and spring motion. The Phase 1/2 test screen (`ui/feasibility/`) is gone. Session C also made the Phase 6 app icon.
+
+**How it's built:**
+- `ui/theme/`: `DawnlyColors` (the mockup's CSS variables, light and dark), Figtree typography, `DawnlyMotion` springs, and `LocalReduceMotion` (animator scale 0).
+- `ui/glass/`: the design system. `FlowingBackground` (three radial gradients on the mockup's keyframes, drawn in the draw phase only, still when motion is reduced), `GlassSurface` (Haze blur 8dp + 170% saturation + tint, a rim that is brighter along the top, an inner glow, no drop shadow), the segmented control, switch, stepper, buttons, `GlassTabBar`, `ProgressRing`, `SpringIn`, and line icons drawn in code (no icon library).
+- Screens: `ui/home/` (`HomeUiState.from()` is a pure mapping with unit tests), `ui/settings/`, `ui/onboarding/`, and `ui/DawnlyRoot.kt` (theme, background, onboarding or tabs). ViewModels are created in `MainActivity` with `viewModels()`, because `lifecycle-viewmodel-compose` isn't on the classpath and isn't needed. `reconcile()` stays in `MainActivity.onResume`; Settings calls it after a window change.
+- `ui/permissions/`: `AppPermission` (status, the runtime permission, the settings screen), `PermissionsController` (runtime dialogs, settings screens rechecked on resume, and a jump to settings once Android stops showing the dialog), and `OemBattery` (Samsung and Xiaomi screens from dontkillmyapp.com, falling back to app info).
+
+**Decisions:**
+- **Haze 2.0.1** (`haze` + `haze-blur`). 2.0 split Haze into modules. `haze-glass` (refraction) was skipped: it needs Android 13+ and is more than the plan's "light blur". Below Android 12 Haze draws a stronger tint instead of blur (`glassFallback`).
+- **Figtree** is the single variable font from google/fonts (62 KB, weights picked with `FontVariation`), with its OFL licence in `assets/licenses/`.
+- **Sensitivity** is one Low / Medium / High control that sets both goals (screen use 10/5/3 min, steps 100/50/30). Medium is the existing default. The last wake sign on can't be turned off.
+- **Steps** turn on only once Physical activity is allowed. Allowing it in onboarding turns steps on.
+- **Onboarding** asks only for permissions this Android has that aren't granted yet, in the order notifications, Alarms & reminders (with the "up to an hour late" case), physical activity, background use. The first step carries the mockup's welcome headline. Every step can be skipped; Settings has the same controls, and Home warns when Alarms & reminders or notifications are off.
+- **Background use** step: `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (manifest, add-only) for the one-tap system dialog. Lint warns this needs a Play policy justification; fine for the hobbyist release, revisit before the Play Store.
+- **"You're up early"** on Home shows when every sign that's on has met its goal. It's a display hint only. **After Phase 3 merges, switch it to session A's scorer** so Home and the notification agree.
+- Home shows **Dismiss alarm** while watching (solid once all signs are seen). It uses `ClockApp.dismissNextAlarm` with the open-Clock fallback and explains the fallback on screen.
+- Onboarding state is in a new `data/onboarding/OnboardingStore.kt` (its own DataStore), since `SettingsRepository` is frozen.
+- Window background follows day/night (`values-night/themes.xml`), so dark mode has no white flash on launch.
+- The app icon is adaptive (`mipmap-anydpi`, minSdk 26), with a themed-icon monochrome layer. `ic_notification` uses the same ring-and-sun glyph.
+
+**Left for later:**
+- `strings.xml` still holds the old feasibility strings (lint lists them as unused). It's a shared file, so remove them after all three branches merge.
+- The debug screen isn't linked from Settings; session A's `DebugActivity` has its own launcher icon.
+- Samsung and Xiaomi battery screens are untested (no phones).
+- The emulator can't run on this PC (no hypervisor driver), so visual checks happen on the phone.
+
 - [x] Haze and Figtree approved (2026-11-01; both are in PLAN.md). Use Haze's latest stable release, and bundle Figtree in `res/font/` so the app stays offline.
-- [ ] Glass design system matching `design/mockups.html`: colours, glass alpha values, 28dp cards, pills.
-- [ ] Flowing background shapes: three radial-gradient circles animated with `rememberInfiniteTransition`. Keep them still when reduce-motion is on.
-- [ ] Screens: onboarding (4 permission steps: notifications, Alarms & reminders, activity recognition, battery optimization), Home (progress ring), Settings, floating glass tab bar. Onboarding must make a strong case for Alarms & reminders (see Phase 2: without it, watching can start an hour late).
-- [ ] Home reads `WatchScheduler.state` and `WatchSession.signals`; Settings uses `SettingsRepository` (window, wake signals, appearance). After changing the window, call `watchScheduler.reconcile()`. Keep the `reconcile()` call in `MainActivity.onResume`.
-- [ ] Use previews with fake `WakeSignals` until Phase 3 merges. Delete `ui/feasibility/` once Home and Settings cover it.
-- [ ] Appearance setting: Light / Dark / System, default System. Non-blur fallback below Android 12.
-- [ ] OEM battery guidance for Xiaomi and Samsung (dontkillmyapp.com).
+- [x] Glass design system matching `design/mockups.html`: colours, glass alpha values, 28dp cards, pills.
+- [x] Flowing background shapes: three radial-gradient circles animated with `rememberInfiniteTransition`. Kept still when reduce-motion is on.
+- [x] Screens: onboarding (4 permission steps), Home (progress ring), Settings, floating glass tab bar.
+- [x] Home reads `WatchScheduler.state` and `WatchSession.signals`; Settings uses `SettingsRepository`. `reconcile()` after a window change and in `MainActivity.onResume`.
+- [x] Previews with fake `WakeSignals` (Home: watching, awake, waiting, no alarm, Clock fallback). `ui/feasibility/` deleted.
+- [x] Appearance setting: Light / Dark / System, default System; status bar icons follow it. Non-blur fallback below Android 12.
+- [x] OEM battery guidance for Xiaomi and Samsung.
+- [x] Unit tests: 14 new (`HomeUiStateTest`, `SensitivityTest`, `OemBatteryTest`), 22 in total, all passing. `lintDebug` passes.
+- [x] Checked on the Nothing Phone by screenshot: onboarding, Home (waiting), Settings, light and dark. Fixed there: the tab bar filled the screen, content clashed with the status bar, and selected pills were invisible in light mode.
+- [ ] User's device test (steps below).
+
+#### How to verify on a device
+1. Uninstall first for a clean onboarding: `adb uninstall com.dawnly.app`, then `.\gradlew.bat installDebug` and open Dawnly.
+2. **Onboarding:** four steps with dots. Allow each one; each should move on by itself, including after you come back from the Alarms & reminders screen. Allowing Physical activity turns on "Steps walked" in Settings. "Not now" skips.
+3. **Home:** set a Clock alarm about 8 minutes away and pick **Custom → 5 min** in Settings. Home shows the time, "Watching from …", and the signal goals. When the window opens, the ring starts filling and **Dismiss alarm** appears; tapping it dismisses through the Clock app.
+4. **Settings:** switch Light / Dark / System (the status bar icons should follow), change sensitivity (the goals under the switches change), and try to turn off all three signs (the last one refuses, with a hint).
+5. **Motion:** the background shapes drift slowly; tabs, segments, and switches spring. With Developer options → Animator duration scale → Off, everything should be still.
+6. **Icon:** the launcher icon is a blue tile with a glass ring and a rising sun. Long-press the home screen → themed icons to see the monochrome layer.
 
 ### Phase 6 — Portfolio finish (CI: session A. Icon: session C. README: after all three merge)
 - [ ] README with screenshots and a demo GIF, plus a "Challenges I solved" section.
