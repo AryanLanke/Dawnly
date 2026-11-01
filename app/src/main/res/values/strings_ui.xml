@@ -105,4 +105,27 @@
     <string name="onboarding_not_now">Not now</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_step">Step %1$d of %2$d</string>
+    <!-- Prompt sound -->
+    <string name="settings_sound_label">Notification sound</string>
+    <string name="sound_title">Notification sound</string>
+    <string name="sound_back">Back</string>
+    <string name="sound_silent_hint">Your phone is on silent, so previews can\'t be heard.</string>
+    <string name="sound_phone_default">Phone default</string>
+    <string name="sound_flute">Flute</string>
+    <string name="sound_sparkle">Sparkle</string>
+    <string name="sound_bubble">Bubble</string>
+    <string name="sound_fizz">Fizz</string>
+    <string name="sound_pop">Pop</string>
+    <string name="sound_bloop">Bloop</string>
+    <string name="sound_simmer">Simmer</string>
+    <string name="sound_potion">Potion</string>
+    <string name="sound_timer">Timer</string>
+    <string name="sound_beep">Beep</string>
+    <string name="sound_click">Click</string>
+    <string name="sound_level_up">Level up</string>
+    <string name="sound_retro">Retro</string>
+    <string name="sound_score">Score</string>
+    <string name="sound_jump">Jump</string>
+    <string name="sound_jackpot">Jackpot</string>
+    <string name="sound_pixel">Pixel</string>
 </resources>

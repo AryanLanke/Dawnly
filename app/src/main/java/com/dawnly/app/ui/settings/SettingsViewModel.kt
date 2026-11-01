@@ -6,6 +6,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.data.sound.SoundStore
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import java.time.Duration
 import kotlinx.coroutines.Dispatchers
@@ -20,14 +22,18 @@ data class SettingsUiState(
     val window: Duration,
     val signals: WakeSignalSettings,
     val appearance: Appearance,
+    val sound: AlertSound,
 )
 
 class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
+    private val sounds = SoundStore(app)
+
     /** Null until the settings have loaded. */
     val uiState: StateFlow<SettingsUiState?> = combine(
         app.settings.watchWindow,
         app.settings.wakeSignals,
         app.settings.appearance,
+        sounds.selected,
         ::SettingsUiState,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -47,6 +53,10 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
 
     fun setAppearance(appearance: Appearance) {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAppearance(appearance) }
+    }
+
+    fun setSound(sound: AlertSound) {
+        app.scope.launch(Dispatchers.Main.immediate) { sounds.setSelected(sound) }
     }
 
     companion object {

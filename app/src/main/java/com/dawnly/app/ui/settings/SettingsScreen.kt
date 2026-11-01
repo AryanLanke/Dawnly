@@ -1,6 +1,11 @@
 package com.dawnly.app.ui.settings
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -32,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.format.formatDuration
@@ -63,25 +69,56 @@ fun SettingsScreen(
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val latest by rememberUpdatedState(state)
     var stepsDenied by remember { mutableStateOf(false) }
-    SettingsContent(
-        state = state,
-        permissions = permissions,
-        oemBattery = oemBattery,
-        stepsDenied = stepsDenied,
-        onWindowChange = viewModel::setWindow,
-        onSignalsChange = viewModel::setSignals,
-        onStepsOn = {
-            // Steps need Physical activity. Turn the sign on only once it's allowed.
-            onRequestPermission(AppPermission.ActivityRecognition) { granted ->
-                stepsDenied = !granted
-                if (granted) viewModel.setSignals(latest.signals.copy(useSteps = true))
-            }
+    var pickingSound by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = pickingSound) { pickingSound = false }
+    val preview = rememberSoundPreview()
+
+    AnimatedContent(
+        targetState = pickingSound,
+        transitionSpec = {
+            val direction = if (targetState) 1 else -1
+            (slideInHorizontally { it / 6 * direction } + fadeIn()) togetherWith
+                (slideOutHorizontally { -it / 6 * direction } + fadeOut())
         },
-        onAppearanceChange = viewModel::setAppearance,
-        onRequestPermission = { onRequestPermission(it) {} },
-        onOpenOemBattery = onOpenOemBattery,
-        contentPadding = contentPadding,
-    )
+        label = "settingsPage",
+    ) { picking ->
+        if (picking) {
+            SoundPicker(
+                selected = state.sound,
+                silenced = remember { preview.isSilenced },
+                onSelect = { sound ->
+                    viewModel.setSound(sound)
+                    preview.play(sound)
+                },
+                onBack = {
+                    preview.stop()
+                    pickingSound = false
+                },
+                contentPadding = contentPadding,
+            )
+        } else {
+            SettingsContent(
+                state = state,
+                permissions = permissions,
+                oemBattery = oemBattery,
+                stepsDenied = stepsDenied,
+                onWindowChange = viewModel::setWindow,
+                onSignalsChange = viewModel::setSignals,
+                onStepsOn = {
+                    // Steps need Physical activity. Turn the sign on only once it's allowed.
+                    onRequestPermission(AppPermission.ActivityRecognition) { granted ->
+                        stepsDenied = !granted
+                        if (granted) viewModel.setSignals(latest.signals.copy(useSteps = true))
+                    }
+                },
+                onAppearanceChange = viewModel::setAppearance,
+                onRequestPermission = { onRequestPermission(it) {} },
+                onOpenOemBattery = onOpenOemBattery,
+                onOpenSounds = { pickingSound = true },
+                contentPadding = contentPadding,
+            )
+        }
+    }
 }
 
 @Composable
@@ -96,6 +133,7 @@ private fun SettingsContent(
     onAppearanceChange: (Appearance) -> Unit,
     onRequestPermission: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
+    onOpenSounds: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     Column(
@@ -126,9 +164,11 @@ private fun SettingsContent(
             }
         }
         Gap()
-        SpringIn(order = 3) { PermissionsSection(permissions, oemBattery, onRequestPermission, onOpenOemBattery) }
+        SpringIn(order = 3) { SoundRow(state.sound, onOpenSounds) }
         Gap()
-        SpringIn(order = 4) {
+        SpringIn(order = 4) { PermissionsSection(permissions, oemBattery, onRequestPermission, onOpenOemBattery) }
+        Gap()
+        SpringIn(order = 5) {
             Column {
                 SectionLabel(stringResource(R.string.settings_appearance_label))
                 val modes = Appearance.entries
@@ -296,7 +336,7 @@ internal val AppPermission.label
 private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
     PreviewFrame(dark) {
         SettingsContent(
-            state = SettingsUiState(window, WakeSignalSettings(), Appearance.System),
+            state = SettingsUiState(window, WakeSignalSettings(), Appearance.System, AlertSound.Flute),
             permissions = PermissionState(setOf(AppPermission.Notifications, AppPermission.ActivityRecognition)),
             oemBattery = oem,
             stepsDenied = false,
@@ -306,6 +346,7 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             onAppearanceChange = {},
             onRequestPermission = {},
             onOpenOemBattery = {},
+            onOpenSounds = {},
             contentPadding = PaddingValues(top = 40.dp, bottom = 100.dp),
         )
     }

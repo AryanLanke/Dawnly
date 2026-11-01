@@ -1,0 +1,22 @@
+Prompt sounds (app/src/main/res/raw/sound_*) are from Mixkit (https://mixkit.co), used under the
+Mixkit Sound Effects Free License (https://mixkit.co/license/#sfxFree). They are trimmed, level
+matched, and renamed for the app. They may not be redistributed on their own.
+
+App name   Mixkit item
+flute      Uplifting flute notification (2317)
+sparkle    Magic bubbles spell (2999)
+bubble     Liquid bubble (3000)
+fizz       Bubbly achievement tone (3193)
+pop        Message pop alert (2354)
+bloop      Long pop (2358)
+simmer     Volcano lava bubble (2445)
+potion     Video game magic potion (2830)
+timer      Cooking stopwatch alert (1792)
+beep       Computer digital lock (2859)
+click      Quick lock sound (2854)
+level_up   Unlock game notification (253)
+retro      Retro game notification (212)
+score      Arcade score interface (217)
+jump       Arcade retro jump (223)
+jackpot    Retro arcade casino notification (211)
+pixel      Pixel chiptune explosion (1692)

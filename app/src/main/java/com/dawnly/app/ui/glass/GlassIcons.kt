@@ -14,6 +14,10 @@ object GlassIcons {
 
     val Minus = icon("Minus", stroke = "M6,12 H18")
 
+    val Back = icon("Back", stroke = "M14.5,5.5 L8,12 L14.5,18.5", strokeWidth = 2.2f)
+
+    val Chevron = icon("Chevron", stroke = "M9.5,6 L15.5,12 L9.5,18")
+
     val Plus = icon("Plus", stroke = "M12,6 V18 M6,12 H18")
 
     val Bell = icon(
