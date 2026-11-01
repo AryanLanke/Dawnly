@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,8 +48,8 @@ import kotlinx.coroutines.delay
 private data class DismissAttempt(val result: DismissResult, val target: NextAlarm)
 
 /**
- * Phase 1 test screen: can we read the next alarm, and can the Clock app dismiss it?
- * Deliberately plain; the real Home screen replaces it in Phase 5.
+ * Test screen. Phase 1: can we read the next alarm, and can the Clock app dismiss it?
+ * Phase 2: the watch window. Deliberately plain; the real Home screen replaces it in Phase 5.
  */
 @Composable
 fun FeasibilityScreen(modifier: Modifier = Modifier) {
@@ -136,6 +137,10 @@ private fun FeasibilityContent(
                 HorizontalDivider()
                 AttemptResult(attempt, current = alarm)
             }
+            if (!LocalInspectionMode.current) {
+                HorizontalDivider()
+                WatchWindowSection()
+            }
         }
     }
 }
@@ -178,8 +183,8 @@ private fun AlarmSummary(alarm: NextAlarm?, now: Instant) {
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+internal fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = softColor())
         Text(text = value, style = MaterialTheme.typography.bodyLarge)
     }
@@ -207,7 +212,7 @@ private fun AttemptResult(attempt: DismissAttempt, current: NextAlarm?) {
 }
 
 @Composable
-private fun softColor() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+internal fun softColor() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
 @Composable
 private fun describe(app: AppRef): String =
@@ -216,7 +221,7 @@ private fun describe(app: AppRef): String =
 
 /** Formats a time the way the phone does, following its 12/24-hour setting. */
 @Composable
-private fun formatTime(instant: Instant): String {
+internal fun formatTime(instant: Instant): String {
     val skeleton = if (DateFormat.is24HourFormat(LocalContext.current)) "Hm" else "hm"
     return formatPattern(instant, skeleton)
 }

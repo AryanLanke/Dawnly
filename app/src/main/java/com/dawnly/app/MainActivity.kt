@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.dawnly.app.ui.feasibility.FeasibilityScreen
 import com.dawnly.app.ui.theme.DawnlyTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,5 +17,11 @@ class MainActivity : ComponentActivity() {
                 FeasibilityScreen()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Covers a fresh install (no broadcast has arrived yet) and returning from permission settings.
+        dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
     }
 }

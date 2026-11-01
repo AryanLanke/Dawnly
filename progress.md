@@ -4,7 +4,7 @@
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
 
-**Current phase:** Phase 1 (feasibility test), passed on the Nothing Phone. Samsung and Xiaomi skipped for now (user's decision). Phase 2 is next.
+**Current phase:** Phase 2 (watch window) done and tested on the Nothing Phone. Phase 3 (wake detection) is next.
 **Last updated:** 2026-11-01
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
@@ -23,11 +23,11 @@
 - [x] Phase 1 test screen built (see the Phase 1 checklist below) and installed. It launches; with no alarm set it shows "No alarm set" and "Dismiss goes to Clock (com.google.android.deskclock)", so the Nothing Phone uses Google Clock.
 
 **The plan, in order:**
-1. [x] Tested on the Nothing Phone with the user (2026-11-01). Reading and dismissing both work; see the results table.
-2. [x] Samsung and Xiaomi: the user has neither phone. **The user decided (2026-11-01) to skip them for now and start Phase 2.** Test them before sharing the app (PLAN.md section 9).
-3. [x] Repeating-alarm test: dismiss skips one ring and leaves the alarm on. Recorded in the table.
-4. [ ] Ask before committing and pushing Phase 1. Nothing from Phase 1 is committed yet.
-5. [ ] Start Phase 2.
+1. [x] Phase 1 done, committed as `a42e43e` and pushed (2026-11-01). Samsung and Xiaomi skipped for now (user's decision); test them before sharing the app (PLAN.md section 9).
+2. [x] Phase 2 built and tested on the Nothing Phone with the user (2026-11-01). See the Phase 2 section.
+3. [ ] Ask before committing and pushing Phase 2. Nothing from Phase 2 is committed yet.
+4. [ ] Optional: reboot test (reboot during a window; watching should resume).
+5. [ ] Start Phase 3.
 
 **Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing):
 ```
@@ -44,7 +44,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 |---|---|---|
 | 0 | Setup: SDK, Compose project, mockups, Hello screen running on the phone | ✅ Done (2026-10-31) |
 | 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ✅ Passed on Nothing Phone (2026-11-01). Samsung and Xiaomi not tested yet |
-| 2 | Watch window: settings, exact-alarm scheduling, foreground service | ⬜ Not started |
+| 2 | Watch window: settings, exact-alarm scheduling, foreground service | ✅ Done (2026-11-01). Reboot not tested yet |
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ⬜ Not started |
 | 4 | Notification and one-tap dismiss, plus the fallback | ⬜ Not started |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ⬜ Not started |
@@ -103,11 +103,16 @@ Dawnly/
       ├─ AndroidManifest.xml
       ├─ res/values/strings.xml, themes.xml
       └─ java/com/dawnly/app/
-         ├─ MainActivity.kt
+         ├─ DawnlyApp.kt, MainActivity.kt
+         ├─ data/SafeData.kt
          ├─ data/alarm/NextAlarm.kt, NextAlarmSource.kt, ClockApp.kt
-         └─ ui/feasibility/FeasibilityScreen.kt, ui/theme/Theme.kt
+         ├─ data/settings/SettingsRepository.kt, data/watch/ArmedAlarmStore.kt
+         ├─ domain/watch/WatchState.kt (WatchPlanner), WatchWindow.kt
+         ├─ service/WatchScheduler.kt, WatchService.kt, WatchNotifications.kt, Receivers.kt
+         └─ ui/feasibility/FeasibilityScreen.kt, WatchWindowSection.kt, ui/theme/Theme.kt
+   └─ src/test/java/com/dawnly/app/domain/watch/WatchPlannerTest.kt
 ```
-`data/alarm/` is meant to be reused in later phases: `NextAlarmSource` reads the next alarm and follows it as a Flow, and `ClockApp` handles the dismiss intent, the handler lookup, and the open-Clock fallback. `ClockApp.dismissNextAlarmIntent()` is what Phase 4's notification `PendingIntent` should wrap. `ui/feasibility/` is a throwaway test screen that Home replaces in Phase 5. The `domain/` and `service/` packages will be created in the phases that need them.
+`data/alarm/` is meant to be reused in later phases: `NextAlarmSource` reads the next alarm and follows it as a Flow, and `ClockApp` handles the dismiss intent, the handler lookup, and the open-Clock fallback. `ClockApp.dismissNextAlarmIntent()` is what Phase 4's notification `PendingIntent` should wrap. `ui/feasibility/` is a throwaway test screen that Home replaces in Phase 5. `DawnlyApp` holds the app-wide singletons (manual wiring, no DI library). `WatchScheduler.reconcile()` is the single entry point for the watch window; see Phase 2.
 
 ---
 
@@ -149,11 +154,45 @@ Samsung and Xiaomi aren't tested yet; the user has neither phone. They decided t
 5. Repeat with a repeating alarm. Dismissing it should skip only the next ring, not turn the alarm off.
 6. If something looks wrong, check the logs: `adb logcat -s ClockApp`.
 
-### Phase 2 — Watch window
-- [ ] DataStore settings: window length (30 min / 1 hr / 2 hr / custom).
-- [ ] Schedule an exact alarm at (alarm time − window). Handle `SCHEDULE_EXACT_ALARM` and fall back gracefully if it's denied.
-- [ ] Foreground service with a low-priority ongoing notification. Choose the Android 14+ `foregroundServiceType` and **explain the choice to the user**.
-- [ ] Stop the service when the alarm time passes or the user dismisses. Reschedule when the next alarm changes and after a reboot.
+### Phase 2 — Watch window ✅ Done (2026-11-01)
+
+#### Summary
+Dawnly starts a quiet foreground service when the watch window opens, and stops it when the alarm time passes or the alarm is dismissed. The window length is a saved setting. Tested on the Nothing Phone with the screen locked: the window opened and closed to the second.
+
+**How it works:** `WatchScheduler.reconcile()` is the only entry point. It reads the next alarm, the window setting, and the armed alarm, and asks the pure `WatchPlanner.decide()` for a `WatchState` (Idle / Waiting / Watching / Skipped). Then it sets the single pending check alarm and starts or stops `WatchService` to match. Every trigger calls it: app resume, a settings change, `NEXT_ALARM_CLOCK_CHANGED`, `BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`, the exact-alarm permission being granted, and our own check alarm.
+
+**Decisions:**
+- **Foreground service type `specialUse`** (explained to the user). `health` needs `ACTIVITY_RECOGNITION` granted before every start, and the user can turn the steps signal off. `dataSync` doesn't fit and has a 6-hour daily cap on Android 15. `shortService` stops after 3 min. `specialUse` needs a Play review reason, which is in the manifest `<property>`. Phase 3 can revisit this (for example `health` when steps are on).
+- **"Skipped" state.** An alarm that first appears after its window has begun isn't watched: a snooze, a short nap, or the alarm time edited mid-window. The user is clearly awake, and Phase 3 would flag them straight away. Only an alarm whose window start Dawnly scheduled ahead of time ("armed", stored in DataStore) is watched. That also lets watching resume after a reboot.
+- **Never use `setAlarmClock`** for our own alarm, because it would become the "next alarm" we read. We use `setExactAndAllowWhileIdle`.
+- **Starting the service from the background.** Android 12+ blocks this except right after an exact alarm fires. So when reconcile runs from a background broadcast inside the window, it schedules the check alarm for "now" and starts the service from there.
+- **Fallback when "Alarms & reminders" is off** (the default on Android 14+): `setAndAllowWhileIdle`. On the Nothing Phone, Android gave that alarm a **1-hour delivery window**, so watching could start up to an hour late. The test screen says so. **Phase 5 onboarding must make a strong case for this permission.**
+- Window: presets 30 min / 1 hr / 2 hr, custom 5 min to 3 h in 5-min steps, default 1 hr.
+- New libraries, both covered by PLAN.md section 5: DataStore Preferences 1.3.0 and JUnit 4.13.2. `lifecycle-runtime-compose` (for `LifecycleResumeEffect`) already comes in through Compose.
+
+- [x] DataStore settings: window length (30 min / 1 hr / 2 hr / custom).
+- [x] Exact alarm at (alarm time − window), with a fallback when `SCHEDULE_EXACT_ALARM` is denied.
+- [x] Foreground service (`specialUse`) with a low-priority ongoing notification: "Watching for signs you're up" / "Until your 1:30 PM alarm". Placeholder status-bar icon until Phase 6.
+- [x] Stops when the alarm time passes or the alarm is dismissed. Reschedules when the next alarm changes, after an app update, and after a reboot (reboot not tested on the device yet).
+- [x] Unit tests: 8 tests for `WatchPlanner` and `WatchWindow`, all passing (`.\gradlew.bat testDebugUnitTest`).
+- [x] Test screen: window picker, live status, whether the service is running, and Allow buttons for notifications and Alarms & reminders.
+
+#### Device test results (Nothing Phone (2a), 2026-11-01, 5-min window, both permissions allowed)
+| Test | Result |
+|---|---|
+| Window opens with the phone locked | ✅ Check alarm fired at 13:25:00.013. The service started from the background and the notification showed |
+| Alarm time passes | ✅ Service stopped at 13:30:00.035, notification removed, next day's window scheduled |
+| Dismiss during the window (Phase 1 button) | ✅ At 13:42:14 the dismiss went to Google Clock. The next alarm moved to tomorrow, the service stopped, and the alarm didn't ring |
+| Alarm first seen inside its window | ✅ Skipped (happened by chance while the user was picking a time) |
+| App update while waiting | ✅ `MY_PACKAGE_REPLACED` reached the non-exported receiver and rescheduled |
+| Reboot during a window | Not tested yet |
+
+#### How to verify on a device
+1. Install and open Dawnly. Under **Watch window**, allow Notifications and Alarms & reminders, then pick **Custom → 5 min**.
+2. Set a Clock alarm about 8 minutes away. The status should say "Starts watching at …".
+3. Lock the phone. When the window opens, the "Watching for signs you're up" notification appears.
+4. Either let the alarm ring (the notification goes away at the alarm time), or tap **Dismiss next alarm** in Dawnly (it goes away at once).
+5. Logs: `adb logcat -s WatchScheduler SystemEventsReceiver ClockApp`. Service: `adb shell dumpsys activity services com.dawnly.app`.
 
 ### Phase 3 — Wake detection
 - [ ] Unlock: register `ACTION_USER_PRESENT` dynamically inside the service.
@@ -185,7 +224,7 @@ Samsung and Xiaomi aren't tested yet; the user has neither phone. They decided t
 ---
 
 ## Open questions for the user
-- Can the user get hold of a Samsung and a Xiaomi phone for Phase 1 testing?
+- Can the user get hold of a Samsung and a Xiaomi phone for Phase 1 testing? (Skipped for now; test before sharing the app.)
 - Not v1: what should happen if the user falls back asleep after dismissing? (PLAN.md section 4)
 
 ## Environment notes (this PC)

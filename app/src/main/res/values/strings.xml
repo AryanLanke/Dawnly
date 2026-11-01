@@ -2,7 +2,7 @@
     <string name="app_name">Dawnly</string>
 
     <!-- Phase 1 feasibility screen. Replaced by the real Home screen in Phase 5. -->
-    <string name="feasibility_title">Feasibility test</string>
+    <string name="feasibility_title">Test screen</string>
     <string name="next_alarm">Next alarm</string>
     <string name="no_alarm">No alarm set</string>
     <string name="no_alarm_hint">Set one in your Clock app. This screen updates by itself.</string>
@@ -24,4 +24,34 @@
     <string name="result_alarm_unchanged">The next alarm hasn\'t changed yet.</string>
     <string name="result_opened_clock">No app can dismiss alarms, so %1$s was opened instead. Dismiss the alarm there.</string>
     <string name="result_no_clock">No Clock app found on this phone.</string>
+
+    <!-- Phase 2 watch window section of the test screen. -->
+    <string name="watch_window">Watch window</string>
+    <string name="watch_window_hint">Start watching this long before the alarm</string>
+    <string name="custom">Custom</string>
+    <string name="decrease">Shorter</string>
+    <string name="increase">Longer</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d hr</string>
+    <string name="duration_hours_minutes">%1$d hr %2$d min</string>
+    <string name="status">Status</string>
+    <string name="status_idle">No alarm to watch for</string>
+    <string name="status_waiting">Starts watching at %1$s</string>
+    <string name="status_watching">Watching since %1$s · %2$d%% of the window</string>
+    <string name="status_skipped">Not watching: this alarm was set after its window began</string>
+    <string name="watch_service">Watch service</string>
+    <string name="running">Running</string>
+    <string name="not_running">Not running</string>
+    <string name="exact_alarms">Alarms &amp; reminders</string>
+    <string name="exact_alarms_denied">Off. Watching may start up to an hour late</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_denied">Off. The watching notification stays hidden</string>
+    <string name="allowed">Allowed</string>
+    <string name="allow">Allow</string>
+
+    <!-- Watching notification. -->
+    <string name="channel_watching">Watching before your alarm</string>
+    <string name="channel_watching_description">Shown while Dawnly watches for signs you\'re awake, only before your alarm.</string>
+    <string name="watching_title">Watching for signs you\'re up</string>
+    <string name="watching_until">Until your %1$s alarm</string>
 </resources>
