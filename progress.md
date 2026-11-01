@@ -242,13 +242,47 @@ Dawnly starts a quiet foreground service when the watch window opens, and stops 
 - [ ] Phase 6 CI (also session A): GitHub Actions workflow that runs `testDebugUnitTest assembleDebug lintDebug` on push and PR.
 - [ ] Leave a clean hook for the future "Still awake?" nudge. It's not in v1.
 
-### Phase 4 — Notification & dismiss (session B, branch `phase-4-notify`)
-- [ ] Implement `AwakeNotifier.onUserAwake()`. Test it before Phase 3 lands with a debug-only receiver you can call from `adb`.
-- [ ] "Not yet" just closes the prompt; `AwakeNotifier` is called at most once per window anyway.
-- [ ] Gentle notification: "You're up early" / "Dismiss your 5:30 alarm so it doesn't ring?", with the actions **Dismiss alarm** and **Not yet**.
-- [ ] Dismiss action uses `PendingIntent.getActivity` straight to `ACTION_DISMISS_ALARM`, with no trampoline because Android 12+ blocks those.
-- [ ] Fallback when the Clock app can't dismiss. Never dismiss silently.
-- [ ] **Guard against dismissing the wrong alarm** (found in Phase 1 testing). `ALARM_SEARCH_MODE_NEXT` dismisses whatever alarm is next. If today's alarm was already dismissed or has already rung, a stale notification would skip *tomorrow's* alarm. Before sending the dismiss, check that `getNextAlarmClock()` still returns the alarm the notification is about. Cancel the notification when the next alarm changes. This probably needs a small activity that checks first and then forwards the request; launch it straight from the notification, which is allowed because it isn't a trampoline.
+### Phase 4 — Notification & dismiss ✅ Done (2026-11-01, session B, branch `phase-4-notify`)
+
+#### Summary
+When wake detection calls `AwakeNotifier.onUserAwake()`, Dawnly shows "You're up early" / "Dismiss your 4:40 pm alarm so it doesn't ring?" with **Dismiss alarm** and **Not yet**. Dismiss alarm only goes ahead if the next alarm is still the one the prompt is about, so a stale prompt can never skip tomorrow's alarm. Tested on the Nothing Phone with Google Clock through a debug-only adb trigger, because Phase 3 wasn't merged yet.
+
+**How it works** (all in `notify/`):
+- `AwakeNotifier` checks the alarm is still next, then posts the prompt (ID 2; the watching notification is 1). The alarm time goes in the notification extras. The prompt times out by itself at the alarm time. Tapping the body opens Dawnly; only the button dismisses.
+- `DismissAlarmActivity` is opened straight from the button with `PendingIntent.getActivity`. It's an activity, not a trampoline, so Android 12+ allows it to start the Clock app. It's translucent with no UI. It closes the prompt, asks `DismissGuard`, then calls `ClockApp.dismissNextAlarm()`. If the Clock app can't dismiss, it opens the Clock app and shows a toast. If the guard refuses, it shows a toast and sends nothing.
+- `DismissGuard` is a pure function with 6 unit tests. Ok only if the prompt's alarm is still next and still ahead; otherwise AlarmPassed, AlarmGone, or AlarmChanged.
+- `NotYetReceiver` just closes the prompt.
+- `WatchScheduler.reconcile()` calls `AwakeNotifier.cancelIfStale()` on every run, so the prompt goes as soon as the next alarm changes. It reads the alarm from the live notification's extras, so this still works after the process dies.
+
+**Decisions:**
+- **Silent heads-up channel** ("Up before your alarm", `IMPORTANCE_HIGH`, no sound or vibration). Heads-up so it's seen while the phone is in use; silent because the user is already awake. The channel is created when the first prompt is posted, so `DawnlyApp` wasn't touched.
+- **Debug trigger:** `app/src/debug/` holds `notify/DebugAwakeReceiver` and its manifest entry. It's exported but needs `android.permission.DUMP`, which adb's shell has and apps can't get. Release builds don't include it.
+
+- [x] Implement `AwakeNotifier.onUserAwake()`, tested before Phase 3 through the debug adb receiver.
+- [x] "Not yet" just closes the prompt.
+- [x] Gentle notification with **Dismiss alarm** and **Not yet**. The full question shows when expanded (BigTextStyle).
+- [x] Dismiss uses `PendingIntent.getActivity`, with no trampoline.
+- [x] Fallback: open the Clock app with a toast. Never dismisses silently.
+- [x] Wrong-alarm guard: checked before posting and again before dismissing. The prompt is cancelled when the next alarm changes.
+
+#### Device test results (Nothing Phone (2a), Google Clock, 2026-11-01)
+| Test | Result |
+|---|---|
+| Prompt appearance | ✅ Silent heads-up, 12-hour time, both buttons. Full question readable when expanded |
+| Stale prompt (prompt for 4:34 pm, real alarm 4:35 pm) → Dismiss alarm | ✅ Refused with "That alarm was already dismissed or changed…". No request sent; the alarm stayed on |
+| Not yet | ✅ Prompt closed, nothing else happened |
+| Alarm moved 4:35 → 4:40 pm with the prompt showing | ✅ Prompt removed 12 ms after `NEXT_ALARM_CLOCK_CHANGED` |
+| Dismiss alarm (4:40 pm, daily) | ✅ Guard Ok → Google Clock dismissed it. Only today's ring was skipped; the next alarm moved to tomorrow 4:40 pm |
+| Fallback (no app can dismiss) | Not tested on a device: Google Clock always handles it. Same `ClockApp` path as Phase 1's fallback |
+
+#### How to verify on a device
+1. Install a debug build. Allow notifications. Set a throwaway Clock alarm a couple of hours ahead (not one you rely on).
+2. Show the prompt: `adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app`. Add `--ez stale true` for a prompt about an alarm one minute earlier, to test the guard.
+3. Try **Not yet**, **Dismiss alarm**, and changing the alarm time while the prompt is showing.
+4. Logs: `adb logcat -s AwakeNotifier DismissAlarmActivity ClockApp WatchScheduler`.
+5. Once Phase 3 has merged, the real trigger is wake detection calling `onUserAwake()` during the window.
+
+**Merge note:** A also adds to `app/src/debug/AndroidManifest.xml`. Whoever merges second keeps both `<application>` entries.
 
 ### Phase 5 — UI polish (session C, branch `phase-5-ui`)
 - [x] Haze and Figtree approved (2026-11-01; both are in PLAN.md). Use Haze's latest stable release, and bundle Figtree in `res/font/` so the app stays offline.
