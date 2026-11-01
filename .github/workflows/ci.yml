@@ -1,0 +1,45 @@
+# Builds the app, runs the unit tests, and runs lint on every push and pull request.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes an older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same JDK major as Android Studio's bundled JBR, which builds the app locally.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+
+      # Caches Gradle and checks gradle-wrapper.jar against Gradle's known checksums.
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The runner's Android SDK has its licenses accepted, so AGP downloads the
+      # compileSdk platform by itself if it's missing.
+      - name: Test, build and lint
+        run: ./gradlew testDebugUnitTest assembleDebug lintDebug
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore
