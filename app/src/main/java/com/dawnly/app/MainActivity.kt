@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.dawnly.app.ui.HelloScreen
+import com.dawnly.app.ui.feasibility.FeasibilityScreen
 import com.dawnly.app.ui.theme.DawnlyTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DawnlyTheme {
-                HelloScreen()
+                FeasibilityScreen()
             }
         }
     }

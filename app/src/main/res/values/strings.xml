@@ -1,4 +1,27 @@
 <resources>
     <string name="app_name">Dawnly</string>
-    <string name="hello">Hello from Dawnly</string>
+
+    <!-- Phase 1 feasibility screen. Replaced by the real Home screen in Phase 5. -->
+    <string name="feasibility_title">Feasibility test</string>
+    <string name="next_alarm">Next alarm</string>
+    <string name="no_alarm">No alarm set</string>
+    <string name="no_alarm_hint">Set one in your Clock app. This screen updates by itself.</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="due_now">now</string>
+    <string name="in_minutes">in %1$d min</string>
+    <string name="in_hours_minutes">in %1$d h %2$d min</string>
+    <string name="day_and_countdown">%1$s · %2$s</string>
+    <string name="app_and_package">%1$s (%2$s)</string>
+    <string name="set_by">Set by</string>
+    <string name="unknown_app">Unknown app</string>
+    <string name="dismiss_goes_to">Dismiss goes to</string>
+    <string name="no_dismiss_handler">No app can dismiss alarms</string>
+    <string name="dismiss_next_alarm">Dismiss next alarm</string>
+    <string name="open_clock">Open Clock app</string>
+    <string name="result_requested">Asked %1$s to dismiss the %2$s alarm.</string>
+    <string name="result_alarm_changed">The next alarm has changed since then.</string>
+    <string name="result_alarm_unchanged">The next alarm hasn\'t changed yet.</string>
+    <string name="result_opened_clock">No app can dismiss alarms, so %1$s was opened instead. Dismiss the alarm there.</string>
+    <string name="result_no_clock">No Clock app found on this phone.</string>
 </resources>
