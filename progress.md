@@ -6,14 +6,46 @@
 >
 > **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 run **in parallel** in three coding sessions, one git worktree each. See "Parallel work" below.
 
-**Current phase:** Phase 2 done and committed. Phases 3, 4, and 5 run in parallel next (sessions A, B, C).
+**Current phase:** Phases 4 and 5 merged into `main` (2026-11-01). Next: a session B follow-up, then session A (Phase 3 + changes), then a new Phase 6 session. See "Handoff" below.
 **Last updated:** 2026-11-01
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
 
 ---
 
-## ▶ Next session: start here — Parallel work (Phases 3, 4, 5)
+## ▶ Handoff (2026-11-01, end of session C): the user's plan from here
+
+Session C is closed: Phase 5 and the app icon are merged and pushed. The user's order:
+
+1. **Session B** (`C:\Users\aryan\dev\Dawnly-notify`): Phase 4 follow-up changes, then merge.
+2. **Session A** (`C:\Users\aryan\dev\Dawnly-wake`): finish Phase 3 with the changes below, then merge.
+3. **A new Phase 6 session** (in `C:\Users\aryan\dev\Dawnly`, today or tomorrow): the portfolio finish.
+
+**Before anything else in B or A: `git rebase main`.** `main` has moved (Phase 4 + Phase 5). Phase 5's `ui/` files are no longer locked to session C. Edit them as needed, but build with the components in `ui/glass/`, use the colours in `ui/theme/`, and keep UI strings in `strings_ui.xml`. Phase 5's summary (further down) explains how the UI is built.
+
+### Session B: Phase 4 follow-up
+- **Optional auto-dismiss** (user approved): a Settings switch, **off by default**. When the user seems awake, post "Dismissing your 5:30 alarm in 1 minute" with **Not yet**, then dismiss. Starting the Clock app from the background is blocked on Android 10+, so this needs "Display over other apps" (`SYSTEM_ALERT_WINDOW`). Ask for it only when the switch is turned on, with a short reason. Keep `DismissGuard`'s wrong-alarm check.
+- **Hide Google Clock during a dismiss:** try `AlarmClock.EXTRA_SKIP_UI` on `ACTION_DISMISS_ALARM` (documented only for setting alarms, so it may be ignored), then bring Dawnly back or finish straight away. The user wants no Clock screen; a flicker may be the best possible. Applies to both the prompt and Home's "Dismiss alarm" (`ClockApp.dismissNextAlarm`).
+- Prompt copy: the user liked "Up already?" / "Looks like you're awake. Dismiss your 5:30 alarm?". Decide with them.
+- The prompt already plays the sound chosen in Settings (`AwakeNotifier.useSound`, one channel per sound). Keep that working.
+- Update PLAN.md section 4 ("Never dismiss silently" becomes "never without asking, unless the user turns on auto-dismiss").
+
+### Session A: Phase 3 with the user's changes
+- **Drop "Phone unlocked" as a sign** (user's finding: the phone can be unlocked while they sleep).
+- **Add:** movement (accelerometer or significant motion; no permission needed), music playing (`AudioManager.isMusicActive`; counts **only together with movement**, since people fall asleep to music), and active phone use through Usage access (`UsageStatsManager`, the closest safe stand-in for "touches"; an accessibility service was rejected). Keep steps and screen use.
+- Contract change: `WakeSignals` / `WakeSignalSettings` get the new fields and lose unlock. Update the users in the same branch: `ui/home/HomeUiState.kt` (+ its tests), `ui/settings/SettingsScreen.kt` (switch rows) and `Sensitivity.kt` (the `Sign` enum), the onboarding and Settings permission lists (`ui/permissions/AppPermission.kt`) for Usage access, and the debug screen.
+- Switch Home's "You're up early" hint (`HomeStatus.Watching.allSignsSeen`) to the real wake scorer, so Home and the prompt agree.
+- Update PLAN.md section 4 ("Awake means...") and section 7.
+- Phase 6 CI is also A's (already on `phase-3-wake`).
+
+### New Phase 6 session (after A merges)
+- README with screenshots, a demo GIF, and "Challenges I solved" (background limits, exact alarms, OEM differences, FGS types, the "Skipped" rule, channel sounds).
+- Pick Dawnly's house default sound (the user will choose; it's "Phone default" until then).
+- Remove the leftover feasibility strings from `res/values/strings.xml`. Lint lists them as unused.
+- Optional: the reboot test from Phase 2.
+- Remove the worktrees once all branches are merged: `git worktree remove ..\Dawnly-ui` (C is done, so it can go now), `..\Dawnly-notify`, `..\Dawnly-wake`.
+
+## Earlier: Parallel work (Phases 3, 4, 5)
 
 Phase 2 is committed and pushed. The shared "contract" files the three sessions build on are on `main` (see below). Each session has its own git worktree and branch, already created:
 
