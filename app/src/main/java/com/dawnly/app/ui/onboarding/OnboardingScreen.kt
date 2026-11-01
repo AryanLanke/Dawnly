@@ -257,6 +257,10 @@ private val AppPermission.copy: StepCopy
             GlassIcons.Steps, R.string.perm_activity, R.string.perm_activity_why,
             R.string.onboarding_activity_title, R.string.onboarding_activity_lead, R.string.onboarding_allow_activity,
         )
+        AppPermission.UsageAccess -> StepCopy(
+            GlassIcons.Phone, R.string.perm_usage, R.string.perm_usage_why,
+            R.string.onboarding_usage_title, R.string.onboarding_usage_lead, R.string.onboarding_allow_usage,
+        )
         AppPermission.Battery -> StepCopy(
             GlassIcons.Battery, R.string.perm_battery, R.string.perm_battery_why,
             R.string.onboarding_battery_title, R.string.onboarding_battery_lead, R.string.onboarding_allow_battery,

@@ -64,6 +64,7 @@ import com.dawnly.app.ui.permissions.PermissionsController
 import com.dawnly.app.ui.permissions.rememberPermissionsController
 import com.dawnly.app.ui.settings.SettingsScreen
 import com.dawnly.app.ui.settings.SettingsViewModel
+import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
 import dev.chrisbanes.haze.rememberHazeState
@@ -118,7 +119,8 @@ private fun Onboarding(main: MainViewModel, permissions: PermissionsController, 
         oemBattery = oemBattery,
         onAllow = { permission, onDone ->
             permissions.request(permission) { granted ->
-                if (permission == AppPermission.ActivityRecognition && granted) main.useSteps()
+                if (granted && permission == AppPermission.ActivityRecognition) main.useSign(Sign.Steps)
+                if (granted && permission == AppPermission.UsageAccess) main.useSign(Sign.PhoneUse)
                 onDone()
             }
         },

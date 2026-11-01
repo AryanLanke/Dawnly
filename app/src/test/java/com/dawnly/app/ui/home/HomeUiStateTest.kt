@@ -14,7 +14,7 @@ class HomeUiStateTest {
     private val alarm = Instant.parse("2026-11-02T05:30:00Z")
     private val windowStart = alarm.minus(Duration.ofHours(1))
     private val watching = WatchState.Watching(alarm, windowStart)
-    private val allSigns = WakeSignalSettings(useUnlock = true, useScreenTime = true, useSteps = true)
+    private val allSigns = WakeSignalSettings(usePhoneUse = true, useSteps = true)
 
     @Test
     fun `no alarm shows no signals`() {
@@ -28,7 +28,7 @@ class HomeUiStateTest {
         val state = HomeUiState.from(
             WatchState.Waiting(alarm, windowStart),
             null,
-            WakeSignalSettings(useUnlock = false, useScreenTime = true, useSteps = true, stepsGoal = 80),
+            WakeSignalSettings(useSteps = true, stepsGoal = 80, useMovement = false, useMusic = false),
             windowStart.minusSeconds(60),
         )
         assertEquals(
@@ -52,34 +52,49 @@ class HomeUiStateTest {
     @Test
     fun `watching before the service publishes counts nothing as seen`() {
         val state = HomeUiState.from(watching, null, allSigns, windowStart)
-        assertEquals(listOf(0, 0, 0), state.signals.map { it.current })
-        assertFalse((state.status as HomeStatus.Watching).allSignsSeen)
+        assertEquals(listOf(0, 0, 0, 0, 0), state.signals.map { it.current })
+        assertFalse((state.status as HomeStatus.Watching).awake)
     }
 
     @Test
-    fun `screen time counts whole minutes against the goal`() {
-        val live = WakeSignals(unlocked = true, screenOnTime = Duration.ofSeconds(4 * 60 + 59), steps = 42)
+    fun `rows count whole minutes and counts against the goal`() {
+        val live = WakeSignals(
+            screenOnTime = Duration.ofSeconds(4 * 60 + 59),
+            appsOpened = 3,
+            steps = 42,
+            movingTime = Duration.ofSeconds(70),
+            musicTime = Duration.ofSeconds(59),
+        )
         val rows = HomeUiState.from(watching, live, allSigns, windowStart).signals
-        assertEquals(SignalRow(SignalKind.Unlock, 1, 1), rows[0])
-        assertEquals(SignalRow(SignalKind.ScreenTime, 4, 5), rows[1])
-        assertEquals(SignalRow(SignalKind.Steps, 42, 50), rows[2])
-        assertEquals(listOf(true, false, false), rows.map { it.met })
+        assertEquals(
+            listOf(
+                SignalRow(SignalKind.ScreenTime, 4, 5),
+                SignalRow(SignalKind.PhoneUse, 3, 3),
+                SignalRow(SignalKind.Steps, 42, 50),
+                SignalRow(SignalKind.Movement, 1, 2),
+                SignalRow(SignalKind.Music, 0, 1),
+            ),
+            rows,
+        )
+        assertEquals(listOf(false, true, false, false, false), rows.map { it.met })
     }
 
     @Test
-    fun `all signs seen only when every sign that is on has met its goal`() {
-        val live = WakeSignals(unlocked = true, screenOnTime = Duration.ofMinutes(5), steps = 10)
-        val withSteps = HomeUiState.from(watching, live, allSigns, windowStart).status as HomeStatus.Watching
-        assertFalse(withSteps.allSignsSeen)
+    fun `awake follows the wake score, so Home and the prompt agree`() {
+        // No single sign has met its goal, but 3 of 5 minutes and 20 of 50 steps add up to awake.
+        val settings = WakeSignalSettings(useSteps = true, useMovement = false, useMusic = false)
+        val live = WakeSignals(screenOnTime = Duration.ofMinutes(3), steps = 20)
+        val state = HomeUiState.from(watching, live, settings, windowStart)
+        assertFalse(state.signals.any { it.met })
+        assertTrue((state.status as HomeStatus.Watching).awake)
 
-        val withoutSteps = HomeUiState.from(watching, live, allSigns.copy(useSteps = false), windowStart)
-            .status as HomeStatus.Watching
-        assertTrue(withoutSteps.allSignsSeen)
+        val less = HomeUiState.from(watching, live.copy(steps = 10), settings, windowStart)
+        assertFalse((less.status as HomeStatus.Watching).awake)
     }
 
     @Test
     fun `skipped alarms show no signals`() {
-        val state = HomeUiState.from(WatchState.Skipped(alarm), WakeSignals(unlocked = true), allSigns, windowStart)
+        val state = HomeUiState.from(WatchState.Skipped(alarm), WakeSignals(steps = 80), allSigns, windowStart)
         assertEquals(HomeStatus.Skipped(alarm), state.status)
         assertTrue(state.signals.isEmpty())
     }

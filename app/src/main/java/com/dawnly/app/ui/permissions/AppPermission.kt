@@ -11,6 +11,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.dawnly.app.service.WakeWatcher
 
 /** The permissions Dawnly asks for, in onboarding order. */
 enum class AppPermission {
@@ -22,6 +23,9 @@ enum class AppPermission {
 
     /** The steps signal (Android 10+). */
     ActivityRecognition,
+
+    /** "Usage access", for the apps-opened signal: which app is in front, during the window only. */
+    UsageAccess,
 
     /** Unrestricted battery, so the phone doesn't stop the watch service. */
     Battery,
@@ -43,7 +47,7 @@ enum class AppPermission {
             Notifications -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             ExactAlarms -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ActivityRecognition -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-            Battery, Overlay -> true
+            UsageAccess, Battery, Overlay -> true
         }
 
     /** The runtime permission behind a system dialog, or null when it's granted in system settings. */
@@ -52,7 +56,7 @@ enum class AppPermission {
         get() = when (this) {
             Notifications -> if (isApplicable) Manifest.permission.POST_NOTIFICATIONS else null
             ActivityRecognition -> if (isApplicable) Manifest.permission.ACTIVITY_RECOGNITION else null
-            ExactAlarms, Battery, Overlay -> null
+            ExactAlarms, UsageAccess, Battery, Overlay -> null
         }
 
     fun isGranted(context: Context): Boolean {
@@ -66,13 +70,14 @@ enum class AppPermission {
             Battery -> context.getSystemService(PowerManager::class.java)
                 .isIgnoringBatteryOptimizations(context.packageName)
             Overlay -> Settings.canDrawOverlays(context)
+            UsageAccess -> WakeWatcher.hasUsageAccess(context)
             Notifications, ActivityRecognition -> true
         }
     }
 
     /**
-     * Where to send the user to grant this in system settings: the only way for exact alarms and
-     * battery, and the fallback once a runtime permission has been denied for good.
+     * Where to send the user to grant this in system settings: the only way for exact alarms,
+     * usage access, battery and overlays, and the fallback once a runtime permission has been denied for good.
      */
     fun settingsIntent(context: Context): Intent {
         val packageUri = "package:${context.packageName}".toUri()
@@ -88,6 +93,8 @@ enum class AppPermission {
             Battery -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri)
             ActivityRecognition -> appDetails(packageUri)
             Overlay -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri)
+            // The list of apps; a package Uri isn't honoured on every phone.
+            UsageAccess -> Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         }
     }
 

@@ -23,7 +23,7 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
 - **Platform:** Android only. No iPhone version.
 - **Alarms:** stay in the user's default Clock app. Our app only reads the next alarm and requests a dismiss.
 - **Dismiss style:** one tap on a gentle notification. Never dismiss without asking, unless the user turns on **Dismiss automatically** in Settings (off by default, user's decision 2026-11-01). Then Dawnly first shows "Dismissing your 5:30 alarm in 1 minute" with **Not yet**; swiping it away also stops it. If the warning can't be shown or can't finish before the alarm, Dawnly asks instead.
-- **"Awake" means a mix of signals:** phone unlocked + used for a few minutes + some steps walked. Combine them into a simple score; don't trigger on a quick 3 AM time check.
+- **"Awake" means a mix of signals** (user's changes, 2026-11-01): minutes of screen use, apps opened (Usage access), steps walked, the phone moving, and music playing. Each sign's progress toward its goal adds up, and the user counts as awake at 1: any one sign at its goal, or a mix (3 of 5 minutes on screen plus 20 of 50 steps). Music never counts alone, because people fall asleep to music: it adds at most as much as movement has. "Phone unlocked" was dropped: the phone can be unlocked while the user sleeps. A quick 3 AM time check adds only a sliver.
 - **Watch window:** chosen by the user in settings.
 - **Works fully offline.** No server, no login, no API calls.
 - **Battery-friendly:** only run during the watch window, never all night.
@@ -51,7 +51,7 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
   1. **Onboarding & permissions:** friendly step-by-step explanation of each permission and why it's needed.
   2. **Home:** big glass card showing the next alarm time, watch window status (waiting / watching / you're awake), and the progress ring.
   3. **Settings:** watch window length, which wake signals to use, sensitivity, appearance (Light / Dark / System).
-  4. **Debug screen** (hidden or dev-only): shows live signal values (unlocked? minutes of use? steps?) so I can test detection.
+  4. **Debug screen** (hidden or dev-only): shows live signal values (minutes of use, apps opened, steps, movement, music) so I can test detection.
 - **Approved mockups:** see Appendix A (saved as `design/mockups.html`). Match these screens closely in Compose, in both light and dark mode.
 
 ### Design system (from the mockups)
@@ -73,9 +73,11 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
 - **Start the watch window:** schedule an exact alarm at (alarm time − window). Handle the `SCHEDULE_EXACT_ALARM` permission and fall back gracefully if it's denied.
 - **During the window:** run a foreground service with an ongoing low-priority notification. Choose the correct `foregroundServiceType` for Android 14+ and explain the choice to me.
 - **Wake signals:**
-  - Unlock: register `ACTION_USER_PRESENT` dynamically inside the service (it can't be registered in the manifest).
-  - Screen use: track `ACTION_SCREEN_ON` / `ACTION_SCREEN_OFF` to measure minutes of use.
+  - Screen use: minutes from unlocking (`ACTION_USER_PRESENT`, registered dynamically inside the service because it can't be in the manifest) until `ACTION_SCREEN_OFF`. Lighting up the lock screen doesn't count.
+  - Apps opened: `UsageStatsManager` events (Usage access, granted in system settings), counting each switch to a different app, not the home screen or Dawnly. It's the closest safe stand-in for touches; seeing touches in other apps would need an accessibility service, which was rejected.
   - Steps: `Sensor.TYPE_STEP_COUNTER` (needs the `ACTIVITY_RECOGNITION` permission).
+  - Movement: the accelerometer at its slowest standard rate, batched; no permission needed. Counts the seconds in which the acceleration strays from gravity.
+  - Music: `AudioManager.isMusicActive`, checked every few seconds. Counts only together with movement.
   - Put the scoring in a pure Kotlin class so it's easy to unit test.
 - **Dismiss:** notification action uses `PendingIntent.getActivity` that launches `AlarmClock.ACTION_DISMISS_ALARM` with search mode "next alarm". Requires `com.android.alarm.permission.SET_ALARM`. Use an activity PendingIntent directly because Android 12+ blocks starting activities from notification trampolines.
 - **Fallback:** if the Clock app doesn't support dismissing, open the Clock app instead and tell the user.
@@ -96,7 +98,7 @@ A screen with two things: the next alarm time read from the Clock app, and a "Di
 Settings for window length, scheduling the window start, and the foreground service starting and stopping correctly.
 
 **Phase 3 — Wake detection**
-Unlock, screen-time, and step signals, plus the scoring logic with unit tests and the debug screen.
+Screen use, apps opened, steps, movement, and music signals, plus the scoring logic with unit tests and the debug screen.
 
 **Phase 4 — Notification & dismiss**
 The gentle notification with the one-tap dismiss and the fallback.

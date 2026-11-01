@@ -69,7 +69,7 @@ fun SettingsScreen(
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val latest by rememberUpdatedState(state)
-    var stepsDenied by remember { mutableStateOf(false) }
+    var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = pickingSound) { pickingSound = false }
     val preview = rememberSoundPreview()
@@ -102,14 +102,16 @@ fun SettingsScreen(
                 state = state,
                 permissions = permissions,
                 oemBattery = oemBattery,
-                stepsDenied = stepsDenied,
+                deniedSign = deniedSign,
                 onWindowChange = viewModel::setWindow,
                 onSignalsChange = viewModel::setSignals,
-                onStepsOn = {
-                    // Steps need Physical activity. Turn the sign on only once it's allowed.
-                    onRequestPermission(AppPermission.ActivityRecognition) { granted ->
-                        stepsDenied = !granted
-                        if (granted) viewModel.setSignals(latest.signals.copy(useSteps = true))
+                onSignNeedsPermission = { sign ->
+                    // Steps need Physical activity, apps opened Usage access. Turn the sign on only
+                    // once it's allowed.
+                    val permission = if (sign == Sign.Steps) AppPermission.ActivityRecognition else AppPermission.UsageAccess
+                    onRequestPermission(permission) { granted ->
+                        deniedSign = sign.takeUnless { granted }
+                        if (granted) latest.signals.withSign(sign, true)?.let(viewModel::setSignals)
                     }
                 },
                 onAppearanceChange = viewModel::setAppearance,
@@ -133,10 +135,10 @@ private fun SettingsContent(
     state: SettingsUiState,
     permissions: PermissionState,
     oemBattery: OemBattery?,
-    stepsDenied: Boolean,
+    deniedSign: Sign?,
     onWindowChange: (Duration) -> Unit,
     onSignalsChange: (WakeSignalSettings) -> Unit,
-    onStepsOn: () -> Unit,
+    onSignNeedsPermission: (Sign) -> Unit,
     onAppearanceChange: (Appearance) -> Unit,
     onAutoDismissChange: (Boolean) -> Unit,
     onAllowOverlay: () -> Unit,
@@ -159,7 +161,7 @@ private fun SettingsContent(
         )
         SpringIn(order = 0) { WindowSection(state.window, onWindowChange) }
         Gap()
-        SpringIn(order = 1) { SignalsSection(state.signals, stepsDenied, onSignalsChange, onStepsOn) }
+        SpringIn(order = 1) { SignalsSection(state.signals, deniedSign, onSignalsChange, onSignNeedsPermission) }
         Gap()
         SpringIn(order = 2) {
             Column {
@@ -245,9 +247,9 @@ private fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
 @Composable
 private fun SignalsSection(
     signals: WakeSignalSettings,
-    stepsDenied: Boolean,
+    deniedSign: Sign?,
     onChange: (WakeSignalSettings) -> Unit,
-    onStepsOn: () -> Unit,
+    onNeedsPermission: (Sign) -> Unit,
 ) {
     var lastOneRefused by remember { mutableStateOf(false) }
     fun toggle(sign: Sign, on: Boolean) {
@@ -258,28 +260,18 @@ private fun SignalsSection(
     Column {
         SectionLabel(stringResource(R.string.settings_signals_label))
         GlassList {
-            GlassRow(title = stringResource(R.string.settings_unlock)) {
-                GlassSwitch(signals.useUnlock, { toggle(Sign.Unlock, it) })
-            }
-            GlassRow(
-                title = stringResource(R.string.settings_screen),
-                subtitle = signals.screenTimeGoal.toMinutes().toInt()
-                    .let { pluralStringResource(R.plurals.settings_screen_goal, it, it) },
-                divider = true,
-            ) {
-                GlassSwitch(signals.useScreenTime, { toggle(Sign.ScreenTime, it) })
-            }
-            GlassRow(
-                title = stringResource(R.string.settings_steps),
-                subtitle = pluralStringResource(R.plurals.settings_steps_goal, signals.stepsGoal, signals.stepsGoal),
-                divider = true,
-            ) {
-                GlassSwitch(signals.useSteps, { on -> if (on) onStepsOn() else toggle(Sign.Steps, false) })
+            Sign.entries.forEachIndexed { index, sign ->
+                GlassRow(title = stringResource(sign.title), subtitle = sign.subtitle(signals), divider = index > 0) {
+                    GlassSwitch(signals.uses(sign), { on ->
+                        if (on && sign.needsPermission) onNeedsPermission(sign) else toggle(sign, on)
+                    })
+                }
             }
         }
         val hint = when {
             lastOneRefused -> stringResource(R.string.settings_signals_min)
-            stepsDenied && !signals.useSteps -> stringResource(R.string.settings_steps_denied)
+            deniedSign == Sign.Steps && !signals.useSteps -> stringResource(R.string.settings_steps_denied)
+            deniedSign == Sign.PhoneUse && !signals.usePhoneUse -> stringResource(R.string.settings_apps_denied)
             else -> null
         }
         AnimatedVisibility(visible = hint != null) {
@@ -291,6 +283,37 @@ private fun SignalsSection(
             )
         }
     }
+}
+
+private fun WakeSignalSettings.uses(sign: Sign) = when (sign) {
+    Sign.ScreenTime -> useScreenTime
+    Sign.PhoneUse -> usePhoneUse
+    Sign.Steps -> useSteps
+    Sign.Movement -> useMovement
+    Sign.Music -> useMusic
+}
+
+/** Steps and apps opened turn on only once their permission is allowed. */
+private val Sign.needsPermission get() = this == Sign.Steps || this == Sign.PhoneUse
+
+private val Sign.title
+    get() = when (this) {
+        Sign.ScreenTime -> R.string.settings_screen
+        Sign.PhoneUse -> R.string.settings_apps
+        Sign.Steps -> R.string.settings_steps
+        Sign.Movement -> R.string.settings_movement
+        Sign.Music -> R.string.settings_music
+    }
+
+@Composable
+private fun Sign.subtitle(signals: WakeSignalSettings): String = when (this) {
+    Sign.ScreenTime -> signals.screenTimeGoal.toMinutes().toInt()
+        .let { pluralStringResource(R.plurals.settings_screen_goal, it, it) }
+    Sign.PhoneUse -> pluralStringResource(R.plurals.settings_apps_goal, signals.appsOpenedGoal, signals.appsOpenedGoal)
+    Sign.Steps -> pluralStringResource(R.plurals.settings_steps_goal, signals.stepsGoal, signals.stepsGoal)
+    Sign.Movement -> signals.movementGoal.toMinutes().toInt()
+        .let { pluralStringResource(R.plurals.settings_movement_goal, it, it) }
+    Sign.Music -> stringResource(R.string.settings_music_detail)
 }
 
 /**
@@ -395,6 +418,7 @@ internal val AppPermission.label
         AppPermission.Notifications -> R.string.perm_notifications
         AppPermission.ExactAlarms -> R.string.perm_exact_alarms
         AppPermission.ActivityRecognition -> R.string.perm_activity
+        AppPermission.UsageAccess -> R.string.perm_usage
         AppPermission.Battery -> R.string.perm_battery
         AppPermission.Overlay -> R.string.perm_overlay
     }
@@ -406,10 +430,10 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             state = SettingsUiState(window, WakeSignalSettings(), Appearance.System, AlertSound.Flute),
             permissions = PermissionState(setOf(AppPermission.Notifications, AppPermission.ActivityRecognition)),
             oemBattery = oem,
-            stepsDenied = false,
+            deniedSign = null,
             onWindowChange = {},
             onSignalsChange = {},
-            onStepsOn = {},
+            onSignNeedsPermission = {},
             onAppearanceChange = {},
             onAutoDismissChange = {},
             onAllowOverlay = {},

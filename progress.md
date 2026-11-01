@@ -263,16 +263,37 @@ Dawnly starts a quiet foreground service when the watch window opens, and stops 
 4. Either let the alarm ring (the notification goes away at the alarm time), or tap **Dismiss next alarm** in Dawnly (it goes away at once).
 5. Logs: `adb logcat -s WatchScheduler SystemEventsReceiver ClockApp`. Service: `adb shell dumpsys activity services com.dawnly.app`.
 
-### Phase 3 — Wake detection (session A, branch `phase-3-wake`)
-- [ ] Unlock: register `ACTION_USER_PRESENT` dynamically inside the service.
-- [ ] Screen use: count minutes between `ACTION_SCREEN_ON` and `ACTION_SCREEN_OFF`.
-- [ ] Steps: `Sensor.TYPE_STEP_COUNTER`, which needs the `ACTIVITY_RECOGNITION` permission.
-- [ ] Pure-Kotlin scoring class in `domain/wake/` with unit tests (JUnit is already set up). A quick 3 AM time check must not trigger it. Use `WakeSignalSettings` for which signals count and their goals.
-- [ ] Publish live readings to `WatchSession`, and call `AwakeNotifier.onUserAwake()` at most once per window.
-- [ ] Revisit the FGS type now that steps need `ACTIVITY_RECOGNITION` (Phase 2 chose `specialUse`). Explain any change to the user.
-- [ ] Debug-only screen showing live signal values: `ui/debug/DebugScreen.kt`, opened by a debug-only `DebugActivity` with its own launcher icon.
-- [ ] Phase 6 CI (also session A): GitHub Actions workflow that runs `testDebugUnitTest assembleDebug lintDebug` on push and PR.
-- [ ] Leave a clean hook for the future "Still awake?" nudge. It's not in v1.
+### Phase 3 — Wake detection ✅ Code done (session A's branch `phase-3-wake`, finished in the Phase 6 session, 2026-11-01). Device test pending
+
+#### Summary
+While the watch window is open, `WatchService` runs a `WakeWatcher`. It feeds phone events into the pure `WakeTracker`, publishes the readings to `WatchSession` (Home and the debug screen), and calls `AwakeNotifier.onUserAwake()` once `WakeScore` says the user is up. That happens at most once per window, even across a process restart, because progress is saved in `WakeProgressStore`.
+
+**The signs** (the user's changes from the Phase 5 test applied):
+| Sign | Source | Goal (Low / Medium / High) | Default |
+|---|---|---|---|
+| Screen use | `USER_PRESENT` / `SCREEN_ON` without a lock screen, until `SCREEN_OFF` | 10 / 5 / 3 min | On |
+| Apps opened | `UsageStatsManager` resume events; launchers, system UI and Dawnly don't count | 5 / 3 / 2 apps | Off until Usage access is allowed |
+| Steps | `TYPE_STEP_COUNTER` (wake-up variant if the phone has one) | 100 / 50 / 30 | Off until Physical activity is allowed |
+| Movement | Accelerometer, ~5 samples a second, batched 10 s. A second counts when the acceleration strays more than 0.6 m/s² from gravity | 3 / 2 / 1 min | On |
+| Music playing | `AudioManager.isMusicActive` every 5 s | 1 min, capped by movement | On |
+
+**Scoring (`WakeScore`):** each counted sign's progress (0 to 1) adds up; awake at 1. Music adds at most as much as movement, so it never counts alone. "Phone unlocked" is gone (it still starts the screen-use clock). Home's "You're up early" now uses the same scorer, so Home and the prompt agree.
+
+**Decisions:**
+- **Scoring changed from "every sign must reach its goal" to "progress adds up to 1".** With five signs, requiring all of them would mean nobody counts as awake without music playing. With adding up, any one sign at its goal is enough, and a mix works too.
+- **FGS type stays `specialUse`.** The step counter and accelerometer work under any foreground service type, and `health` would need Physical activity granted before every start.
+- **Apps opened** counts switches to a different app, so screens inside one app don't count, but going back to an app from the home screen does. Usage access is a new onboarding step (`AppPermission.UsageAccess`); allowing it turns the sign on.
+- The old `use_unlock` setting is removed on the next settings write.
+- 62 unit tests in total (`WakeScoreTest` 10, `WakeTrackerTest` 15, plus the updated Home and Sensitivity tests).
+
+- [x] Screen use, apps opened, steps, movement, music.
+- [x] Pure-Kotlin scoring and tracking in `domain/wake/` with unit tests. A quick 3 AM time check doesn't trigger it.
+- [x] Publish live readings to `WatchSession`, and call `AwakeNotifier.onUserAwake()` at most once per window.
+- [x] FGS type revisited: stays `specialUse` (see above).
+- [x] Debug-only screen with live values (`ui/debug/DebugScreen.kt`), opened by the "Dawnly debug" launcher icon. It can switch signs and change goals for quick tests.
+- [x] Phase 6 CI: `.github/workflows/ci.yml` runs `testDebugUnitTest assembleDebug lintDebug` on push and PR.
+- [x] Clean hook for the future "Still awake?" nudge (`WakeWatcher.onAwake`).
+- [ ] Device test (see the Phase 6 section).
 
 ### Phase 4 — Notification & dismiss ✅ Done (2026-11-01, session B, branch `phase-4-notify`)
 

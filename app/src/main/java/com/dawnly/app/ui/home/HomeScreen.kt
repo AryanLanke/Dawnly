@@ -140,7 +140,7 @@ private fun HomeContent(
         }
         if (status is HomeStatus.Watching) {
             SpringIn(order) {
-                if (status.allSignsSeen) {
+                if (status.awake) {
                     PrimaryButton(stringResource(R.string.dismiss_alarm), onDismissAlarm)
                 } else {
                     GlassButton(stringResource(R.string.dismiss_alarm), onDismissAlarm)
@@ -180,7 +180,7 @@ private fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Mod
             val subtitle = when (status) {
                 is HomeStatus.Waiting -> stringResource(R.string.home_waiting, formatTime(status.startsAt))
                 is HomeStatus.Watching ->
-                    if (status.allSignsSeen) stringResource(R.string.home_awake)
+                    if (status.awake) stringResource(R.string.home_awake)
                     else stringResource(R.string.home_watching, formatTime(status.startedAt))
                 else -> stringResource(R.string.home_skipped)
             }
@@ -235,9 +235,11 @@ private fun SignalCard(rows: List<SignalRow>) {
 @Composable
 private fun signalTitle(kind: SignalKind) = stringResource(
     when (kind) {
-        SignalKind.Unlock -> R.string.home_signal_unlock
         SignalKind.ScreenTime -> R.string.home_signal_screen
+        SignalKind.PhoneUse -> R.string.home_signal_apps
         SignalKind.Steps -> R.string.home_signal_steps
+        SignalKind.Movement -> R.string.home_signal_movement
+        SignalKind.Music -> R.string.home_signal_music
     },
 )
 
@@ -245,13 +247,17 @@ private fun signalTitle(kind: SignalKind) = stringResource(
 private fun signalValue(row: SignalRow): String {
     val current = row.current
     return when (row.kind) {
-        SignalKind.Unlock -> if (current == null) "" else stringResource(R.string.home_signal_not_yet)
-        SignalKind.ScreenTime ->
+        SignalKind.ScreenTime, SignalKind.Movement ->
             if (current == null) stringResource(R.string.home_signal_minutes_goal, row.goal)
             else stringResource(R.string.home_signal_minutes_of, current, row.goal)
+        SignalKind.PhoneUse ->
+            if (current == null) pluralStringResource(R.plurals.home_signal_apps_goal, row.goal, row.goal)
+            else stringResource(R.string.home_signal_count_of, current, row.goal)
         SignalKind.Steps ->
             if (current == null) pluralStringResource(R.plurals.home_signal_steps_goal, row.goal, row.goal)
-            else stringResource(R.string.home_signal_steps_of, current, row.goal)
+            else stringResource(R.string.home_signal_count_of, current, row.goal)
+        // Music only adds to movement, so before the window there's no goal to show.
+        SignalKind.Music -> if (current == null) "" else stringResource(R.string.home_signal_not_yet)
     }
 }
 
@@ -297,7 +303,7 @@ private fun describe(result: DismissResult) = when (result) {
 
 private val PreviewNow: Instant = Instant.parse("2026-11-02T04:58:00Z")
 private val PreviewAlarm: Instant = PreviewNow.plus(Duration.ofMinutes(32))
-private val PreviewSettings = WakeSignalSettings(useSteps = true)
+private val PreviewSettings = WakeSignalSettings(useSteps = true, useMusic = false)
 private val PreviewPadding = PaddingValues(top = 40.dp, bottom = 100.dp)
 
 private fun watching(live: WakeSignals) = HomeUiState.from(
@@ -326,17 +332,17 @@ private fun HomePreview(state: HomeUiState, dark: Boolean, permissions: Permissi
 @Preview(name = "Watching, light", showSystemUi = true)
 @Composable
 private fun WatchingLightPreview() =
-    HomePreview(watching(WakeSignals(true, Duration.ofMinutes(3), 42)), dark = false)
+    HomePreview(watching(WakeSignals(screenOnTime = Duration.ofMinutes(2), steps = 12, movingTime = Duration.ofSeconds(20))), dark = false)
 
 @Preview(name = "Watching, dark", showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun WatchingDarkPreview() =
-    HomePreview(watching(WakeSignals(true, Duration.ofMinutes(3), 42)), dark = true)
+    HomePreview(watching(WakeSignals(screenOnTime = Duration.ofMinutes(2), steps = 12, movingTime = Duration.ofSeconds(20))), dark = true)
 
 @Preview(name = "Awake", showSystemUi = true)
 @Composable
 private fun AwakePreview() =
-    HomePreview(watching(WakeSignals(true, Duration.ofMinutes(6), 64)), dark = false)
+    HomePreview(watching(WakeSignals(screenOnTime = Duration.ofMinutes(6), steps = 64, movingTime = Duration.ofMinutes(2))), dark = false)
 
 @Preview(name = "Waiting, exact alarms off", showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -360,7 +366,7 @@ private fun NoAlarmPreview() = HomePreview(HomeUiState(HomeStatus.NoAlarm), dark
 private fun OpenedClockPreview() {
     PreviewFrame(dark = false) {
         HomeContent(
-            state = watching(WakeSignals(true, Duration.ofMinutes(6), 64)),
+            state = watching(WakeSignals(screenOnTime = Duration.ofMinutes(6), steps = 64, movingTime = Duration.ofMinutes(2))),
             permissions = PermissionState.AllGranted,
             dismissResult = DismissResult.OpenedClock(AppRef("com.example.clock", "Clock")),
             onDismissAlarm = {},

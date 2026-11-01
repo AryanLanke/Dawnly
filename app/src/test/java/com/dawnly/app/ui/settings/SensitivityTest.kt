@@ -15,12 +15,14 @@ class SensitivityTest {
     }
 
     @Test
-    fun `applying a level sets both goals and keeps the switches`() {
-        val settings = WakeSignalSettings(useUnlock = false, useSteps = true)
+    fun `applying a level sets every goal and keeps the switches`() {
+        val settings = WakeSignalSettings(useMusic = false, useSteps = true)
         val high = Sensitivity.High.applyTo(settings)
         assertEquals(Duration.ofMinutes(3), high.screenTimeGoal)
+        assertEquals(2, high.appsOpenedGoal)
         assertEquals(30, high.stepsGoal)
-        assertFalse(high.useUnlock)
+        assertEquals(Duration.ofMinutes(1), high.movementGoal)
+        assertFalse(high.useMusic)
         assertTrue(high.useSteps)
         assertEquals(Sensitivity.High, Sensitivity.of(high))
     }
@@ -32,12 +34,16 @@ class SensitivityTest {
 
     @Test
     fun `the last sign can't be turned off`() {
-        val onlyUnlock = WakeSignalSettings(useUnlock = true, useScreenTime = false, useSteps = false)
-        assertNull(onlyUnlock.withSign(Sign.Unlock, false))
-        assertEquals(
-            onlyUnlock.copy(useSteps = true),
-            onlyUnlock.withSign(Sign.Steps, true),
-        )
+        val onlySteps = WakeSignalSettings(useScreenTime = false, useSteps = true, useMovement = false, useMusic = false)
+        assertNull(onlySteps.withSign(Sign.Steps, false))
+        assertEquals(onlySteps.copy(useMovement = true), onlySteps.withSign(Sign.Movement, true))
+    }
+
+    @Test
+    fun `music alone isn't enough to keep`() {
+        val movementAndMusic = WakeSignalSettings(useScreenTime = false, useMovement = true, useMusic = true)
+        assertNull(movementAndMusic.withSign(Sign.Movement, false))
+        assertEquals(movementAndMusic.copy(useMusic = false), movementAndMusic.withSign(Sign.Music, false))
     }
 
     @Test

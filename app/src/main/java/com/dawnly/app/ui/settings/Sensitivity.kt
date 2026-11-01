@@ -4,34 +4,47 @@ import com.dawnly.app.domain.wake.WakeSignalSettings
 import java.time.Duration
 
 /**
- * How much screen use and walking count as "awake". One choice instead of two goal pickers.
+ * How much of each sign counts as "awake". One choice instead of a goal picker per sign.
  * Medium matches the defaults in [WakeSignalSettings].
  */
-enum class Sensitivity(val screenTimeGoal: Duration, val stepsGoal: Int) {
-    Low(Duration.ofMinutes(10), 100),
-    Medium(Duration.ofMinutes(5), 50),
-    High(Duration.ofMinutes(3), 30),
+enum class Sensitivity(
+    val screenTimeGoal: Duration,
+    val appsOpenedGoal: Int,
+    val stepsGoal: Int,
+    val movementGoal: Duration,
+) {
+    Low(Duration.ofMinutes(10), 5, 100, Duration.ofMinutes(3)),
+    Medium(Duration.ofMinutes(5), 3, 50, Duration.ofMinutes(2)),
+    High(Duration.ofMinutes(3), 2, 30, Duration.ofMinutes(1)),
     ;
 
-    fun applyTo(settings: WakeSignalSettings) =
-        settings.copy(screenTimeGoal = screenTimeGoal, stepsGoal = stepsGoal)
+    fun applyTo(settings: WakeSignalSettings) = settings.copy(
+        screenTimeGoal = screenTimeGoal,
+        appsOpenedGoal = appsOpenedGoal,
+        stepsGoal = stepsGoal,
+        movementGoal = movementGoal,
+    )
 
     companion object {
         /** The level matching [settings]' goals, or null if they were set some other way. */
-        fun of(settings: WakeSignalSettings): Sensitivity? = entries.firstOrNull {
-            it.screenTimeGoal == settings.screenTimeGoal && it.stepsGoal == settings.stepsGoal
-        }
+        fun of(settings: WakeSignalSettings): Sensitivity? = entries.firstOrNull { it.applyTo(settings) == settings }
     }
 }
 
-/** Turning a sign off is refused when it's the last one on: with none, Dawnly could never notice. */
+/**
+ * Turning a sign off is refused when nothing that counts on its own would be left: with no signs,
+ * or only music (which only adds to movement), Dawnly could never notice.
+ */
 fun WakeSignalSettings.withSign(sign: Sign, on: Boolean): WakeSignalSettings? {
     val updated = when (sign) {
-        Sign.Unlock -> copy(useUnlock = on)
         Sign.ScreenTime -> copy(useScreenTime = on)
+        Sign.PhoneUse -> copy(usePhoneUse = on)
         Sign.Steps -> copy(useSteps = on)
+        Sign.Movement -> copy(useMovement = on)
+        Sign.Music -> copy(useMusic = on)
     }
-    return updated.takeIf { it.useUnlock || it.useScreenTime || it.useSteps }
+    return updated.takeIf { it.canNotice }
 }
 
-enum class Sign { Unlock, ScreenTime, Steps }
+/** The signs in Settings order. */
+enum class Sign { ScreenTime, PhoneUse, Steps, Movement, Music }

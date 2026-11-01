@@ -2,10 +2,12 @@ package com.dawnly.app.ui.debug
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
+import android.provider.Settings
 import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +45,7 @@ import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.watch.WatchState
+import com.dawnly.app.service.WakeWatcher
 import com.dawnly.app.service.WatchService
 import com.dawnly.app.service.WatchSession
 import com.dawnly.app.ui.theme.DawnlyTheme
@@ -62,6 +65,7 @@ private data class DebugState(
     val signals: WakeSignals?,
     val settings: WakeSignalSettings,
     val activityAllowed: Boolean,
+    val usageAllowed: Boolean,
     val stepSensor: StepSensor,
 )
 
@@ -82,8 +86,10 @@ fun DebugScreen(modifier: Modifier = Modifier) {
     val stepSensor = remember { stepSensor(context) }
 
     var activityAllowed by remember { mutableStateOf(activityAllowed(context)) }
+    var usageAllowed by remember { mutableStateOf(WakeWatcher.hasUsageAccess(context)) }
     LifecycleResumeEffect(Unit) {
         activityAllowed = activityAllowed(context)
+        usageAllowed = WakeWatcher.hasUsageAccess(context)
         onPauseOrDispose { }
     }
     val requestActivity = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -91,13 +97,14 @@ fun DebugScreen(modifier: Modifier = Modifier) {
     }
 
     DebugContent(
-        state = DebugState(watch, serviceRunning, signals, settings, activityAllowed, stepSensor),
+        state = DebugState(watch, serviceRunning, signals, settings, activityAllowed, usageAllowed, stepSensor),
         onSettingsChange = { app.scope.launch { app.settings.setWakeSignals(it) } },
         onAllowActivity = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 requestActivity.launch(Manifest.permission.ACTIVITY_RECOGNITION)
             }
         },
+        onAllowUsage = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
         modifier = modifier,
     )
 }
@@ -107,6 +114,7 @@ private fun DebugContent(
     state: DebugState,
     onSettingsChange: (WakeSignalSettings) -> Unit,
     onAllowActivity: () -> Unit,
+    onAllowUsage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val settings = state.settings
@@ -136,7 +144,6 @@ private fun DebugContent(
                 )
             } else {
                 val score = WakeScore.of(signals, settings)
-                ValueRow(stringResource(R.string.debug_unlocked), yesNo(signals.unlocked))
                 ValueRow(
                     stringResource(R.string.debug_screen_use),
                     stringResource(
@@ -145,7 +152,17 @@ private fun DebugContent(
                         durationText(settings.screenTimeGoal),
                     ),
                 )
+                ValueRow(stringResource(R.string.debug_apps), appsText(signals, settings))
                 ValueRow(stringResource(R.string.debug_steps), stepsText(signals, settings))
+                ValueRow(
+                    stringResource(R.string.debug_movement),
+                    if (!signals.movementAvailable) {
+                        stringResource(R.string.debug_movement_unavailable)
+                    } else {
+                        stringResource(R.string.debug_of_goal, durationText(signals.movingTime), durationText(settings.movementGoal))
+                    },
+                )
+                ValueRow(stringResource(R.string.debug_music), durationText(signals.musicTime))
                 ValueRow(
                     stringResource(R.string.debug_score),
                     stringResource(R.string.debug_percent, (score.value * 100).roundToInt()),
@@ -155,9 +172,6 @@ private fun DebugContent(
         }
 
         Section(stringResource(R.string.debug_signals_that_count)) {
-            SwitchRow(stringResource(R.string.debug_unlocked), settings.useUnlock) {
-                onSettingsChange(settings.copy(useUnlock = it))
-            }
             SwitchRow(stringResource(R.string.debug_screen_use), settings.useScreenTime) {
                 onSettingsChange(settings.copy(useScreenTime = it))
             }
@@ -173,6 +187,9 @@ private fun DebugContent(
                     onSettingsChange(settings.copy(screenTimeGoal = Duration.ofMinutes(minutes)))
                 },
             )
+            SwitchRow(stringResource(R.string.debug_apps), settings.usePhoneUse) {
+                onSettingsChange(settings.copy(usePhoneUse = it))
+            }
             SwitchRow(stringResource(R.string.debug_steps), settings.useSteps) {
                 onSettingsChange(settings.copy(useSteps = it))
             }
@@ -182,6 +199,35 @@ private fun DebugContent(
                 onDecrease = { onSettingsChange(settings.copy(stepsGoal = (settings.stepsGoal - 10).coerceAtLeast(10))) },
                 onIncrease = { onSettingsChange(settings.copy(stepsGoal = (settings.stepsGoal + 10).coerceAtMost(500))) },
             )
+            SwitchRow(stringResource(R.string.debug_movement), settings.useMovement) {
+                onSettingsChange(settings.copy(useMovement = it))
+            }
+            Stepper(
+                label = stringResource(R.string.debug_movement_goal),
+                value = durationText(settings.movementGoal),
+                onDecrease = {
+                    val minutes = (settings.movementGoal.toMinutes() - 1).coerceAtLeast(1)
+                    onSettingsChange(settings.copy(movementGoal = Duration.ofMinutes(minutes)))
+                },
+                onIncrease = {
+                    val minutes = (settings.movementGoal.toMinutes() + 1).coerceAtMost(10)
+                    onSettingsChange(settings.copy(movementGoal = Duration.ofMinutes(minutes)))
+                },
+            )
+            SwitchRow(stringResource(R.string.debug_music), settings.useMusic) {
+                onSettingsChange(settings.copy(useMusic = it))
+            }
+        }
+
+        Section(stringResource(R.string.debug_usage_access)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.debug_usage_access), Modifier.weight(1f))
+                if (state.usageAllowed) {
+                    Text(stringResource(R.string.debug_allowed))
+                } else {
+                    TextButton(onClick = onAllowUsage) { Text(stringResource(R.string.debug_allow)) }
+                }
+            }
         }
 
         Section(stringResource(R.string.debug_steps_setup)) {
@@ -263,6 +309,13 @@ private fun stepsText(signals: WakeSignals, settings: WakeSignalSettings): Strin
 }
 
 @Composable
+private fun appsText(signals: WakeSignals, settings: WakeSignalSettings): String = when {
+    !signals.appsAvailable -> stringResource(R.string.debug_apps_unavailable)
+    !settings.usePhoneUse -> stringResource(R.string.debug_not_counted, signals.appsOpened)
+    else -> stringResource(R.string.debug_of_goal, signals.appsOpened.toString(), settings.appsOpenedGoal.toString())
+}
+
+@Composable
 private fun yesNo(value: Boolean): String = stringResource(if (value) R.string.debug_yes else R.string.debug_no)
 
 @Composable
@@ -304,13 +357,21 @@ private fun DebugContentPreview() {
                 state = DebugState(
                     watch = WatchState.Watching(alarmAt = now.plusSeconds(1_800), startedAt = now.minusSeconds(1_800)),
                     serviceRunning = true,
-                    signals = WakeSignals(unlocked = true, screenOnTime = Duration.ofSeconds(200), steps = 42),
-                    settings = WakeSignalSettings(useSteps = true),
+                    signals = WakeSignals(
+                        screenOnTime = Duration.ofSeconds(200),
+                        appsOpened = 2,
+                        steps = 42,
+                        movingTime = Duration.ofSeconds(75),
+                        musicTime = Duration.ofSeconds(30),
+                    ),
+                    settings = WakeSignalSettings(useSteps = true, usePhoneUse = true),
                     activityAllowed = false,
+                    usageAllowed = true,
                     stepSensor = StepSensor.WakeUp,
                 ),
                 onSettingsChange = {},
                 onAllowActivity = {},
+                onAllowUsage = {},
             )
         }
     }

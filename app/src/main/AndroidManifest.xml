@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Needed for AlarmClock.ACTION_DISMISS_ALARM. A normal permission, granted at install. -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
@@ -13,6 +14,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Steps signal (Phase 3). Declared early so onboarding (Phase 5) can request it. -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- "Apps opened" signal: Usage access, granted by the user in system settings. Read only during
+         the watch window, and only which app came to the front. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     <!-- Onboarding's "Background use" step: a one-tap system dialog instead of a hunt through
          battery settings. Dawnly's core job (watching before an alarm) breaks if the OS stops it. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -20,13 +26,18 @@
          Android 10+ blocks otherwise. Asked when the user turns that switch on. Nothing is drawn. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Android 11+ package visibility: lets us find and name the Clock app. -->
+    <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
+         screen apps so opening them doesn't count as opening an app. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />
         </intent>
         <intent>
             <action android:name="android.intent.action.SHOW_ALARMS" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
         </intent>
     </queries>
 

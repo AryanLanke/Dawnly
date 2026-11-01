@@ -13,11 +13,15 @@
 
     <string name="debug_live_signals">Live signals</string>
     <string name="debug_not_watching">Not watching. Readings appear while the watch window is open.</string>
-    <string name="debug_unlocked">Phone unlocked</string>
     <string name="debug_screen_use">Screen use</string>
+    <string name="debug_apps">Apps opened</string>
     <string name="debug_steps">Steps</string>
+    <string name="debug_movement">Movement</string>
+    <string name="debug_music">Music playing</string>
     <string name="debug_of_goal">%1$s of %2$s</string>
     <string name="debug_not_counted">%1$d, not counted</string>
+    <string name="debug_apps_unavailable">No usage access</string>
+    <string name="debug_movement_unavailable">No accelerometer</string>
     <string name="debug_steps_unavailable">Can\'t count steps</string>
     <string name="debug_score">Score</string>
     <string name="debug_percent">%1$d%%</string>
@@ -30,6 +34,7 @@
     <string name="debug_signals_that_count">Signals that count</string>
     <string name="debug_screen_goal">Screen use goal</string>
     <string name="debug_steps_goal">Steps goal</string>
+    <string name="debug_movement_goal">Movement goal</string>
     <string name="debug_less">Less</string>
     <string name="debug_more">More</string>
 
@@ -38,6 +43,7 @@
     <string name="debug_sensor_wake_up">Yes, counts while asleep</string>
     <string name="debug_sensor_sleeps">Yes, batched while asleep</string>
     <string name="debug_sensor_none">None on this phone</string>
+    <string name="debug_usage_access">Usage access</string>
     <string name="debug_activity_recognition">Physical activity permission</string>
     <string name="debug_allowed">Allowed</string>
     <string name="debug_allow">Allow</string>

@@ -37,9 +37,11 @@ class WakeProgressStore(context: Context) {
         return WakeProgress(
             alarmAt = alarmAt,
             signals = WakeSignals(
-                unlocked = prefs[UNLOCKED] ?: false,
                 screenOnTime = Duration.ofMillis(prefs[SCREEN_ON_MILLIS] ?: 0L),
+                appsOpened = prefs[APPS_OPENED] ?: 0,
                 steps = prefs[STEPS] ?: 0,
+                movingTime = Duration.ofSeconds(prefs[MOVING_SECONDS] ?: 0L),
+                musicTime = Duration.ofMillis(prefs[MUSIC_MILLIS] ?: 0L),
             ),
             notified = prefs[NOTIFIED] ?: false,
         )
@@ -48,18 +50,22 @@ class WakeProgressStore(context: Context) {
     suspend fun save(progress: WakeProgress) {
         store.edit { prefs ->
             prefs[ALARM_AT] = progress.alarmAt.toEpochMilli()
-            prefs[UNLOCKED] = progress.signals.unlocked
             prefs[SCREEN_ON_MILLIS] = progress.signals.screenOnTime.toMillis()
+            prefs[APPS_OPENED] = progress.signals.appsOpened
             prefs[STEPS] = progress.signals.steps
+            prefs[MOVING_SECONDS] = progress.signals.movingTime.seconds
+            prefs[MUSIC_MILLIS] = progress.signals.musicTime.toMillis()
             prefs[NOTIFIED] = progress.notified
         }
     }
 
     private companion object {
         val ALARM_AT = longPreferencesKey("alarm_at")
-        val UNLOCKED = booleanPreferencesKey("unlocked")
         val SCREEN_ON_MILLIS = longPreferencesKey("screen_on_millis")
+        val APPS_OPENED = intPreferencesKey("apps_opened")
         val STEPS = intPreferencesKey("steps")
+        val MOVING_SECONDS = longPreferencesKey("moving_seconds")
+        val MUSIC_MILLIS = longPreferencesKey("music_millis")
         val NOTIFIED = booleanPreferencesKey("notified")
     }
 }
