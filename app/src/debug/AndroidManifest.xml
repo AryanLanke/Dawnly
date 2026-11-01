@@ -3,7 +3,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <!-- Phase 4 test trigger: shows the "You're up early" prompt from adb, without wake detection.
+        <!-- Phase 4 test trigger: shows the "Up already?" prompt from adb, without wake detection.
              Guarded by DUMP, which adb's shell has and other apps can't get.
              adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app [-ez stale true] -->
         <receiver
@@ -14,6 +14,20 @@
                 <action android:name="com.dawnly.app.debug.USER_AWAKE" />
             </intent-filter>
         </receiver>
+
+        <!-- Wake detection debug screen, with its own launcher icon and its own task. -->
+        <activity
+            android:name=".debug.DebugActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_debug"
+            android:label="@string/debug_launcher_label"
+            android:roundIcon="@mipmap/ic_launcher_debug"
+            android:taskAffinity="com.dawnly.app.debug">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -1,0 +1,44 @@
+<resources>
+    <!-- Wake detection debug screen (Phase 3). Dev-only, so plain wording is fine. -->
+    <string name="debug_title">Wake detection</string>
+    <string name="debug_watch_window">Watch window</string>
+    <string name="debug_state">State</string>
+    <string name="debug_state_idle">No alarm to watch for</string>
+    <string name="debug_state_waiting">Waiting, starts at %1$s</string>
+    <string name="debug_state_watching">Watching until %1$s</string>
+    <string name="debug_state_skipped">Skipped: alarm set after its window began</string>
+    <string name="debug_service">Watch service</string>
+    <string name="debug_running">Running</string>
+    <string name="debug_not_running">Not running</string>
+
+    <string name="debug_live_signals">Live signals</string>
+    <string name="debug_not_watching">Not watching. Readings appear while the watch window is open.</string>
+    <string name="debug_unlocked">Phone unlocked</string>
+    <string name="debug_screen_use">Screen use</string>
+    <string name="debug_steps">Steps</string>
+    <string name="debug_of_goal">%1$s of %2$s</string>
+    <string name="debug_not_counted">%1$d, not counted</string>
+    <string name="debug_steps_unavailable">Can\'t count steps</string>
+    <string name="debug_score">Score</string>
+    <string name="debug_percent">%1$d%%</string>
+    <string name="debug_awake">Counts as awake</string>
+    <string name="debug_yes">Yes</string>
+    <string name="debug_no">No</string>
+    <string name="debug_minutes">%1$d min</string>
+    <string name="debug_minutes_seconds">%1$d min %2$d s</string>
+
+    <string name="debug_signals_that_count">Signals that count</string>
+    <string name="debug_screen_goal">Screen use goal</string>
+    <string name="debug_steps_goal">Steps goal</string>
+    <string name="debug_less">Less</string>
+    <string name="debug_more">More</string>
+
+    <string name="debug_steps_setup">Steps setup</string>
+    <string name="debug_step_sensor">Step counter</string>
+    <string name="debug_sensor_wake_up">Yes, counts while asleep</string>
+    <string name="debug_sensor_sleeps">Yes, batched while asleep</string>
+    <string name="debug_sensor_none">None on this phone</string>
+    <string name="debug_activity_recognition">Physical activity permission</string>
+    <string name="debug_allowed">Allowed</string>
+    <string name="debug_allow">Allow</string>
+</resources>

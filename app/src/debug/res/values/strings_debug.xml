@@ -1,0 +1,4 @@
+<resources>
+    <!-- Label of the debug-only launcher icon that opens the wake detection debug screen. -->
+    <string name="debug_launcher_label">Dawnly debug</string>
+</resources>

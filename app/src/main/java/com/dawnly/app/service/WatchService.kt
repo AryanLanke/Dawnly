@@ -7,7 +7,13 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import com.dawnly.app.dawnly
+import com.dawnly.app.domain.watch.WatchState
 import java.time.Instant
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,13 +21,18 @@ import kotlinx.coroutines.launch
 
 /**
  * Runs only during the watch window, with a low-priority ongoing notification. Started and
- * stopped by [WatchScheduler]. The wake signals (Phase 3) will live here.
+ * stopped by [WatchScheduler]. While it runs, a [WakeWatcher] watches for signs the user is awake.
  *
  * Foreground service type: `specialUse` (Android 14+). Watching for signs someone woke up
  * before their alarm doesn't fit a standard type. `health` comes closest, but it needs the
  * activity permission granted before every start, and the user may switch the steps signal off.
+ * The step counter works under any foreground service type, so steps don't need `health` either.
  */
 class WatchService : Service() {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var watchingFor: Instant? = null
+    private var watcher: Job? = null
+
     override fun onCreate() {
         super.onCreate()
         running.value = true
@@ -38,12 +49,26 @@ class WatchService : Service() {
         } else {
             startForeground(WatchNotifications.WATCHING_ID, notification)
         }
-        // Stops us again if the window ended while we were starting (or while we were dead).
-        dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
+        dawnly.scope.launch {
+            // Stops us again if the window ended while we were starting (or while we were dead).
+            // Only an alarm reconcile confirms is being watched gets a watcher: after a restart,
+            // the next alarm may already be tomorrow's.
+            val state = dawnly.watchScheduler.reconcile()
+            if (state is WatchState.Watching) scope.launch { watchForWake(state.alarmAt) }
+        }
         return START_STICKY
     }
 
+    private fun watchForWake(alarmAt: Instant) {
+        if (alarmAt == watchingFor) return
+        watchingFor = alarmAt
+        watcher?.cancel()
+        watcher = scope.launch { WakeWatcher(this@WatchService, alarmAt).watch() }
+    }
+
     override fun onDestroy() {
+        scope.cancel()
+        WatchSession.publish(null)
         running.value = false
         super.onDestroy()
     }
