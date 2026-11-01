@@ -1,5 +1,6 @@
 package com.dawnly.app.ui.settings
 
+import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import java.time.Duration
 import org.junit.Assert.assertEquals

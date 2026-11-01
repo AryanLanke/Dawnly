@@ -196,13 +196,13 @@ object AwakeNotifier {
     private fun formatTime(context: Context, at: Instant): String =
         DateFormat.getTimeFormat(context).format(Date.from(at))
 
-    /** The channel for the chosen sound; the phone's own sound until the user picks one. */
+    /** The channel for the chosen sound; Dawnly's default sound until the user picks one. */
     private fun currentChannel(context: Context): String {
         val existing = NotificationManagerCompat.from(context).notificationChannelsCompat
             .firstOrNull { it.id.startsWith(CHANNEL_PREFIX) }
         if (existing != null) return existing.id
-        useSound(context, AlertSound.PhoneDefault)
-        return CHANNEL_PREFIX + AlertSound.PhoneDefault.name.lowercase()
+        useSound(context, AlertSound.DEFAULT)
+        return CHANNEL_PREFIX + AlertSound.DEFAULT.name.lowercase()
     }
 
     /**

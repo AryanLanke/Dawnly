@@ -5,8 +5,9 @@ import org.junit.Test
 
 class AlertSoundTest {
     @Test
-    fun `nothing saved means the phone's own sound`() {
-        assertEquals(AlertSound.PhoneDefault, AlertSound.fromKey(null))
+    fun `nothing saved means Dawnly's default sound, Retro`() {
+        assertEquals(AlertSound.Retro, AlertSound.DEFAULT)
+        assertEquals(AlertSound.DEFAULT, AlertSound.fromKey(null))
     }
 
     @Test
@@ -15,8 +16,8 @@ class AlertSoundTest {
     }
 
     @Test
-    fun `a sound that no longer exists falls back to the phone's sound`() {
-        assertEquals(AlertSound.PhoneDefault, AlertSound.fromKey("Gong"))
+    fun `a sound that no longer exists falls back to the default`() {
+        assertEquals(AlertSound.DEFAULT, AlertSound.fromKey("Gong"))
     }
 
     @Test

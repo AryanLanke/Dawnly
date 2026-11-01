@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.format.formatDuration

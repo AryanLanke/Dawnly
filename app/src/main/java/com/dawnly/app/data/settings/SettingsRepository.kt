@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.dawnly.app.data.safeData
+import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.watch.WatchWindow
 import java.time.Duration
@@ -38,19 +39,26 @@ class SettingsRepository(context: Context) {
     val wakeSignals: Flow<WakeSignalSettings> = store.safeData
         .map { prefs ->
             val default = WakeSignalSettings()
+            val screenTimeGoal = prefs[SCREEN_TIME_GOAL_MINUTES]
+                ?.let { Duration.ofMinutes(it.toLong()) }
+                ?: default.screenTimeGoal
+            val stepsGoal = prefs[STEPS_GOAL] ?: default.stepsGoal
+            // Saved before apps opened and movement existed: give them the goals of the level the
+            // user picked, so Settings still shows that level.
+            val level = Sensitivity.entries
+                .firstOrNull { it.screenTimeGoal == screenTimeGoal && it.stepsGoal == stepsGoal }
+                ?: Sensitivity.Medium
             WakeSignalSettings(
                 useScreenTime = prefs[USE_SCREEN_TIME] ?: default.useScreenTime,
-                screenTimeGoal = prefs[SCREEN_TIME_GOAL_MINUTES]
-                    ?.let { Duration.ofMinutes(it.toLong()) }
-                    ?: default.screenTimeGoal,
+                screenTimeGoal = screenTimeGoal,
                 usePhoneUse = prefs[USE_PHONE_USE] ?: default.usePhoneUse,
-                appsOpenedGoal = prefs[APPS_OPENED_GOAL] ?: default.appsOpenedGoal,
+                appsOpenedGoal = prefs[APPS_OPENED_GOAL] ?: level.appsOpenedGoal,
                 useSteps = prefs[USE_STEPS] ?: default.useSteps,
-                stepsGoal = prefs[STEPS_GOAL] ?: default.stepsGoal,
+                stepsGoal = stepsGoal,
                 useMovement = prefs[USE_MOVEMENT] ?: default.useMovement,
                 movementGoal = prefs[MOVEMENT_GOAL_MINUTES]
                     ?.let { Duration.ofMinutes(it.toLong()) }
-                    ?: default.movementGoal,
+                    ?: level.movementGoal,
                 useMusic = prefs[USE_MUSIC] ?: default.useMusic,
             )
         }

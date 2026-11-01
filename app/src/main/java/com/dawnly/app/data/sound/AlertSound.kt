@@ -40,7 +40,10 @@ enum class AlertSound(@StringRes val label: Int, @RawRes private val raw: Int?) 
         ?: Settings.System.DEFAULT_NOTIFICATION_URI
 
     companion object {
-        /** Saved by name; an unknown name (a removed sound) falls back to the phone's sound. */
-        fun fromKey(key: String?): AlertSound = entries.firstOrNull { it.name == key } ?: PhoneDefault
+        /** Dawnly's own sound until the user picks another (the user's choice, 2026-11-01). */
+        val DEFAULT = Retro
+
+        /** Saved by name; nothing saved, or an unknown name (a removed sound), gives [DEFAULT]. */
+        fun fromKey(key: String?): AlertSound = entries.firstOrNull { it.name == key } ?: DEFAULT
     }
 }
