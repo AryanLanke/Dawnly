@@ -4,18 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.dawnly.app.ui.feasibility.FeasibilityScreen
-import com.dawnly.app.ui.theme.DawnlyTheme
+import androidx.activity.viewModels
+import com.dawnly.app.ui.DawnlyRoot
+import com.dawnly.app.ui.MainViewModel
+import com.dawnly.app.ui.home.HomeViewModel
+import com.dawnly.app.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val main: MainViewModel by viewModels { MainViewModel.factory(dawnly) }
+    private val home: HomeViewModel by viewModels { HomeViewModel.factory(dawnly) }
+    private val settings: SettingsViewModel by viewModels { SettingsViewModel.factory(dawnly) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            DawnlyTheme {
-                FeasibilityScreen()
-            }
+            DawnlyRoot(main, home, settings)
         }
     }
 

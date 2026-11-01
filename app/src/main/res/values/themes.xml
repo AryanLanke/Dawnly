@@ -1,4 +1,9 @@
 <resources>
-    <!-- Window theme only; all real theming happens in Compose (ui/theme). -->
-    <style name="Theme.Dawnly" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Window theme only; all real theming happens in Compose (ui/theme). The window background
+         matches the wall colour, so there's no white flash before the first frame in dark mode. -->
+    <style name="Theme.Dawnly" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/wall</item>
+    </style>
+
+    <color name="wall">#F7F9FE</color>
 </resources>

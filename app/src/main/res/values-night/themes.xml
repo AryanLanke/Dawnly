@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Dawnly" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/wall</item>
+    </style>
+
+    <color name="wall">#050A1A</color>
+</resources>

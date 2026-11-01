@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Steps signal (Phase 3). Declared early so onboarding (Phase 5) can request it. -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- Onboarding's "Background use" step: a one-tap system dialog instead of a hunt through
+         battery settings. Dawnly's core job (watching before an alarm) breaks if the OS stops it. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app. -->
     <queries>

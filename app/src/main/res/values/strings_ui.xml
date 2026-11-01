@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 5 UI: Home, Settings, onboarding. Short, sentence case, plain words. -->
+<resources>
+    <!-- Tabs -->
+    <string name="tab_today">Today</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Shared -->
+    <string name="common_allow">Allow</string>
+    <string name="common_allowed">Allowed</string>
+    <string name="common_open">Open</string>
+    <string name="dismiss_alarm">Dismiss alarm</string>
+    <string name="duration_min">%1$d min</string>
+    <string name="duration_hr">%1$d hr</string>
+    <string name="duration_hr_min">%1$d hr %2$d min</string>
+
+    <!-- Home -->
+    <string name="home_no_alarm">No alarm</string>
+    <string name="home_no_alarm_hint">Set one in your Clock app</string>
+    <string name="home_day_today">Today</string>
+    <string name="home_day_tomorrow">Tomorrow</string>
+    <string name="home_waiting">Watching from %1$s</string>
+    <string name="home_watching">Watching since %1$s</string>
+    <string name="home_awake">You\'re up early</string>
+    <string name="home_skipped">Not watching this one</string>
+    <string name="home_skipped_detail">This alarm was set after its watch window began, so Dawnly leaves it alone.</string>
+    <string name="home_progress_description">%1$d%% of the watch window has passed</string>
+    <string name="home_signal_unlock">Phone unlocked</string>
+    <string name="home_signal_screen">Screen use</string>
+    <string name="home_signal_steps">Steps</string>
+    <string name="home_signal_not_yet">Not yet</string>
+    <string name="home_signal_minutes_of">%1$d of %2$d min</string>
+    <string name="home_signal_steps_of">%1$d of %2$d</string>
+    <string name="home_signal_minutes_goal">%1$d min</string>
+    <string name="home_signal_steps_goal">%1$d steps</string>
+    <string name="home_signal_seen">Seen</string>
+    <string name="home_exact_off_title">Watching may start late</string>
+    <string name="home_exact_off_body">Allow Alarms &amp; reminders so Dawnly starts on time.</string>
+    <string name="home_notifications_off_title">Notifications are off</string>
+    <string name="home_notifications_off_body">Dawnly can\'t ask you before your alarm rings.</string>
+    <string name="home_opened_clock">%1$s can\'t dismiss alarms for other apps, so it\'s open now. Dismiss the alarm there.</string>
+    <string name="home_no_clock">No Clock app found on this phone.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_window_label">Start watching before the alarm</string>
+    <string name="settings_window_custom">Custom</string>
+    <string name="settings_shorter">Shorter</string>
+    <string name="settings_longer">Longer</string>
+    <string name="settings_signals_label">Signs you\'re awake</string>
+    <string name="settings_unlock">Phone unlocked</string>
+    <string name="settings_screen">Screen use</string>
+    <string name="settings_screen_goal">At least %1$d minutes</string>
+    <string name="settings_steps">Steps walked</string>
+    <string name="settings_steps_goal">At least %1$d steps</string>
+    <string name="settings_signals_min">Keep at least one sign on.</string>
+    <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
+    <string name="settings_sensitivity_label">Sensitivity</string>
+    <string name="sensitivity_low">Low</string>
+    <string name="sensitivity_medium">Medium</string>
+    <string name="sensitivity_high">High</string>
+    <string name="settings_permissions_label">Permissions</string>
+    <string name="settings_appearance_label">Appearance</string>
+    <string name="appearance_light">Light</string>
+    <string name="appearance_dark">Dark</string>
+    <string name="appearance_system">System</string>
+
+    <!-- Permissions -->
+    <string name="perm_notifications">Notifications</string>
+    <string name="perm_exact_alarms">Alarms &amp; reminders</string>
+    <string name="perm_activity">Physical activity</string>
+    <string name="perm_battery">Background use</string>
+    <string name="perm_notifications_why">So we can ask before dismissing your alarm. We never dismiss it on our own.</string>
+    <string name="perm_exact_alarms_why">Lets Dawnly start watching the moment your window opens. It never sets alarms of its own.</string>
+    <string name="perm_activity_why">Used only during the watch window to count steps. Nothing leaves your phone.</string>
+    <string name="perm_battery_why">So your phone doesn\'t stop Dawnly halfway through the window.</string>
+    <string name="oem_samsung">Samsung battery settings</string>
+    <string name="oem_xiaomi">Xiaomi battery settings</string>
+    <string name="oem_samsung_hint">On Samsung phones, also add Dawnly to Never sleeping apps in Battery settings.</string>
+    <string name="oem_xiaomi_hint">On Xiaomi phones, also turn on Autostart and set Battery saver to No restrictions.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Up before your alarm?\nWe\'ll notice.</string>
+    <string name="onboarding_welcome_lead">Dawnly watches for signs you\'re awake, only before your alarm.</string>
+    <string name="onboarding_exact_title">Start right on time</string>
+    <string name="onboarding_exact_lead">Without this, Android can start watching up to an hour late and miss you getting up.</string>
+    <string name="onboarding_activity_title">Count your steps</string>
+    <string name="onboarding_activity_lead">Walking around is one of the clearest signs you\'re up.</string>
+    <string name="onboarding_battery_title">Keep Dawnly running</string>
+    <string name="onboarding_battery_lead">Some phones stop apps in the background. Dawnly only runs before your alarm.</string>
+    <string name="onboarding_allow_notifications">Allow notifications</string>
+    <string name="onboarding_allow_exact_alarms">Allow alarms &amp; reminders</string>
+    <string name="onboarding_allow_activity">Allow physical activity</string>
+    <string name="onboarding_allow_battery">Allow background use</string>
+    <string name="onboarding_open_settings">Open settings</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_not_now">Not now</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_step">Step %1$d of %2$d</string>
+</resources>
