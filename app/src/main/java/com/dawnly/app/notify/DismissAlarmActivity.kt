@@ -1,21 +1,23 @@
 package com.dawnly.app.notify
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.StringRes
 import com.dawnly.app.R
 import com.dawnly.app.dawnly
-import com.dawnly.app.data.alarm.ClockApp
 import com.dawnly.app.data.alarm.DismissResult
 import java.time.Instant
 
 /**
- * Opened by the prompt's "Dismiss alarm" button. No UI of its own: it checks the next alarm is
- * still the one the prompt was about ([DismissGuard]), then asks the Clock app to dismiss it, or
- * opens the Clock app if that can't be done. Being an activity, it may start the Clock app, which
- * a receiver launched from a notification may not (Android 12+).
+ * Opened by the prompt's "Dismiss alarm" button, and by [AutoDismissReceiver]. No UI of its own:
+ * it checks the next alarm is still the one the prompt was about ([DismissGuard]), then asks the
+ * Clock app to dismiss it ([QuietDismiss]), or opens the Clock app if that can't be done. Being an
+ * activity, it may start the Clock app, which a receiver launched from a notification may not
+ * (Android 12+).
  */
 class DismissAlarmActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,8 +35,8 @@ class DismissAlarmActivity : Activity() {
         val check = DismissGuard.check(promptAlarmAt, next?.triggerAt, Instant.now())
         Log.i(TAG, "Prompt for $promptAlarmAt, next alarm ${next?.triggerAt}: $check")
         when (check) {
-            DismissCheck.Ok -> when (val result = ClockApp(this).dismissNextAlarm(this, next?.ownerPackage)) {
-                // The Clock app shows what happened, and the next alarm moves on.
+            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next)) {
+                // The Clock app dismisses it, and Dawnly comes back once the next alarm moves on.
                 is DismissResult.Requested -> Unit
                 is DismissResult.OpenedClock -> toast(R.string.dismiss_opened_clock, result.clock.label)
                 DismissResult.NoClockApp -> toast(R.string.dismiss_no_clock)
@@ -49,7 +51,12 @@ class DismissAlarmActivity : Activity() {
         Toast.makeText(applicationContext, getString(message, *args), Toast.LENGTH_LONG).show()
     }
 
-    private companion object {
-        const val TAG = "DismissAlarmActivity"
+    companion object {
+        private const val TAG = "DismissAlarmActivity"
+
+        fun intent(context: Context, alarmAt: Instant): Intent =
+            Intent(context, DismissAlarmActivity::class.java)
+                .putExtra(AwakeNotifier.EXTRA_ALARM_AT, alarmAt.toEpochMilli())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }

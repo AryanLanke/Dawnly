@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -112,6 +113,12 @@ fun SettingsScreen(
                     }
                 },
                 onAppearanceChange = viewModel::setAppearance,
+                onAutoDismissChange = viewModel::setAutoDismiss,
+                onAllowOverlay = {
+                    onRequestPermission(AppPermission.Overlay) { granted ->
+                        if (granted) viewModel.setAutoDismiss(true)
+                    }
+                },
                 onRequestPermission = { onRequestPermission(it) {} },
                 onOpenOemBattery = onOpenOemBattery,
                 onOpenSounds = { pickingSound = true },
@@ -131,6 +138,8 @@ private fun SettingsContent(
     onSignalsChange: (WakeSignalSettings) -> Unit,
     onStepsOn: () -> Unit,
     onAppearanceChange: (Appearance) -> Unit,
+    onAutoDismissChange: (Boolean) -> Unit,
+    onAllowOverlay: () -> Unit,
     onRequestPermission: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
     onOpenSounds: () -> Unit,
@@ -166,9 +175,20 @@ private fun SettingsContent(
         Gap()
         SpringIn(order = 3) { SoundRow(state.sound, onOpenSounds) }
         Gap()
-        SpringIn(order = 4) { PermissionsSection(permissions, oemBattery, onRequestPermission, onOpenOemBattery) }
+        SpringIn(order = 4) {
+            AutoDismissSection(
+                on = state.autoDismiss,
+                overlayAllowed = AppPermission.Overlay in permissions,
+                onChange = onAutoDismissChange,
+                onAllowOverlay = onAllowOverlay,
+            )
+        }
         Gap()
         SpringIn(order = 5) {
+            PermissionsSection(permissions, state.autoDismiss, oemBattery, onRequestPermission, onOpenOemBattery)
+        }
+        Gap()
+        SpringIn(order = 6) {
             Column {
                 SectionLabel(stringResource(R.string.settings_appearance_label))
                 val modes = Appearance.entries
@@ -273,14 +293,60 @@ private fun SignalsSection(
     }
 }
 
+/**
+ * Off by default. Turning it on without "Display over other apps" first says why it's needed,
+ * with one tap to allow it; the switch turns on once it's allowed.
+ */
+@Composable
+private fun AutoDismissSection(
+    on: Boolean,
+    overlayAllowed: Boolean,
+    onChange: (Boolean) -> Unit,
+    onAllowOverlay: () -> Unit,
+) {
+    var asking by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(on) { if (on) asking = false }
+    GlassList {
+        GlassRow(
+            title = stringResource(R.string.settings_auto_dismiss),
+            subtitle = stringResource(R.string.settings_auto_dismiss_detail),
+        ) {
+            GlassSwitch(on, { wanted ->
+                when {
+                    !wanted -> {
+                        asking = false
+                        onChange(false)
+                    }
+                    overlayAllowed -> onChange(true)
+                    else -> asking = true
+                }
+            })
+        }
+        AnimatedVisibility(visible = asking && !on) {
+            Column(Modifier.padding(bottom = 14.dp)) {
+                Text(
+                    stringResource(R.string.settings_auto_dismiss_why),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DawnlyTheme.colors.textSoft,
+                )
+                AccentPill(stringResource(R.string.common_allow), onAllowOverlay, Modifier.padding(top = 10.dp))
+            }
+        }
+    }
+}
+
 @Composable
 private fun PermissionsSection(
     permissions: PermissionState,
+    autoDismiss: Boolean,
     oemBattery: OemBattery?,
     onRequest: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
 ) {
-    val shown = AppPermission.entries.filter { it.isApplicable }
+    // Display over other apps only matters with auto-dismiss on, e.g. if it was taken back since.
+    val shown = AppPermission.entries.filter {
+        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && autoDismiss))
+    }
     Column {
         SectionLabel(stringResource(R.string.settings_permissions_label))
         GlassList {
@@ -330,6 +396,7 @@ internal val AppPermission.label
         AppPermission.ExactAlarms -> R.string.perm_exact_alarms
         AppPermission.ActivityRecognition -> R.string.perm_activity
         AppPermission.Battery -> R.string.perm_battery
+        AppPermission.Overlay -> R.string.perm_overlay
     }
 
 @Composable
@@ -344,6 +411,8 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             onSignalsChange = {},
             onStepsOn = {},
             onAppearanceChange = {},
+            onAutoDismissChange = {},
+            onAllowOverlay = {},
             onRequestPermission = {},
             onOpenOemBattery = {},
             onOpenSounds = {},

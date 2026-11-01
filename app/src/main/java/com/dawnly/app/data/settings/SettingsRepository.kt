@@ -60,6 +60,18 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    /**
+     * Dismiss the alarm without asking, after a one-minute warning that can be stopped. Off by
+     * default; turning it on needs "Display over other apps" (see `AwakeNotifier`).
+     */
+    val autoDismiss: Flow<Boolean> = store.safeData
+        .map { it[AUTO_DISMISS] ?: false }
+        .distinctUntilChanged()
+
+    suspend fun setAutoDismiss(on: Boolean) {
+        store.edit { it[AUTO_DISMISS] = on }
+    }
+
     val appearance: Flow<Appearance> = store.safeData
         .map { prefs ->
             prefs[APPEARANCE]?.let { name -> Appearance.entries.firstOrNull { it.name == name } }
@@ -78,6 +90,7 @@ class SettingsRepository(context: Context) {
         val SCREEN_TIME_GOAL_MINUTES = intPreferencesKey("screen_time_goal_minutes")
         val USE_STEPS = booleanPreferencesKey("use_steps")
         val STEPS_GOAL = intPreferencesKey("steps_goal")
+        val AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val APPEARANCE = stringPreferencesKey("appearance")
     }
 }

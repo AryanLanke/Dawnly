@@ -16,6 +16,9 @@
     <!-- Onboarding's "Background use" step: a one-tap system dialog instead of a hunt through
          battery settings. Dawnly's core job (watching before an alarm) breaks if the OS stops it. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Opt-in auto-dismiss only: lets Dawnly open the Clock app from the background, which
+         Android 10+ blocks otherwise. Asked when the user turns that switch on. Nothing is drawn. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app. -->
     <queries>
@@ -83,6 +86,11 @@
         <!-- Phase 4: the prompt's "Not yet" button. -->
         <receiver
             android:name=".notify.NotYetReceiver"
+            android:exported="false" />
+
+        <!-- Opt-in auto-dismiss: our own alarm, when the one-minute warning runs out. -->
+        <receiver
+            android:name=".notify.AutoDismissReceiver"
             android:exported="false" />
     </application>
 

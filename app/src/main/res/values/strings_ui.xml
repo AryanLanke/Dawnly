@@ -68,6 +68,9 @@
     <string name="sensitivity_low">Low</string>
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>
+    <string name="settings_auto_dismiss">Dismiss automatically</string>
+    <string name="settings_auto_dismiss_detail">After a 1-minute warning you can stop</string>
+    <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
     <string name="settings_permissions_label">Permissions</string>
     <string name="settings_appearance_label">Appearance</string>
     <string name="appearance_light">Light</string>
@@ -79,6 +82,7 @@
     <string name="perm_exact_alarms">Alarms &amp; reminders</string>
     <string name="perm_activity">Physical activity</string>
     <string name="perm_battery">Background use</string>
+    <string name="perm_overlay">Display over other apps</string>
     <string name="perm_notifications_why">So we can ask before dismissing your alarm. We never dismiss it on our own.</string>
     <string name="perm_exact_alarms_why">Lets Dawnly start watching the moment your window opens. It never sets alarms of its own.</string>
     <string name="perm_activity_why">Used only during the watch window to count steps. Nothing leaves your phone.</string>

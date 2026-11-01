@@ -94,7 +94,12 @@ class ClockApp(context: Context) {
     companion object {
         private const val TAG = "ClockApp"
 
+        /**
+         * `EXTRA_SKIP_UI` is documented only for setting alarms, and Google Clock shows its alarm
+         * list anyway, but a Clock app that honours it can dismiss without showing its screen.
+         */
         fun dismissNextAlarmIntent(): Intent = Intent(AlarmClock.ACTION_DISMISS_ALARM)
             .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT)
+            .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
     }
 }

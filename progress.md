@@ -316,6 +316,15 @@ When wake detection calls `AwakeNotifier.onUserAwake()`, Dawnly shows "You're up
 
 **Merge note:** A also adds to `app/src/debug/AndroidManifest.xml`. Whoever merges second keeps both `<application>` entries.
 
+#### Phase 4 follow-up (session B's list, done in the Phase 6 session, 2026-11-01)
+The user asked the Phase 6 session to do B's and A's lists itself.
+- **Prompt copy:** "Up already?" / "Looks like you're awake. Dismiss your 5:30 alarm?" (the user's preferred wording). The buttons stay **Dismiss alarm** and **Not yet**.
+- **Dismiss automatically** (Settings, off by default). When the user seems awake, the prompt says "Dismissing your 5:30 alarm in 1 minute" with a live countdown, **Dismiss alarm**, and **Not yet**. Swiping it away counts as Not yet. When the minute is up, `AutoDismissReceiver` (our own exact alarm) runs `DismissGuard` again and opens `DismissAlarmActivity`. Dawnly asks the normal way instead when: the alarm is under 70 s away (`AutoDismissPlan`, 4 unit tests), Display over other apps is off, exact alarms are off (the minute could stretch to an hour), or notifications are off (no warning could show).
+- **Display over other apps** (`SYSTEM_ALERT_WINDOW`): Android 10+ only lets an app start the Clock app from the background with it. It's a new `AppPermission.Overlay`, not in onboarding (`askedUpFront = false`). Turning the switch on without it shows a one-line reason and an Allow pill; the switch turns on once it's granted. Settings → Permissions lists it only while auto-dismiss is on.
+- **Hiding Google Clock:** the dismiss request now carries `EXTRA_SKIP_UI`. `QuietDismiss` waits up to 5 s for the next alarm to move on, then brings Dawnly back to the front with a "Your 5:30 alarm is dismissed" toast. If the alarm doesn't move, the Clock app stays open so the user sees why. Used by the prompt, auto-dismiss, and Home's Dismiss alarm.
+- `SettingsRepository` gained `autoDismiss` (it was frozen only during the parallel phases). PLAN.md sections 3, 4 and 7 updated.
+- **Device test: pending** (see the Phase 6 section for the combined test steps).
+
 ### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Done (2026-11-01)
 
 #### Summary

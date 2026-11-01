@@ -24,6 +24,7 @@ data class SettingsUiState(
     val signals: WakeSignalSettings,
     val appearance: Appearance,
     val sound: AlertSound,
+    val autoDismiss: Boolean = false,
 )
 
 class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
@@ -35,6 +36,7 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
         app.settings.wakeSignals,
         app.settings.appearance,
         sounds.selected,
+        app.settings.autoDismiss,
         ::SettingsUiState,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -54,6 +56,11 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
 
     fun setAppearance(appearance: Appearance) {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAppearance(appearance) }
+    }
+
+    /** Turn on only once "Display over other apps" is allowed; the screen asks for it first. */
+    fun setAutoDismiss(on: Boolean) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAutoDismiss(on) }
     }
 
     fun setSound(sound: AlertSound) {

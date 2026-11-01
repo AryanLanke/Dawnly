@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
-import com.dawnly.app.data.alarm.ClockApp
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.notify.QuietDismiss
 import com.dawnly.app.service.WatchSession
 import java.time.Instant
 import kotlinx.coroutines.delay
@@ -21,8 +21,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
-    private val clockApp = ClockApp(app)
-
     val uiState: StateFlow<HomeUiState> = combine(
         app.watchScheduler.state,
         WatchSession.signals,
@@ -37,9 +35,12 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
     /** The last dismiss that didn't go straight to the Clock app, to explain what happened. */
     val dismissResult: StateFlow<DismissResult?> = _dismissResult.asStateFlow()
 
-    /** Asks the Clock app to dismiss the next alarm, or opens it if it can't. [activity] starts it. */
+    /**
+     * Asks the Clock app to dismiss the next alarm, or opens it if it can't. [activity] starts it.
+     * Dawnly comes back over the Clock app once the alarm is dismissed.
+     */
     fun dismissAlarm(activity: Activity) {
-        val result = clockApp.dismissNextAlarm(activity, app.nextAlarms.current()?.ownerPackage)
+        val result = QuietDismiss.dismiss(activity, app.nextAlarms.current())
         _dismissResult.value = result.takeUnless { it is DismissResult.Requested }
         app.scope.launch { app.watchScheduler.reconcile() }
     }

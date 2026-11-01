@@ -25,7 +25,17 @@ enum class AppPermission {
 
     /** Unrestricted battery, so the phone doesn't stop the watch service. */
     Battery,
+
+    /**
+     * "Display over other apps", only for auto-dismiss: it's what lets Dawnly open the Clock app
+     * from the background (Android 10+). Asked when that switch is turned on, never in onboarding.
+     */
+    Overlay,
     ;
+
+    /** Asked in onboarding and listed in Settings. [Overlay] only matters with auto-dismiss on. */
+    val askedUpFront: Boolean
+        get() = this != Overlay
 
     /** False on Android versions where this permission doesn't exist (it's granted already). */
     val isApplicable: Boolean
@@ -33,7 +43,7 @@ enum class AppPermission {
             Notifications -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             ExactAlarms -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ActivityRecognition -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-            Battery -> true
+            Battery, Overlay -> true
         }
 
     /** The runtime permission behind a system dialog, or null when it's granted in system settings. */
@@ -42,7 +52,7 @@ enum class AppPermission {
         get() = when (this) {
             Notifications -> if (isApplicable) Manifest.permission.POST_NOTIFICATIONS else null
             ActivityRecognition -> if (isApplicable) Manifest.permission.ACTIVITY_RECOGNITION else null
-            ExactAlarms, Battery -> null
+            ExactAlarms, Battery, Overlay -> null
         }
 
     fun isGranted(context: Context): Boolean {
@@ -55,6 +65,7 @@ enum class AppPermission {
                 context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
             Battery -> context.getSystemService(PowerManager::class.java)
                 .isIgnoringBatteryOptimizations(context.packageName)
+            Overlay -> Settings.canDrawOverlays(context)
             Notifications, ActivityRecognition -> true
         }
     }
@@ -76,6 +87,7 @@ enum class AppPermission {
             // Shows a one-tap system dialog. Needs REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in the manifest.
             Battery -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri)
             ActivityRecognition -> appDetails(packageUri)
+            Overlay -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri)
         }
     }
 

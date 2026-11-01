@@ -16,13 +16,13 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
 ## 3. What the app does
 1. Reads the time of the **next alarm the user set in their normal Clock app** (Google Clock, Samsung Clock, Xiaomi Clock). The user does NOT set alarms inside our app.
 2. Before that alarm, during a **watch window** the user chooses (e.g. 30 min, 1 hr, 2 hr), the app quietly watches for signs the user is awake.
-3. If the user seems awake, the app shows a **gentle notification**: "You're up early! Dismiss your 5:30 alarm?"
-4. One tap on the notification asks the Clock app to dismiss that alarm.
+3. If the user seems awake, the app shows a **gentle notification**: "Up already? Looks like you're awake. Dismiss your 5:30 alarm?"
+4. One tap on the notification asks the Clock app to dismiss that alarm. (Optional, off by default: auto-dismiss after a one-minute warning; see section 4.)
 
 ## 4. Decisions already made
 - **Platform:** Android only. No iPhone version.
 - **Alarms:** stay in the user's default Clock app. Our app only reads the next alarm and requests a dismiss.
-- **Dismiss style:** one tap on a gentle notification. Never dismiss silently.
+- **Dismiss style:** one tap on a gentle notification. Never dismiss without asking, unless the user turns on **Dismiss automatically** in Settings (off by default, user's decision 2026-11-01). Then Dawnly first shows "Dismissing your 5:30 alarm in 1 minute" with **Not yet**; swiping it away also stops it. If the warning can't be shown or can't finish before the alarm, Dawnly asks instead.
 - **"Awake" means a mix of signals:** phone unlocked + used for a few minutes + some steps walked. Combine them into a simple score; don't trigger on a quick 3 AM time check.
 - **Watch window:** chosen by the user in settings.
 - **Works fully offline.** No server, no login, no API calls.
@@ -79,6 +79,8 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
   - Put the scoring in a pure Kotlin class so it's easy to unit test.
 - **Dismiss:** notification action uses `PendingIntent.getActivity` that launches `AlarmClock.ACTION_DISMISS_ALARM` with search mode "next alarm". Requires `com.android.alarm.permission.SET_ALARM`. Use an activity PendingIntent directly because Android 12+ blocks starting activities from notification trampolines.
 - **Fallback:** if the Clock app doesn't support dismissing, open the Clock app instead and tell the user.
+- **Auto-dismiss (opt-in):** after the warning minute, our own exact alarm fires and starts the dismiss from the background. Android 10+ blocks background activity starts unless the user grants "Display over other apps" (`SYSTEM_ALERT_WINDOW`), so ask for it only when the switch is turned on, with a short reason.
+- **Hiding the Clock app:** the dismiss request carries `EXTRA_SKIP_UI` (documented only for setting alarms; Google Clock ignores it and opens its alarm list). Once the next alarm moves on, Dawnly brings itself back to the front, so the Clock app only flickers.
 - **Permissions to handle:** notifications (Android 13+), exact alarms, activity recognition, battery optimization exemption.
 - **Phone brands:** Xiaomi and Samsung aggressively kill background apps. Guide the user to the right battery settings (see dontkillmyapp.com).
 - Stop the service as soon as the alarm time passes or the user dismisses.

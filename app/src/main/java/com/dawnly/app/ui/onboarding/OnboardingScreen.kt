@@ -61,7 +61,7 @@ import com.dawnly.app.ui.theme.LocalReduceMotion
 
 /** The permissions to walk through: the ones this Android has and the user hasn't granted yet. */
 fun onboardingSteps(permissions: PermissionState, oemBattery: OemBattery?): List<AppPermission> =
-    AppPermission.entries.filter { permission ->
+    AppPermission.entries.filter { it.askedUpFront }.filter { permission ->
         val needed = permission.isApplicable && permission !in permissions
         // Brand phones need extra battery steps even when Android's own exemption is granted.
         needed || (permission == AppPermission.Battery && oemBattery != null)
@@ -261,13 +261,14 @@ private val AppPermission.copy: StepCopy
             GlassIcons.Battery, R.string.perm_battery, R.string.perm_battery_why,
             R.string.onboarding_battery_title, R.string.onboarding_battery_lead, R.string.onboarding_allow_battery,
         )
+        AppPermission.Overlay -> error("Overlay is asked from Settings only")
     }
 
 @Composable
 private fun OnboardingPreview(dark: Boolean, oem: OemBattery?) {
     PreviewFrame(dark) {
         OnboardingScreen(
-            steps = AppPermission.entries,
+            steps = AppPermission.entries.filter { it.askedUpFront },
             permissions = PermissionState(emptySet()),
             oemBattery = oem,
             onAllow = { _, _ -> },
