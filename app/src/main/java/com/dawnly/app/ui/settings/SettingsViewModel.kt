@@ -9,6 +9,7 @@ import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.data.sound.SoundStore
 import com.dawnly.app.domain.wake.WakeSignalSettings
+import com.dawnly.app.notify.AwakeNotifier
 import java.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,7 +57,10 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
     }
 
     fun setSound(sound: AlertSound) {
-        app.scope.launch(Dispatchers.Main.immediate) { sounds.setSelected(sound) }
+        app.scope.launch(Dispatchers.Main.immediate) {
+            sounds.setSelected(sound)
+            AwakeNotifier.useSound(app, sound)
+        }
     }
 
     companion object {

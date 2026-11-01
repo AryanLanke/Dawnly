@@ -284,7 +284,7 @@ When wake detection calls `AwakeNotifier.onUserAwake()`, Dawnly shows "You're up
 
 **Merge note:** A also adds to `app/src/debug/AndroidManifest.xml`. Whoever merges second keeps both `<application>` entries.
 
-### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Built, waiting for the user's device test
+### Phase 5 — UI polish (session C, branch `phase-5-ui`) ✅ Done (2026-11-01)
 
 #### Summary
 The glass design from `design/mockups.html` is now the real app: onboarding, Home (Today), and Settings, in light and dark, with the flowing background and spring motion. The Phase 1/2 test screen (`ui/feasibility/`) is gone. Session C also made the Phase 6 app icon.
@@ -308,6 +308,18 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 - Window background follows day/night (`values-night/themes.xml`), so dark mode has no white flash on launch.
 - The app icon is adaptive (`mipmap-anydpi`, minSdk 26), with a themed-icon monochrome layer. `ic_notification` uses the same ring-and-sun glyph.
 
+**Notification sound (added 2026-11-01, after the user's device test):**
+- Settings → **Notification sound** opens a picker: **Phone default** plus 17 Mixkit sounds the user chose, under our own short names (Flute, Sparkle, Bubble, Fizz, Pop, Bloop, Simmer, Potion, Timer, Beep, Click, Level up, Retro, Score, Jump, Jackpot, Pixel). Tapping one selects and previews it on the notification stream. Default: Phone default, until the user picks a house sound.
+- Files: `res/raw/sound_*`, with silence trimmed and loudness matched, kept at 44.1 kHz stereo (about 3.6 MB). Licence: Mixkit Sound Effects Free License, credited in `assets/licenses/mixkit_sounds.txt`.
+- `data/sound/AlertSound` + `SoundStore` (its own DataStore; fold into settings later).
+- **Phase 4's prompt now plays the chosen sound** (user's decision; it was silent). Android fixes a channel's sound once it exists, so `AwakeNotifier.useSound()` keeps one channel per sound (`awake_<sound>`), deletes the old ones, and the app re-syncs it on start. Still no vibration. Checked on the phone: the channel followed the saved sound, and the prompt showed as heads-up.
+
+**Next phase (user's decisions, 2026-11-01), after all three branches merge:**
+- Drop "Phone unlocked" as a sign: the phone can be unlocked while the user sleeps. Add movement (motion sensors), music playing (counts only together with movement), and active phone use (Usage access) as the closest safe stand-in for touches; seeing touches outside the app would need an accessibility service, which isn't worth it.
+- Optional **auto-dismiss**, off by default, with a "Dismissing your 5:30 alarm in 1 minute — Not yet" warning first. Opening the Clock app from the background needs "Display over other apps". This reverses PLAN.md's "never dismiss silently" for users who opt in, so update PLAN.md.
+- Try to hide Google Clock's screen during a dismiss (`EXTRA_SKIP_UI`, which isn't documented for dismiss, then bring Dawnly back); it may only shrink to a flicker.
+- The user's other UI changes.
+
 **Left for later:**
 - `strings.xml` still holds the old feasibility strings (lint lists them as unused). It's a shared file, so remove them after all three branches merge.
 - The debug screen isn't linked from Settings; session A's `DebugActivity` has its own launcher icon.
@@ -324,7 +336,7 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 - [x] OEM battery guidance for Xiaomi and Samsung.
 - [x] Unit tests: 14 new (`HomeUiStateTest`, `SensitivityTest`, `OemBatteryTest`), 22 in total, all passing. `lintDebug` passes.
 - [x] Checked on the Nothing Phone by screenshot: onboarding, Home (waiting), Settings, light and dark. Fixed there: the tab bar filled the screen, content clashed with the status bar, and selected pills were invisible in light mode.
-- [ ] User's device test (steps below).
+- [x] User's device test (2026-11-01): onboarding, Home, Settings, light/dark, and the icon all good. The user asked for the changes listed under "Next phase".
 
 #### How to verify on a device
 1. Uninstall first for a clean onboarding: `adb uninstall com.dawnly.app`, then `.\gradlew.bat installDebug` and open Dawnly.

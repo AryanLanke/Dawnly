@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateFormat
@@ -17,6 +18,7 @@ import androidx.core.content.ContextCompat
 import com.dawnly.app.MainActivity
 import com.dawnly.app.R
 import com.dawnly.app.dawnly
+import com.dawnly.app.data.sound.AlertSound
 import java.time.Duration
 import java.time.Instant
 import java.util.Date
@@ -31,7 +33,13 @@ import java.util.Date
  */
 object AwakeNotifier {
     private const val TAG = "AwakeNotifier"
-    private const val CHANNEL = "awake"
+
+    /**
+     * Android fixes a channel's sound once it exists, so each sound gets its own channel:
+     * `awake_<sound>`. [useSound] swaps them. "awake" was the silent Phase 4 channel.
+     */
+    private const val CHANNEL_PREFIX = "awake_"
+    private const val OLD_CHANNEL = "awake"
 
     /** `WatchNotifications.WATCHING_ID` is 1. */
     private const val PROMPT_ID = 2
@@ -56,11 +64,11 @@ object AwakeNotifier {
             Log.w(TAG, "Notifications are off, so the user can't be asked")
             return
         }
-        createChannel(context)
+        val channel = currentChannel(context)
 
         val time = DateFormat.getTimeFormat(context).format(Date.from(alarmAt))
         val text = context.getString(R.string.awake_text, time)
-        val builder = NotificationCompat.Builder(context, CHANNEL)
+        val builder = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.awake_title))
             .setContentText(text)
@@ -104,14 +112,40 @@ object AwakeNotifier {
     }
 
     /**
-     * Heads-up so it's seen while the phone is in use, but silent: the user is already awake, and
-     * this should feel like a quiet question, not an alert.
+     * Makes the prompt play [sound] (chosen in Settings). Replaces the channel only when the sound
+     * changed, so it's cheap to call on every app start to stay in step with the saved choice.
      */
-    private fun createChannel(context: Context) {
-        val channel = NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_HIGH)
+    fun useSound(context: Context, sound: AlertSound) {
+        val manager = NotificationManagerCompat.from(context)
+        val wanted = CHANNEL_PREFIX + sound.name.lowercase()
+        manager.notificationChannelsCompat
+            .filter { it.id == OLD_CHANNEL || (it.id.startsWith(CHANNEL_PREFIX) && it.id != wanted) }
+            .forEach { manager.deleteNotificationChannel(it.id) }
+        if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound)
+    }
+
+    /** The channel for the chosen sound; the phone's own sound until the user picks one. */
+    private fun currentChannel(context: Context): String {
+        val existing = NotificationManagerCompat.from(context).notificationChannelsCompat
+            .firstOrNull { it.id.startsWith(CHANNEL_PREFIX) }
+        if (existing != null) return existing.id
+        useSound(context, AlertSound.PhoneDefault)
+        return CHANNEL_PREFIX + AlertSound.PhoneDefault.name.lowercase()
+    }
+
+    /**
+     * Heads-up so it's seen while the phone is in use, with a short soft sound and no vibration:
+     * a quiet question, not an alarm.
+     */
+    private fun createChannel(context: Context, id: String, sound: AlertSound) {
+        val audio = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val channel = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_HIGH)
             .setName(context.getString(R.string.channel_awake))
             .setDescription(context.getString(R.string.channel_awake_description))
-            .setSound(null, null)
+            .setSound(sound.uri(context), audio)
             .setVibrationEnabled(false)
             .setShowBadge(false)
             .build()
