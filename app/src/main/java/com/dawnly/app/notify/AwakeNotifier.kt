@@ -59,10 +59,13 @@ object AwakeNotifier {
         createChannel(context)
 
         val time = DateFormat.getTimeFormat(context).format(Date.from(alarmAt))
+        val text = context.getString(R.string.awake_text, time)
         val builder = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.awake_title))
-            .setContentText(context.getString(R.string.awake_text, time))
+            .setContentText(text)
+            // The whole question when expanded; one line cuts it off on most phones.
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(openApp(context))
             .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt))
             .addAction(0, context.getString(R.string.action_not_yet), notYet(context))
