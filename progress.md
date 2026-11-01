@@ -83,7 +83,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 1 | Feasibility: read the next alarm and dismiss it, tested on 3 phones | ✅ Passed on Nothing Phone (2026-11-01). Samsung and Xiaomi not tested yet |
 | 2 | Watch window: settings, exact-alarm scheduling, foreground service | ✅ Done (2026-11-01). Reboot not tested yet |
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ⬜ Not started |
-| 4 | Notification and one-tap dismiss, plus the fallback | ⬜ Not started |
+| 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01), merged first. Tested through the debug adb trigger; the real trigger arrives with Phase 3 |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ⬜ Not started |
 | 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ⬜ Not started |
 
