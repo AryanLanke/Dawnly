@@ -84,8 +84,8 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 2 | Watch window: settings, exact-alarm scheduling, foreground service | ✅ Done (2026-11-01). Reboot not tested yet |
 | 3 | Wake detection: signals, scoring + unit tests, debug screen | ⬜ Not started |
 | 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01), merged first. Tested through the debug adb trigger; the real trigger arrives with Phase 3 |
-| 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ⬜ Not started |
-| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ⬜ Not started |
+| 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
+| 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | 🟡 App icon done (session C). CI with session A; README after all three merge |
 
 ---
 
