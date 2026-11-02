@@ -31,6 +31,10 @@ data class DawnlyColors(
     val edge: Color,
     /** The bright line along the top edge of glass. */
     val highlight: Color,
+    /** How bright the liquid rim gets where light catches the edge, 0 to 1. */
+    val rimStrength: Float,
+    /** A faint light inside the top of glass, so it reads as a thick pane rather than an outline. */
+    val sheen: Color,
     /** The soft shadow that lifts glass off the sky. */
     val lift: Color,
     /** The soft shadow under selected pills. */
@@ -63,6 +67,8 @@ val LightColors = DawnlyColors(
     glassFallback = Color.White.copy(alpha = 0.5f),
     edge = Color.White.copy(alpha = 0.35f),
     highlight = Color.White.copy(alpha = 0.95f),
+    rimStrength = 1f,
+    sheen = Color.Transparent,
     lift = Color(0xFF3C5AA0).copy(alpha = 0.14f),
     selectedShadow = Color(0xFF0A1E5A).copy(alpha = 0.15f),
     line = Navy.copy(alpha = 0.10f),
@@ -84,8 +90,10 @@ val DarkColors = DawnlyColors(
     glass = Color(0xFFBEDCFF).copy(alpha = 0.06f),
     glassStrong = Color(0xFFD2E6FF).copy(alpha = 0.2f),
     glassFallback = Color(0xFF14204A).copy(alpha = 0.6f),
-    edge = Color.White.copy(alpha = 0.18f),
-    highlight = Color.White.copy(alpha = 0.95f),
+    edge = Color(0xFFDCE8FF).copy(alpha = 0.07f),
+    highlight = Color(0xFFDCE8FF).copy(alpha = 0.30f),
+    rimStrength = 0.55f,
+    sheen = Color(0xFFBED6FF).copy(alpha = 0.08f),
     lift = Color.Black.copy(alpha = 0.35f),
     selectedShadow = Color.Black.copy(alpha = 0.25f),
     line = Color.White.copy(alpha = 0.14f),

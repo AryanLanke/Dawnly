@@ -31,6 +31,7 @@ import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSegmented
+import com.dawnly.app.ui.glass.GlassSlider
 import com.dawnly.app.ui.glass.GlassStepper
 import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.GlassSwitch
@@ -63,18 +64,46 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
         ) {
-            GlassSurface(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-                GlassStepper(
-                    value = formatDuration(window),
-                    onDecrease = { onChange(window - WatchWindow.STEP) },
-                    onIncrease = { onChange(window + WatchWindow.STEP) },
-                    decreaseEnabled = window > WatchWindow.MIN,
-                    increaseEnabled = window < WatchWindow.MAX,
-                    decreaseLabel = stringResource(R.string.settings_shorter),
-                    increaseLabel = stringResource(R.string.settings_longer),
-                    modifier = Modifier.padding(10.dp),
-                )
-            }
+            CustomWindow(window, onChange)
+        }
+    }
+}
+
+/**
+ * The custom window: drag the slider for big jumps (5 min to 3 hr in one swipe), tap or hold
+ * minus and plus for fine ones. While dragging, the time follows the finger and is saved on
+ * letting go, so a swipe is one settings change rather than dozens.
+ */
+@Composable
+private fun CustomWindow(window: Duration, onChange: (Duration) -> Unit) {
+    val stepMinutes = WatchWindow.STEP.toMinutes()
+    val steps = ((WatchWindow.MAX - WatchWindow.MIN).toMinutes() / stepMinutes).toInt()
+    fun toStep(d: Duration) = ((d - WatchWindow.MIN).toMinutes() / stepMinutes).toInt()
+    fun toWindow(step: Int): Duration = WatchWindow.MIN + WatchWindow.STEP.multipliedBy(step.toLong())
+    var dragging by remember { mutableStateOf<Int?>(null) }
+    val shown = dragging?.let(::toWindow) ?: window
+    GlassSurface(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+        Column(Modifier.padding(10.dp)) {
+            GlassStepper(
+                value = formatDuration(shown),
+                onDecrease = { onChange(WatchWindow.clamp(window - WatchWindow.STEP)) },
+                onIncrease = { onChange(WatchWindow.clamp(window + WatchWindow.STEP)) },
+                decreaseEnabled = window > WatchWindow.MIN,
+                increaseEnabled = window < WatchWindow.MAX,
+                decreaseLabel = stringResource(R.string.settings_shorter),
+                increaseLabel = stringResource(R.string.settings_longer),
+            )
+            GlassSlider(
+                value = dragging ?: toStep(window),
+                max = steps,
+                onValueChange = { dragging = it },
+                onValueChangeFinished = {
+                    dragging?.let { onChange(toWindow(it)) }
+                    dragging = null
+                },
+                label = stringResource(R.string.settings_window_slider),
+                modifier = Modifier.padding(horizontal = 6.dp),
+            )
         }
     }
 }

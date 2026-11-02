@@ -4,6 +4,20 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -243,8 +257,21 @@ fun GlassStepper(
 @Composable
 private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
     val alpha by animateFloatAsState(if (enabled) 1f else 0.35f, label = "stepAlpha")
+    val haptics = LocalHapticFeedback.current
+    val step by rememberUpdatedState(onClick)
+    val canStep by rememberUpdatedState(enabled)
     GlassSurface(
-        modifier = Modifier.size(44.dp).graphicsLayer { this.alpha = alpha },
+        modifier = Modifier
+            .size(44.dp)
+            .graphicsLayer { this.alpha = alpha }
+            .pointerInput(Unit) {
+                repeatWhileHeld {
+                    if (canStep) {
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                        step()
+                    }
+                }
+            },
         shape = CircleShape,
         strong = true,
         onClick = if (enabled) onClick else null,
@@ -253,6 +280,92 @@ private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onCli
     ) {
         Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp))
     }
+}
+
+/**
+ * Holding a step button keeps stepping: the first repeat after 400 ms, then faster, down to one
+ * every 60 ms. A plain tap is left to the button's own click. After repeating, the lift is
+ * consumed so letting go doesn't add one more step.
+ */
+private suspend fun PointerInputScope.repeatWhileHeld(step: () -> Unit) = awaitEachGesture {
+    awaitFirstDown(requireUnconsumed = false)
+    var wait = 400L
+    var repeating = false
+    while (true) {
+        var up: PointerInputChange? = null
+        val ended = withTimeoutOrNull(wait) {
+            up = waitForUpOrCancellation(PointerEventPass.Initial)
+            true
+        } == true
+        if (ended) {
+            if (repeating) up?.consume()
+            break
+        }
+        step()
+        repeating = true
+        wait = (wait * 0.75f).toLong().coerceAtLeast(60L)
+    }
+}
+
+/**
+ * A slider over whole steps, 0 to [max], for big jumps (the stepper is for fine ones). The track
+ * fills with the accent up to a round thumb, like the switch, and each step ticks under the
+ * finger. [onValueChange] follows the finger; [onValueChangeFinished] comes when it lets go.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GlassSlider(
+    value: Int,
+    max: Int,
+    onValueChange: (Int) -> Unit,
+    onValueChangeFinished: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DawnlyTheme.colors
+    val haptics = LocalHapticFeedback.current
+    Slider(
+        value = value.toFloat(),
+        onValueChange = { raw ->
+            val stepped = raw.roundToInt().coerceIn(0, max)
+            if (stepped != value) {
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                onValueChange(stepped)
+            }
+        },
+        valueRange = 0f..max.toFloat(),
+        steps = max - 1,
+        onValueChangeFinished = onValueChangeFinished,
+        modifier = modifier.fillMaxWidth().semantics { contentDescription = label },
+        thumb = {
+            Box(
+                Modifier
+                    .size(26.dp)
+                    .outerShadow(CircleShape, colors.selectedShadow)
+                    .background(colors.onAccent, CircleShape)
+                    .border(1.dp, colors.accent.copy(alpha = 0.25f), CircleShape),
+            )
+        },
+        track = { state ->
+            val range = state.valueRange.endInclusive - state.valueRange.start
+            val fraction = if (range > 0f) (state.value - state.valueRange.start) / range else 0f
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(colors.track),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(fraction)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(colors.accent),
+                )
+            }
+        },
+    )
 }
 
 /** The blue tick that marks a sign as seen, or the chosen item in a list. */

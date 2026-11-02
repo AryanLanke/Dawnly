@@ -22,7 +22,9 @@ import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.asAndroidPath
@@ -125,36 +127,41 @@ fun GlassSurface(
 }
 
 /**
- * The mockup's glass edge, drawn under the content: a faint inner glow, thin inset highlights
- * (top bright, left and bottom dimmer), the 1dp edge, and the liquid rim, a 1.5dp ring whose light
- * is brightest at the top-left, fades out by the middle and comes back a little at the bottom-right.
+ * The mockup's glass edge, drawn under the content: a faint inner glow, a sheen in the top of the
+ * pane, thin inset highlights (top bright, left and bottom dimmer), the 1dp edge, and the liquid
+ * rim, a 1.5dp ring whose light is brightest at the top-left, fades out by the middle and comes
+ * back a little at the bottom-right. The rim also blooms softly inward, so it reads as light
+ * bending through the edge of the glass rather than a drawn outline. Dark mode turns the rim down
+ * ([DawnlyColors.rimStrength]); white lines on a night sky look like a cheap border.
  */
 private fun Modifier.glassRim(shape: Shape, colors: DawnlyColors): Modifier = drawWithCache {
     val path = Path().apply { addOutline(shape.createOutline(size, layoutDirection, this@drawWithCache)) }
     fun shifted(x: Float, y: Float) = Path().apply { addPath(path, Offset(x, y)) }
     val px = 1.dp.toPx()
+    val strength = colors.rimStrength
+    val light = if (colors.isDark) Color(0xFFDCE8FF) else Color.White
     // Each inset box-shadow is the shape minus itself moved by 1px: a hairline on one side.
     val insets = listOf(
         shifted(0f, px) to colors.highlight,
-        shifted(px, 0f) to Color.White.copy(alpha = 0.35f),
-        shifted(0f, -px) to Color.White.copy(alpha = 0.25f),
+        shifted(px, 0f) to light.copy(alpha = 0.35f * strength),
+        shifted(0f, -px) to light.copy(alpha = 0.25f * strength),
     )
     // CSS linear-gradient(140deg, ...) runs along this line through the centre.
     val angle = Math.toRadians(140.0)
     val dir = Offset(sin(angle).toFloat(), -cos(angle).toFloat())
     val half = (size.width * abs(dir.x) + size.height * abs(dir.y)) / 2
     val center = Offset(size.width / 2, size.height / 2)
-    val rim = Brush.linearGradient(
-        0f to Color.White,
-        0.28f to Color.White.copy(alpha = 0.25f),
-        0.5f to Color.White.copy(alpha = 0f),
-        0.75f to Color.White.copy(alpha = 0.15f),
-        1f to Color.White.copy(alpha = 0.7f),
-        start = center - dir * half,
-        end = center + dir * half,
+    val rimShader = LinearGradientShader(
+        from = center - dir * half,
+        to = center + dir * half,
+        colors = listOf(1f, 0.25f, 0f, 0.15f, 0.7f).map { light.copy(alpha = it * strength) },
+        colorStops = listOf(0f, 0.28f, 0.5f, 0.75f, 1f),
     )
+    val rim = ShaderBrush(rimShader)
+    val sheen = Brush.verticalGradient(0f to colors.sheen, 0.45f to colors.sheen.copy(alpha = 0f))
     // Blurred strokes are only drawn with hardware acceleration from Android 9.
-    val glow = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+    val blurs = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+    val glow = if (blurs) {
         android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             style = android.graphics.Paint.Style.STROKE
             strokeWidth = 18.dp.toPx()
@@ -164,15 +171,28 @@ private fun Modifier.glassRim(shape: Shape, colors: DawnlyColors): Modifier = dr
     } else {
         null
     }
+    val bloom = if (blurs) {
+        android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 6.dp.toPx()
+            shader = rimShader
+            alpha = 150
+            maskFilter = BlurMaskFilter(3.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+        }
+    } else {
+        null
+    }
     val androidPath = path.asAndroidPath()
     onDrawWithContent {
         clipPath(path) {
             if (glow != null) drawIntoCanvas { it.nativeCanvas.drawPath(androidPath, glow) }
+            if (colors.sheen.alpha > 0f) drawRect(sheen)
             for ((inset, color) in insets) {
                 clipPath(inset, ClipOp.Difference) { drawRect(color) }
             }
             // Strokes are centred on the outline, so half of each shows inside the clip.
             drawPath(path, colors.edge, style = Stroke(width = 2 * px))
+            if (bloom != null) drawIntoCanvas { it.nativeCanvas.drawPath(androidPath, bloom) }
             drawPath(path, rim, style = Stroke(width = 3 * px))
         }
         drawContent()
