@@ -75,8 +75,9 @@ private val Saturate = HazeColorEffect.colorFilter(
  * tint gets stronger instead.
  *
  * The sky moves every frame, so glass is redrawn every frame too. Its soft parts (the shadow and
- * the rim's glow) are blurred once into small bitmaps and reused, and the sky blur runs at reduced
- * resolution (it's only 3dp, so that doesn't show). Drawing them fresh each frame took ~40 ms.
+ * the rim's glow) are blurred once into small bitmaps and reused, and the sky blur runs at low
+ * resolution (the sky has no fine detail, so that doesn't show; it keeps the GPU, and so the lag
+ * between finger and screen, down). Drawing them fresh each frame took ~40 ms.
  *
  * @param strong the brighter tint for selected items.
  * @param onClick makes the glass a button that sinks a little while pressed.
@@ -116,7 +117,7 @@ fun GlassSurface(
             .clip(shape)
             .then(
                 if (haze != null) {
-                    Modifier.hazeBlur(HazeInput.Sources(haze), style, HazePerformanceMode.Balanced)
+                    Modifier.hazeBlur(HazeInput.Sources(haze), style, HazePerformanceMode.Performance)
                 } else {
                     Modifier.background(tint)
                 },
@@ -202,8 +203,8 @@ private class Rim(scope: DrawScope, shape: Shape, colors: DawnlyColors) {
         // Each inset box-shadow is the shape minus itself moved by 1px: a hairline on one side.
         insets = listOf(
             shifted(0f, px) to colors.highlight,
-            shifted(px, 0f) to tone.copy(alpha = 0.35f * strength),
-            shifted(0f, -px) to tone.copy(alpha = 0.25f * strength),
+            shifted(px, 0f) to tone.copy(alpha = 0.15f * strength),
+            shifted(0f, -px) to tone.copy(alpha = 0.12f * strength),
         )
         // CSS linear-gradient(140deg, ...) runs along this line through the centre.
         val angle = Math.toRadians(140.0)
@@ -220,7 +221,7 @@ private class Rim(scope: DrawScope, shape: Shape, colors: DawnlyColors) {
             style = android.graphics.Paint.Style.STROKE
             strokeWidth = 6 * px
             shader = light
-            alpha = 150
+            alpha = 110
             maskFilter = BlurMaskFilter(3 * px, BlurMaskFilter.Blur.NORMAL)
         }
         val outline = path.asAndroidPath()

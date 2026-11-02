@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -160,7 +161,7 @@ private fun MainTabs(
     fun goTo(page: Int) {
         scope.launch {
             if (reduceMotion) pager.scrollToPage(page)
-            else pager.animateScrollToPage(page, animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f))
+            else pager.animateScrollToPage(page, animationSpec = spring(dampingRatio = 0.9f, stiffness = Spring.StiffnessMedium))
         }
     }
     BackHandler(enabled = pager.targetPage != TODAY) { goTo(TODAY) }

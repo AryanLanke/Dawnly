@@ -1,6 +1,7 @@
 package com.dawnly.app.ui.glass
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -9,6 +10,8 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -64,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import com.dawnly.app.ui.theme.DawnlyMotion
 import com.dawnly.app.ui.theme.DawnlyTheme
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 /** The one main action on a screen: solid accent, full width. */
 @Composable
@@ -195,16 +199,29 @@ fun GlassSegmented(
     val haptic = rememberHaptics()
     var width by remember { mutableIntStateOf(0) }
     val segment = if (options.isEmpty()) 0f else width / options.size.toFloat()
-    val position by animateFloatAsState(selected.coerceAtLeast(0).toFloat(), DawnlyMotion.bouncy(), label = "segment")
+    // The pill springs to the choice, and follows the finger while held (see HoldAndSlide).
+    val pill = remember { Animatable(selected.coerceAtLeast(0).toFloat()) }
+    val spring = DawnlyMotion.bouncy<Float>()
+    LaunchedEffect(selected) {
+        if (selected >= 0) pill.animateTo(selected.toFloat(), spring)
+    }
+    val scope = rememberCoroutineScope()
+    val slide = rememberHoldAndSlide(options.size) { index, at ->
+        scope.launch {
+            pill.snapTo(at)
+            pill.animateTo(index.toFloat(), spring)
+        }
+        if (index != selected) onSelect(index)
+    }
     val indicatorAlpha by animateFloatAsState(if (selected >= 0) 1f else 0f, label = "segmentAlpha")
     val segmentDp = with(LocalDensity.current) { segment.toDp() }
 
     GlassSurface(modifier = modifier.fillMaxWidth(), shape = GlassShapes.Segmented) {
-        Box(Modifier.padding(4.dp).onSizeChanged { width = it.width }) {
+        Box(Modifier.padding(4.dp).onSizeChanged { width = it.width }.then(slide.modifier)) {
             if (width > 0) {
                 Box(
                     Modifier
-                        .offset { IntOffset((position * segment).roundToInt(), 0) }
+                        .offset { IntOffset(((slide.scrub ?: pill.value) * segment).roundToInt(), 0) }
                         .width(segmentDp)
                         .height(40.dp)
                         .graphicsLayer { alpha = indicatorAlpha }

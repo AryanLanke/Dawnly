@@ -460,6 +460,11 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
     - **Haptics** (`ui/glass/Haptics.kt`): a tick when a page settles or a segment changes, toggle feel on switches, a click on glass buttons, and press-and-hold on a tab vibrates (long press) and opens it.
     - **Funny line** above the tabs: 50 lines in `strings_fun.xml`, a random one each time Dawnly opens; tapping it shows another.
     - Sensitivity is back to **Low / Medium / High** (the user: people won't understand Patient/Balanced/Quick). Today's friendly line moved under the ring. The status-bar fade used the old white wall in light mode; it now starts from the sky's top colour.
+  - **Third feedback round** (2026-11-03):
+    - **Measured after the bitmap fix**, Dawnly idle on Today: 120 Hz display, ~120 frames/s, 0% janky (new metric), no slow UI-thread or draw-command frames; frame time p50 23 ms, GPU ~11–12 ms. The user still felt it as ~60 Hz, so the remaining cost is latency from GPU load: Haze now blurs at `HazePerformanceMode.Performance` (the sky has no fine detail), and tapping a tab moves the page with a stiffer spring. Not re-measured yet.
+    - **Hold and slide** (`ui/glass/HoldAndSlide.kt`): press and hold the tab bar or any segmented choice (it buzzes), slide (the pill follows the finger, a tick per option), let go to pick. On the tab bar the page changes as the finger crosses over. Replaces "long-press a tab opens it".
+    - **When you're up:** the original descriptions are back (the user: the shorter ones were harder to understand). Labels stay Ask me / Warn first / Right away.
+    - **Fainter edges:** side and bottom hairlines, the 1dp edge, the rim and its bloom are all lighter, in light and dark.
   - To check in the testing phase: the sky's speed and smoothness, readability of text on the clearer glass in both modes, the icon on the home screen and as a themed icon.
 
 **Sharing with testers (researched 2026-11-02)**
