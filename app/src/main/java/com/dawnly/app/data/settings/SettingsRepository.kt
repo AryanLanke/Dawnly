@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.map
 
 private val Context.settingsStore by preferencesDataStore(name = "settings")
 
-/** Light, dark, or follow the phone. */
-enum class Appearance { Light, Dark, System }
+/** Light, dark, follow the phone, or follow the clock (night from 7 pm to 6 am, see `NightClock`). */
+enum class Appearance { Light, Dark, System, Clock }
 
 /**
  * What Dawnly does once it's sure the user is up (the user's three choices, 2026-11-03). Both

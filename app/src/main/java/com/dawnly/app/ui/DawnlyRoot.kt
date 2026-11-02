@@ -67,6 +67,7 @@ import com.dawnly.app.ui.settings.SettingsViewModel
 import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
+import com.dawnly.app.ui.theme.clockSaysNight
 import dev.chrisbanes.haze.rememberHazeState
 
 /** The whole app: theme, the flowing background, then onboarding or the two tabs. */
@@ -78,6 +79,7 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
         Appearance.Light -> false
         Appearance.Dark -> true
         Appearance.System, null -> isSystemInDarkTheme()
+        Appearance.Clock -> clockSaysNight()
     }
     SystemBarsFollow(dark)
 

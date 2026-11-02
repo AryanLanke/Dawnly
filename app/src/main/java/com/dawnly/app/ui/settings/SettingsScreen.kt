@@ -208,6 +208,7 @@ private val Appearance.label
         Appearance.Light -> R.string.appearance_light
         Appearance.Dark -> R.string.appearance_dark
         Appearance.System -> R.string.appearance_system
+        Appearance.Clock -> R.string.appearance_clock
     }
 
 
