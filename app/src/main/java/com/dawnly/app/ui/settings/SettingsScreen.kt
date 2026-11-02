@@ -3,6 +3,9 @@ package com.dawnly.app.ui.settings
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -58,6 +61,8 @@ fun SettingsScreen(
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
+    // Kept here so it stays open after visiting the sound picker.
+    var moreOpen by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = pickingSound) { pickingSound = false }
     val preview = rememberSoundPreview()
 
@@ -111,6 +116,8 @@ fun SettingsScreen(
                 onRequestPermission = { onRequestPermission(it) {} },
                 onOpenOemBattery = onOpenOemBattery,
                 onOpenSounds = { pickingSound = true },
+                moreOpen = moreOpen,
+                onToggleMore = { moreOpen = !moreOpen },
                 contentPadding = contentPadding,
             )
         }
@@ -132,6 +139,8 @@ private fun SettingsContent(
     onRequestPermission: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
     onOpenSounds: () -> Unit,
+    moreOpen: Boolean,
+    onToggleMore: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     Column(
@@ -148,23 +157,7 @@ private fun SettingsContent(
         )
         SpringIn(order = 0) { WindowSection(state.window, onWindowChange) }
         Gap()
-        SpringIn(order = 1) { SignalsSection(state.signals, deniedSign, onSignalsChange, onSignNeedsPermission) }
-        Gap()
-        SpringIn(order = 2) {
-            Column {
-                SectionLabel(stringResource(R.string.settings_sensitivity_label))
-                val levels = Sensitivity.entries
-                GlassSegmented(
-                    options = levels.map { stringResource(it.label) },
-                    selected = levels.indexOf(Sensitivity.of(state.signals)),
-                    onSelect = { onSignalsChange(levels[it].applyTo(state.signals)) },
-                )
-            }
-        }
-        Gap()
-        SpringIn(order = 3) { SoundRow(state.sound, onOpenSounds) }
-        Gap()
-        SpringIn(order = 4) {
+        SpringIn(order = 1) {
             DismissModeSection(
                 mode = state.dismissMode,
                 overlayAllowed = AppPermission.Overlay in permissions,
@@ -173,11 +166,9 @@ private fun SettingsContent(
             )
         }
         Gap()
-        SpringIn(order = 5) {
-            PermissionsSection(permissions, state.dismissMode, oemBattery, onRequestPermission, onOpenOemBattery)
-        }
+        SpringIn(order = 2) { SoundRow(state.sound, onOpenSounds) }
         Gap()
-        SpringIn(order = 6) {
+        SpringIn(order = 3) {
             Column {
                 SectionLabel(stringResource(R.string.settings_appearance_label))
                 val modes = Appearance.entries
@@ -186,6 +177,33 @@ private fun SettingsContent(
                     selected = modes.indexOf(state.appearance),
                     onSelect = { onAppearanceChange(modes[it]) },
                 )
+            }
+        }
+        Gap()
+        SpringIn(order = 4) {
+            val waiting = shownPermissions(state.dismissMode).count { it !in permissions }
+            MoreOptionsRow(open = moreOpen, needsYou = waiting, onToggle = onToggleMore)
+        }
+        AnimatedVisibility(
+            visible = moreOpen,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Column {
+                Gap()
+                SignalsSection(state.signals, deniedSign, onSignalsChange, onSignNeedsPermission)
+                Gap()
+                Column {
+                    SectionLabel(stringResource(R.string.settings_sensitivity_label))
+                    val levels = Sensitivity.entries
+                    GlassSegmented(
+                        options = levels.map { stringResource(it.label) },
+                        selected = levels.indexOf(Sensitivity.of(state.signals)),
+                        onSelect = { onSignalsChange(levels[it].applyTo(state.signals)) },
+                    )
+                }
+                Gap()
+                PermissionsSection(permissions, state.dismissMode, oemBattery, onRequestPermission, onOpenOemBattery)
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -229,6 +247,8 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             onRequestPermission = {},
             onOpenOemBattery = {},
             onOpenSounds = {},
+            moreOpen = true,
+            onToggleMore = {},
             contentPadding = PaddingValues(top = 40.dp, bottom = 100.dp),
         )
     }

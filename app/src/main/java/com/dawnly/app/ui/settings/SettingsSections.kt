@@ -6,7 +6,15 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.Role
+import com.dawnly.app.ui.glass.GlassIcons
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -254,10 +262,7 @@ internal fun PermissionsSection(
     onRequest: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
 ) {
-    // Display over other apps only matters when Dawnly dismisses by itself, e.g. if it was taken back since.
-    val shown = AppPermission.entries.filter {
-        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && dismissMode != DismissMode.Ask))
-    }
+    val shown = shownPermissions(dismissMode)
     Column {
         SectionLabel(stringResource(R.string.settings_permissions_label))
         GlassList {
@@ -283,6 +288,47 @@ internal fun PermissionsSection(
                     AccentPill(stringResource(R.string.common_open), onOpenOemBattery)
                 }
             }
+        }
+    }
+}
+
+/**
+ * The permissions Settings lists. Display over other apps only matters when Dawnly dismisses by
+ * itself, e.g. if it was taken back since.
+ */
+internal fun shownPermissions(dismissMode: DismissMode): List<AppPermission> =
+    AppPermission.entries.filter {
+        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && dismissMode != DismissMode.Ask))
+    }
+
+/**
+ * The row that opens the rest of Settings in place: signs, how quickly Dawnly asks, and
+ * permissions. If a permission still needs allowing it says so, so nothing important hides here.
+ */
+@Composable
+internal fun MoreOptionsRow(open: Boolean, needsYou: Int, onToggle: () -> Unit) {
+    val turn by animateFloatAsState(if (open) 90f else 0f, label = "moreChevron")
+    GlassList {
+        GlassRow(
+            title = stringResource(R.string.settings_more),
+            subtitle = if (needsYou > 0) null else stringResource(R.string.settings_more_detail),
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.small)
+                .clickable(role = Role.Button, onClick = onToggle),
+        ) {
+            if (needsYou > 0) {
+                Text(
+                    pluralStringResource(R.plurals.settings_more_needs_you, needsYou, needsYou),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DawnlyTheme.colors.tick,
+                )
+            }
+            Icon(
+                GlassIcons.Chevron,
+                contentDescription = null,
+                tint = DawnlyTheme.colors.textSoft,
+                modifier = Modifier.padding(start = 6.dp).size(18.dp).rotate(turn),
+            )
         }
     }
 }

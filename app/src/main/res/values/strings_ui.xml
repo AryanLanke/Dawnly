@@ -15,15 +15,15 @@
     <string name="duration_hr_min">%1$d hr %2$d min</string>
 
     <!-- Home -->
-    <string name="home_no_alarm">No alarm</string>
-    <string name="home_no_alarm_hint">Set one in your Clock app</string>
+    <string name="home_no_alarm">No alarm yet</string>
+    <string name="home_no_alarm_hint">Set one in your Clock app and Dawnly will keep watch</string>
     <string name="home_day_today">Today</string>
     <string name="home_day_tomorrow">Tomorrow</string>
-    <string name="home_waiting">Watching from %1$s</string>
-    <string name="home_watching">Watching since %1$s</string>
-    <string name="home_awake">You\'re up early</string>
-    <string name="home_skipped">Not watching this one</string>
-    <string name="home_skipped_detail">This alarm was set after its watch window began, so Dawnly leaves it alone.</string>
+    <string name="home_waiting">On watch from %1$s</string>
+    <string name="home_watching">Keeping watch since %1$s</string>
+    <string name="home_awake">Look who\'s up early</string>
+    <string name="home_skipped">Sitting this one out</string>
+    <string name="home_skipped_detail">This alarm was set after watching should have started, so Dawnly lets it ring as usual.</string>
     <string name="home_progress_description">%1$d%% of the watch window has passed</string>
     <string name="home_signal_screen">Screen use</string>
     <string name="home_signal_apps">Apps opened</string>
@@ -42,28 +42,28 @@
         <item quantity="one">%1$d step</item>
         <item quantity="other">%1$d steps</item>
     </plurals>
-    <string name="home_signal_seen">Seen</string>
-    <string name="home_wake_title">Signs you\'re awake</string>
-    <string name="home_wake_hint">Dawnly asks once this fills</string>
+    <string name="home_signal_seen">Spotted</string>
+    <string name="home_wake_title">Are you up?</string>
+    <string name="home_wake_hint">When this fills up, Dawnly checks in</string>
     <string name="home_wake_percent">%1$d%%</string>
-    <string name="home_wake_description">%1$d%% of the way to asking</string>
+    <string name="home_wake_description">%1$d%% of the way to checking in</string>
     <string name="home_confirm_dismiss">Dismiss your %1$s alarm?</string>
     <string name="common_cancel">Cancel</string>
-    <string name="home_exact_off_title">Watching may start late</string>
-    <string name="home_exact_off_body">Allow Alarms &amp; reminders so Dawnly starts on time.</string>
-    <string name="home_notifications_off_title">Notifications are off</string>
-    <string name="home_notifications_off_body">Dawnly can\'t ask you before your alarm rings.</string>
+    <string name="home_exact_off_title">Dawnly might start late</string>
+    <string name="home_exact_off_body">Allow Alarms &amp; reminders so it starts right on time.</string>
+    <string name="home_notifications_off_title">Dawnly can\'t say hi</string>
+    <string name="home_notifications_off_body">Turn on notifications so Dawnly can ask before your alarm rings.</string>
     <string name="home_opened_clock">%1$s can\'t dismiss alarms for other apps, so it\'s open now. Dismiss the alarm there.</string>
     <string name="home_no_clock">No Clock app found on this phone.</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_window_label">Start watching before the alarm</string>
+    <string name="settings_window_label">How early should Dawnly start watching?</string>
     <string name="settings_window_custom">Custom</string>
     <string name="settings_shorter">Shorter</string>
     <string name="settings_longer">Longer</string>
-    <string name="settings_window_slider">How long before the alarm</string>
-    <string name="settings_signals_label">Signs you\'re awake</string>
+    <string name="settings_window_slider">How early to start watching</string>
+    <string name="settings_signals_label">What counts as being up</string>
     <string name="settings_screen">Screen use</string>
     <plurals name="settings_screen_goal">
         <item quantity="one">At least %1$d minute</item>
@@ -86,22 +86,22 @@
     </plurals>
     <string name="settings_music">Music playing</string>
     <string name="settings_music_detail">Counts only while you\'re moving too</string>
-    <string name="settings_signals_min">Keep at least one sign on. Music alone doesn\'t count.</string>
+    <string name="settings_signals_min">Keep at least one on. Music alone doesn\'t count.</string>
     <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
     <string name="settings_apps_denied">Allow Usage access to count apps opened.</string>
-    <string name="settings_sensitivity_label">Sensitivity</string>
-    <string name="sensitivity_low">Low</string>
-    <string name="sensitivity_medium">Medium</string>
-    <string name="sensitivity_high">High</string>
+    <string name="settings_sensitivity_label">How quickly Dawnly asks</string>
+    <string name="sensitivity_low">Patient</string>
+    <string name="sensitivity_medium">Balanced</string>
+    <string name="sensitivity_high">Quick</string>
     <string name="settings_dismiss_label">When you\'re up</string>
     <string name="dismiss_mode_ask">Ask me</string>
     <string name="dismiss_mode_warn">Warn first</string>
     <string name="dismiss_mode_instant">Right away</string>
-    <string name="dismiss_mode_ask_detail">Dawnly asks, and you tap Dismiss alarm yourself.</string>
-    <string name="dismiss_mode_warn_detail">Dawnly dismisses the alarm after a 1-minute warning you can stop. Works with the phone locked.</string>
-    <string name="dismiss_mode_instant_detail">Dawnly dismisses the alarm straight away, with no warning. Works with the phone locked; you\'ll hear your sound played backwards.</string>
-    <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
-    <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>
+    <string name="dismiss_mode_ask_detail">Dawnly asks first. One tap and the alarm\'s off.</string>
+    <string name="dismiss_mode_warn_detail">Dawnly gives you a minute to say no, then turns the alarm off. Works with the phone locked.</string>
+    <string name="dismiss_mode_instant_detail">Dawnly turns the alarm off straight away. You\'ll hear your sound play backwards.</string>
+    <string name="settings_auto_dismiss_why">To do this while you\'re in another app, Dawnly needs Display over other apps. It never draws on your screen.</string>
+    <string name="settings_auto_dismiss_find">Allow opens a list: find Dawnly and switch it on.</string>
     <string name="settings_permissions_label">Permissions</string>
     <string name="settings_appearance_label">Appearance</string>
     <string name="appearance_light">Light</string>
@@ -147,7 +147,7 @@
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_step">Step %1$d of %2$d</string>
     <!-- Prompt sound -->
-    <string name="settings_sound_label">Notification sound</string>
+    <string name="settings_sound_label">Dawnly\'s sound</string>
     <string name="sound_title">Notification sound</string>
     <string name="sound_back">Back</string>
     <string name="sound_silent_hint">Your phone is on silent, so previews can\'t be heard.</string>
@@ -169,4 +169,17 @@
     <string name="sound_jump">Jump</string>
     <string name="sound_jackpot">Jackpot</string>
     <string name="sound_pixel">Pixel</string>
+    <string name="settings_more">More options</string>
+    <string name="settings_more_detail">Signs, speed and permissions</string>
+    <plurals name="settings_more_needs_you">
+        <item quantity="one">%1$d needs you</item>
+        <item quantity="other">%1$d need you</item>
+    </plurals>
+    <!-- Today: a friendly line above the ring that follows what's happening -->
+    <string name="home_hello_no_alarm">Nothing to watch yet</string>
+    <string name="home_hello_night">All set. Sleep well</string>
+    <string name="home_hello_day">All set</string>
+    <string name="home_hello_watching">Watching quietly</string>
+    <string name="home_hello_awake">Morning, early bird!</string>
+    <string name="home_hello_skipped">Taking this one off</string>
 </resources>

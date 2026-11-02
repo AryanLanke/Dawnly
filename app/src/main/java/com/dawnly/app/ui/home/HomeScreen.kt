@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,8 +37,10 @@ import com.dawnly.app.ui.glass.PreviewFrame
 import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.PermissionState
+import com.dawnly.app.ui.theme.NightClock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 
 @Composable
 fun HomeScreen(
@@ -82,6 +87,13 @@ private fun HomeContent(
     ) {
         Spacer(Modifier.height(20.dp))
         SpringIn(order = 0) {
+            Text(
+                stringResource(hello(status, now)),
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+        SpringIn(order = 0) {
             AlarmRing(status, now, Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp))
         }
         Spacer(Modifier.height(8.dp))
@@ -120,6 +132,16 @@ private fun HomeContent(
         }
         Spacer(Modifier.height(8.dp))
     }
+}
+
+/** The friendly line above the ring. It follows what's happening, and says good night at night. */
+private fun hello(status: HomeStatus, now: Instant): Int = when (status) {
+    HomeStatus.Loading, HomeStatus.NoAlarm -> R.string.home_hello_no_alarm
+    is HomeStatus.Waiting ->
+        if (NightClock.isNight(now.atZone(ZoneId.systemDefault()).toLocalTime())) R.string.home_hello_night
+        else R.string.home_hello_day
+    is HomeStatus.Watching -> if (status.awake) R.string.home_hello_awake else R.string.home_hello_watching
+    is HomeStatus.Skipped -> R.string.home_hello_skipped
 }
 
 // Previews use fake WakeSignals; the real ones come from WatchService during a window.
