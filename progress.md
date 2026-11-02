@@ -447,6 +447,13 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
 - [x] **Licence** (2026-11-02): all rights reserved (the user's choice over MIT and Apache 2.0). `LICENSE` says so and lists the font's and sounds' own licences; the README has a Licence section.
 - [ ] **Hobbyist sharing:** see "Sharing with testers" below.
 
+- [x] **New look and icon, from a friend's mockup** (2026-11-02, the user's pick): `design/mockups.html` is now "Glass over a living sky" (PLAN.md design system and Appendix A updated).
+  - **Sky** (`ui/glass/FlowingBackground.kt`, one frame clock read only while drawing): light mode is a pale blue morning sky with a sun glow and three drifting clouds; dark mode is `#0A0B12` with two glows, six twinkling stars, eight shooting stars and a soft moon. Still when reduce-animations is on.
+  - **Glass** (`Glass.kt`): 3dp blur, 135% saturation, 5%/6% tint, a 1.5dp liquid rim lit from the top-left, 1dp inset highlights, and a soft lift shadow. Seen signs and the chosen sound get a plain blue tick (`CheckBadge`). Screen layouts didn't change.
+  - **Icon "Sunny Egg"**: the user's egg picture redrawn as SVG in `design/app-icon/generator/icon.py` (`python build.py --android egg`); Floor Light and `liquid.py` removed.
+  - Built in a separate worktree while another session worked on main, then fast-forwarded. `testDebugUnitTest assembleDebug lintDebug` pass (no new lint warnings).
+  - To check in the testing phase: the sky's speed and smoothness, readability of text on the clearer glass in both modes, the icon on the home screen and as a themed icon.
+
 **Sharing with testers (researched 2026-11-02)**
 Google's "hobbyist account" is now the **limited distribution account** in the Android Developer Console (`https://android.google.com/developerconsole`). It's free and needs no ID: a Google Account with 2-Step Verification, a Google payments profile (legal name and address) and a contact email. It registers package names and shares an app with **up to 50 devices** (Google's guide says 50; its FAQ still says 20) through a QR code or link that each tester accepts on their phone. Sources: developer.android.com/developer-verification/guides/limited-distribution and …/guides/faq.
 - **What's enforced now:** since 2026-09-30, unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand only. Everywhere else a sideloaded APK installs as before until the global rollout in 2027. adb installs are never affected.
