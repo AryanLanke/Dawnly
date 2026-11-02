@@ -1,7 +1,7 @@
-Prompt sounds (app/src/main/res/raw/sound_*) are from Mixkit (https://mixkit.co), used under the
-Mixkit Sound Effects Free License (https://mixkit.co/license/#sfxFree). They are trimmed, level
-matched, and renamed for the app; the sound_*_reversed copies, played when an alarm is dismissed,
-are the same sounds reversed. They may not be redistributed on their own.
+Notification sounds (app/src/main/res/raw/sound_*) are from Mixkit (https://mixkit.co), used under
+the Mixkit Sound Effects Free License (https://mixkit.co/license/#sfxFree). They are trimmed, level
+matched, given a short fading echo, and renamed for the app; the sound_*_reversed files, played when
+an alarm is dismissed, are the same sounds reversed. They may not be redistributed on their own.
 
 App name   Mixkit item
 flute      Uplifting flute notification (2317)
