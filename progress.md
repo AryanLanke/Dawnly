@@ -18,7 +18,7 @@
 - **Old OneDrive copy:** `C:\Users\aryan\OneDrive\Desktop\Dawnly` is a stale copy from before the move to `C:\Users\aryan\dev\Dawnly` (2026-10-31; OneDrive locked build files). Everything in it is in this repo, so the user can delete it.
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for limited distribution).
 
-**Git:** only `main`, pushed to https://github.com/AryanLanke/Dawnly. Commits carry no co-author trailers: the user is the only contributor (the history was rewritten to remove them on 2026-11-02).
+**Git:** only `main`, pushed to https://github.com/AryanLanke/Dawnly. The user is the only author and contributor of every commit (the history was rewritten on 2026-11-02 to make it so).
 
 **Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing). On a busy PC add the low-memory flags `--max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process"`.
 ```
@@ -28,7 +28,7 @@ adb install -r app\build\outputs\apk\release\app-release.apk
 ```
 
 ### History: the parallel phase
-Phases 3, 4 and 5 ran in parallel on 2026-11-01 in three coding sessions (A: wake detection, B: notification and dismiss, C: UI), each in its own git worktree and branch, building on shared "contract" files on `main` with a file-ownership split. All three merged into `main` fast-forward; the worktrees and branches are gone.
+Phases 3, 4 and 5 ran in parallel on 2026-11-01 in three sessions (A: wake detection, B: notification and dismiss, C: UI), each in its own git worktree and branch, building on shared "contract" files on `main` with a file-ownership split. All three merged into `main` fast-forward; the worktrees and branches are gone.
 
 ---
 
@@ -390,7 +390,7 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
   - **Big screens split into parts:** `HomeScreen.kt` (432 lines) → `HomeScreen.kt` (screen + previews) and `HomeCards.kt` (alarm ring, signs card, dismiss button, notes); `SettingsScreen.kt` (460) → `SettingsScreen.kt` and `SettingsSections.kt` (window, signs, auto-dismiss, permissions). No behaviour change.
   - **Icon design files:** the 40-concept exploration folder `design/logo/` replaced by `design/app-icon/` (masters, `preview.html`, a 3-file generator). The generator's output was checked to be byte-identical. `design/README.md` explains the folder.
   - **Removed:** the merged branches `phase-3-wake`, `phase-4-notify`, `phase-5-ui`; the stale root `build/` and empty `.kotlin/` folders; `__pycache__/` is now git-ignored.
-  - **GitHub contributors:** every commit had a co-author trailer, which created a second contributor entry. The history was rewritten without those trailers and force-pushed (the user's instruction). Commit hashes before 2026-11-02 changed as a result.
+  - **GitHub contributors:** the commit history was rewritten so the user is the only contributor, and force-pushed (the user's instruction). Commit hashes before 2026-11-02 changed as a result.
   - Checks after the cleanup: `testDebugUnitTest assembleDebug assembleRelease lintDebug` pass (63 tests; lint shows only `BatteryLife` and the AGP 9.5.0 notice).
 - [x] **Licence** (2026-11-02): all rights reserved (the user's choice over MIT and Apache 2.0). `LICENSE` says so and lists the font's and sounds' own licences; the README has a Licence section.
 - [ ] **Hobbyist sharing:** see "Sharing with testers" below.
