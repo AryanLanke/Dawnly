@@ -3,87 +3,32 @@
 > Progress tracker for [PLAN.md](PLAN.md). **PLAN.md is still the full brief and the single source of truth.** Read it first: the requirements, design system, technical approach, and Appendix A are all there. This file records where the work stands and what to do next.
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
->
-> **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 ran **in parallel** in three coding sessions, one git worktree each. That's over: everything is merged into `main` and the worktrees are removed.
 
-**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). The signed release build, the licence, the overlay hint, and two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar) are done (2026-11-02). The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist.
+**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). Done on 2026-11-02: the signed release build, the licence, the overlay hint, two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar), the new app icon, and a repo cleanup. The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist.
 **Last updated:** 2026-11-02
-
-> **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
 
 ---
 
-## ▶ Where things stand (2026-11-01, end of the Phase 6 session)
-
-The user asked the Phase 6 session to do session B's and A's lists itself, then Phase 6. All three are done, merged into `main` (fast-forward, no merge commits), and the worktrees `Dawnly-ui`, `Dawnly-notify` and `Dawnly-wake` are removed. The branches `phase-3-wake`, `phase-4-notify` and `phase-5-ui` still exist, fully merged; delete them whenever (`git branch -d <name>`).
+## ▶ Where things stand (2026-11-02)
 
 **Open items:**
-- **Samsung and Xiaomi** are still untested (no phones). Test before sharing the app.
-- **The reboot test** from Phase 2: the user chose to skip it.
-- **Delete the two test alarms** in Google Clock, "Dawnly demo" (11:19 pm) and "Dawnly test" (11:40 pm). Both were dismissed, so they're off, but still in the list.
-- **Licence:** all rights reserved (the user's choice, 2026-11-02), in `LICENSE`.
+- **Testing phase (later):** the release device test, the reboot test (Phase 2), Samsung and Xiaomi (Phase 1), and checking the new icon on the phone. Details in the Phase 7 checklist.
+- **Delete the two test alarms** in Google Clock, "Dawnly demo" (11:19 pm) and "Dawnly test" (11:40 pm). Both are off but still in the list.
 - **Release key** (2026-11-02): `C:\Users\aryan\dawnly-keys\dawnly-release.jks`, password in the git-ignored `keystore.properties`. On this PC only, not backed up (the user's choice). If it's lost, Dawnly can't be updated on testers' phones or registered with Google.
-- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for the hobbyist release).
+- **Old OneDrive copy:** `C:\Users\aryan\OneDrive\Desktop\Dawnly` is a stale copy from before the move to `C:\Users\aryan\dev\Dawnly` (2026-10-31; OneDrive locked build files). Everything in it is in this repo, so the user can delete it.
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for limited distribution).
 
-## Earlier: Parallel work (Phases 3, 4, 5)
+**Git:** only `main`, pushed to https://github.com/AryanLanke/Dawnly. Commits carry no co-author trailers: the user is the only contributor (the history was rewritten to remove them on 2026-11-02).
 
-Phase 2 is committed and pushed. The shared "contract" files the three sessions build on are on `main` (see below). Each session has its own git worktree and branch, already created:
-
-| Session | Work | Folder (open VS Code here) | Branch |
-|---|---|---|---|
-| **A** | Phase 3 wake detection + Phase 6 CI | `C:\Users\aryan\dev\Dawnly-wake` | `phase-3-wake` |
-| **B** | Phase 4 notification and dismiss | `C:\Users\aryan\dev\Dawnly-notify` | `phase-4-notify` |
-| **C** | Phase 5 UI polish + Phase 6 app icon | `C:\Users\aryan\dev\Dawnly-ui` | `phase-5-ui` |
-
-The original folder `C:\Users\aryan\dev\Dawnly` keeps `main` checked out. Don't work in it; it's where merges land.
-
-### Shared contracts (on `main`; don't change their signatures)
-- `domain/wake/WakeSignals.kt`: `WakeSignals` (live readings) and `WakeSignalSettings` (which signals count, and the goals). A may add fields **with defaults**.
-- `service/WatchSession.kt`: `WatchSession.signals: StateFlow<WakeSignals?>`. A publishes to it from `WatchService`; C reads it on Home. null when not watching.
-- `notify/AwakeNotifier.kt`: `AwakeNotifier.onUserAwake(context, alarmAt)`. A calls it **at most once per watch window**; B implements it.
-- `data/settings/SettingsRepository.kt`: `watchWindow`, `wakeSignals`, and `appearance` (with setters). C builds the Settings screen on these; A reads `wakeSignals`. Treat this file as frozen.
-- `ui/debug/DebugScreen.kt`: a stub. A fills it in.
-- Manifest: `ACTIVITY_RECOGNITION` is already declared, so C's onboarding can request it before A merges.
-
-### File ownership (only edit your own; anything else is add-only and needs a reason in the commit message)
-| Owner | Files |
-|---|---|
-| A | `domain/wake/` (scoring + tests), `service/WatchService.kt`, `ui/debug/`, `app/src/debug/` (`DebugActivity` with its own "Dawnly debug" launcher icon, so A needs nothing from C's navigation), `.github/workflows/`, `res/values/strings_wake.xml` |
-| B | `notify/` (everything for Phase 4), `service/WatchScheduler.kt` (e.g. cancel the prompt when the next alarm changes), `res/values/strings_notify.xml`, manifest entries for B's own components. B's debug trigger: an `adb`-callable receiver in `app/src/debug/AndroidManifest.xml` (A adds to that file too; whoever merges second keeps both entries) |
-| C | `ui/` except `ui/debug/`, `MainActivity.kt`, `ui/theme/`, `res/font/`, launcher icon resources, `res/values/themes.xml`, `res/values/strings_ui.xml`, `ic_notification.xml` (artwork only), the manifest `icon`/`roundIcon`/`theme` attributes. C deletes `ui/feasibility/` once Home and Settings cover it |
-| Shared, add-only | `gradle/libs.versions.toml`, `app/build.gradle.kts`, `AndroidManifest.xml`, `DawnlyApp.kt`, `res/values/strings.xml` (don't edit; use your own strings file) |
-| Frozen | `domain/watch/`, `data/` (except as above), `SettingsRepository.kt`, `WatchSession.kt`, `AwakeNotifier`'s signature |
-
-### Rules for all three sessions
-1. **One phone, one app.** All three builds install as `com.dawnly.app`, so each install replaces the last. Build and unit test as much as you like, but **ask the user before `installDebug`**, and tell them what to test.
-2. **progress.md:** edit only your own phase section below. Don't touch the overview table or this block; the merge step updates them.
-3. Commit on your branch whenever a step works (no need to ask). **Ask the user before merging into `main` and pushing.**
-4. Before merging, run `.\gradlew.bat testDebugUnitTest assembleDebug lintDebug`, and get the user to confirm the device test.
-5. End with a phase summary and device test steps, as PLAN.md asks.
-
-### How to merge (first finished, first merged; any order works)
-Run in your own worktree once the user says go. `main` is shared by all worktrees, so there's nothing to fetch.
+**Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing). On a busy PC add the low-memory flags `--max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process"`.
 ```
-git rebase main                     # take in whatever merged first; fix conflicts (usually strings, manifest, progress.md)
-.\gradlew.bat testDebugUnitTest assembleDebug lintDebug
-git -C C:\Users\aryan\dev\Dawnly merge --ff-only <your-branch>
-git -C C:\Users\aryan\dev\Dawnly push origin main
+.\gradlew.bat testDebugUnitTest assembleDebug lintDebug   # the full check (CI runs the same)
+.\gradlew.bat assembleRelease                              # signed release APK
+adb install -r app\build\outputs\apk\release\app-release.apk
 ```
-Then update your row in the overview table and push that too. Fast-forward only keeps history linear, with no merge commits. After all three merge, remove the worktrees: `git worktree remove ..\Dawnly-wake` and the same for the other two.
 
-### After all three have merged (one session, any of them)
-Phase 6 finish: README with screenshots, a demo GIF, and a "Challenges I solved" section (background limits, exact alarms, OEM differences, FGS types, the "Skipped" rule), then the optional reboot test from Phase 2.
-
-### Earlier history
-- Phase 1 done, committed as `a42e43e` (2026-11-01). Samsung and Xiaomi skipped for now (user's decision); test them before sharing the app (PLAN.md section 9).
-- Phase 2 done, committed as `16b7cd5` (2026-11-01).
-
-**Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing):
-```
-.\gradlew.bat assembleDebug        # build
-.\gradlew.bat installDebug         # build + install on the phone
-adb shell am start -n com.dawnly.app/.MainActivity   # launch
-```
+### History: the parallel phase
+Phases 3, 4 and 5 ran in parallel on 2026-11-01 in three coding sessions (A: wake detection, B: notification and dismiss, C: UI), each in its own git worktree and branch, building on shared "contract" files on `main` with a file-ownership split. All three merged into `main` fast-forward; the worktrees and branches are gone.
 
 ---
 
@@ -98,7 +43,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (device-tested), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
 | 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Flute |
-| 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | 🔶 In progress (2026-11-02). Signed 0.1.0 release built and R8-checked, licence, overlay hint, Today confirm + "Signs you're awake" bar done. Open: CI check, hobbyist sharing; device tests wait for a later testing phase |
+| 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | 🔶 In progress (2026-11-02). Signed 0.1.0 release built and R8-checked, licence, overlay hint, Today confirm + "Signs you're awake" bar, new app icon, repo cleanup done. Open: CI check, hobbyist sharing; device tests wait for a later testing phase |
 
 ---
 
@@ -119,7 +64,7 @@ The Compose project builds and runs on the user's Nothing Phone (2a). "Hello fro
 - [x] Light and dark mode both verified on the phone. Note: `adb shell cmd uimode night no` does nothing while Nothing's Bedtime mode is on, so check light mode by hand.
 - [x] User env vars set: `JAVA_HOME` = Studio's `jbr`, `ANDROID_HOME` = the SDK, and `%ANDROID_HOME%\platform-tools` appended to the user `PATH` (kept as `REG_EXPAND_SZ`).
 - [x] Branch renamed `master` → `main`. `.gitattributes` added so `gradlew` keeps LF line endings for Linux and CI.
-- [x] First commit `2108df3` pushed to https://github.com/AryanLanke/Dawnly (`origin`; `main` tracks `origin/main`). `gh` isn't installed; plain `git push` works through the user's Git Credential Manager login.
+- [x] First commit `4481a1b` pushed to https://github.com/AryanLanke/Dawnly (`origin`; `main` tracks `origin/main`). `gh` isn't installed; plain `git push` works through the user's Git Credential Manager login.
 
 ---
 
@@ -139,30 +84,29 @@ The Compose project builds and runs on the user's Nothing Phone (2a). "Hello fro
 | Release build | R8 minify and resource shrinking on |
 | Window theme | `android:Theme.Material.Light.NoActionBar`. All real theming is done in Compose. |
 
-### File layout so far
+### File layout
 ```
 Dawnly/
-├─ PLAN.md, progress.md
-├─ design/mockups.html
-├─ settings.gradle.kts, build.gradle.kts, gradle.properties
-├─ gradle/libs.versions.toml, gradle/wrapper/*
-├─ gradlew, gradlew.bat
-└─ app/
-   ├─ build.gradle.kts, proguard-rules.pro
-   └─ src/main/
-      ├─ AndroidManifest.xml
-      ├─ res/values/strings.xml, themes.xml
-      └─ java/com/dawnly/app/
-         ├─ DawnlyApp.kt, MainActivity.kt
-         ├─ data/SafeData.kt
-         ├─ data/alarm/NextAlarm.kt, NextAlarmSource.kt, ClockApp.kt
-         ├─ data/settings/SettingsRepository.kt, data/watch/ArmedAlarmStore.kt
-         ├─ domain/watch/WatchState.kt (WatchPlanner), WatchWindow.kt
-         ├─ service/WatchScheduler.kt, WatchService.kt, WatchNotifications.kt, Receivers.kt
-         └─ ui/feasibility/FeasibilityScreen.kt, WatchWindowSection.kt, ui/theme/Theme.kt
-   └─ src/test/java/com/dawnly/app/domain/watch/WatchPlannerTest.kt
+├─ PLAN.md (the brief), progress.md (this log), README.md, LICENSE
+├─ .github/workflows/ci.yml          tests, debug build and lint on every push
+├─ design/                           see design/README.md
+│  ├─ mockups.html                   approved UI mockups (PLAN.md Appendix A)
+│  └─ app-icon/                      icon masters, preview.html, generator/ (Python, renders with Chrome)
+├─ docs/                             README screenshots and demo.gif
+├─ gradle/libs.versions.toml         version catalog
+└─ app/src/
+   ├─ main/java/com/dawnly/app/
+   │  ├─ DawnlyApp.kt, MainActivity.kt   app-wide singletons (manual wiring, no DI library)
+   │  ├─ data/        alarm/ (next alarm, Clock app), settings/, sound/, onboarding/, wake/, watch/
+   │  ├─ domain/      wake/ (signals, scoring, tracker), watch/ (window planning)
+   │  ├─ service/     WatchScheduler, WatchService, WakeWatcher, receivers
+   │  ├─ notify/      "Up already?" prompt, dismiss, auto-dismiss
+   │  └─ ui/          glass/ (design system), theme/, home/, settings/, onboarding/, permissions/, format/
+   ├─ main/res/       strings_*.xml per area, mipmap-*/ launcher icon layers, raw/ alert sounds
+   ├─ debug/          debug-only: wake detection screen (own launcher icon), adb test receiver
+   └─ test/           unit tests, mirroring main's packages
 ```
-`data/alarm/` is meant to be reused in later phases: `NextAlarmSource` reads the next alarm and follows it as a Flow, and `ClockApp` handles the dismiss intent, the handler lookup, and the open-Clock fallback. `ClockApp.dismissNextAlarmIntent()` is what Phase 4's notification `PendingIntent` should wrap. `ui/feasibility/` is a throwaway test screen that Home replaces in Phase 5. `DawnlyApp` holds the app-wide singletons (manual wiring, no DI library). `WatchScheduler.reconcile()` is the single entry point for the watch window; see Phase 2.
+Screens are split into the screen and its parts: `ui/home/HomeScreen.kt` + `HomeCards.kt`, `ui/settings/SettingsScreen.kt` + `SettingsSections.kt`. `WatchScheduler.reconcile()` is the single entry point for the watch window; see Phase 2.
 
 ---
 
@@ -402,7 +346,7 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 - [x] Fixed on the way: settings saved before the new signs existed now get the apps and movement goals of the user's sensitivity level, so Settings still shows that level after an update. `Sensitivity` moved to `domain/wake`.
 - [x] Worktrees `Dawnly-ui`, `Dawnly-notify`, `Dawnly-wake` removed (all clean and merged first).
 - [x] `.gitignore` now ignores JVM crash logs (`hs_err_pid*.log`, `replay_pid*.log`). The PC ran low on memory during builds while another big Python job was running; building with `--max-workers=2 -Pkotlin.compiler.execution.strategy=in-process` worked.
-- [x] Pushed to GitHub (`d0f564c`). The CI result couldn't be read without the user's login (see Phase 7).
+- [x] Pushed to GitHub (`11b09c4`). The CI result couldn't be read without the user's login (see Phase 7).
 - [ ] Reboot test (Phase 2): skipped by the user.
 
 #### Device test: auto-dismiss (Nothing Phone (2a), Google Clock, 2026-11-01, 23:30–23:39)
@@ -440,7 +384,14 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
   - **Dismiss alarm asks first.** A tap swaps the button, in place, for "Dismiss your 8:00 pm alarm?" with **Dismiss alarm** / **Cancel** (`DismissAction` in `HomeScreen.kt`). Inline rather than a dialog, so it stays on the glass and the flowing background.
   - **"Signs you're awake" bar** at the top of the signs card while watching: a percentage, a thin bar (`ProgressBar` in `ui/glass/ProgressRing.kt`) and "Dawnly asks once this fills". It shows `WakeScore.value`, the same score that sends the prompt (`HomeStatus.Watching.wakeProgress`, 1 new unit test, 63 in total).
   - Not seen on the phone yet (testing comes later).
-- [x] **New app icon** (2026-11-02): "Floor Light", a slanted arched window in liquid glass on blue (the user's pick from 40 concepts; masters and the generator are in `design/logo/`). The launcher uses the **night** version (the user's choice of one static icon) as bitmap layers in `mipmap-{mdpi…xxxhdpi}/ic_launcher_{background,foreground,monochrome}.png`, because the glass needs blur, which vector drawables can't do. Re-export with `python design/logo/_source/build.py --android night` (or `day`). The old vector icon drawables were removed. Release 0.1.0 with the new icon installed over the old one with the user's OK (2026-11-02, settings kept). Not checked on the phone yet: the home screen, the app drawer, and themed icons on.
+- [x] **New app icon** (2026-11-02): "Floor Light", a slanted arched window in liquid glass on blue (the user's pick from 40 concepts; masters, a preview page and the generator are in `design/app-icon/`). The launcher uses the **night** version (the user's choice of one static icon) as bitmap layers in `mipmap-{mdpi…xxxhdpi}/ic_launcher_{background,foreground,monochrome}.png`, because the glass needs blur, which vector drawables can't do. To change it, edit `design/app-icon/generator/icon.py` and run `python build.py --android night` in that folder (see `design/README.md`). The old vector icon drawables were removed. Release 0.1.0 with the new icon installed over the old one with the user's OK (2026-11-02, settings kept). Not checked on the phone yet: the home screen, the app drawer, and themed icons on.
+- [x] **Repo cleanup** (2026-11-02, the user asked for a tidy, engineer-style repo):
+  - **Debug-only code out of the release app:** `DebugScreen.kt` moved from `main` to `app/src/debug/` (only `DebugActivity` uses it), with its 44 strings (`strings_wake.xml` → `debug/res/values/strings_debug_screen.xml`). The release APK no longer contains the debug screen or its text (checked with aapt2).
+  - **Big screens split into parts:** `HomeScreen.kt` (432 lines) → `HomeScreen.kt` (screen + previews) and `HomeCards.kt` (alarm ring, signs card, dismiss button, notes); `SettingsScreen.kt` (460) → `SettingsScreen.kt` and `SettingsSections.kt` (window, signs, auto-dismiss, permissions). No behaviour change.
+  - **Icon design files:** the 40-concept exploration folder `design/logo/` replaced by `design/app-icon/` (masters, `preview.html`, a 3-file generator). The generator's output was checked to be byte-identical. `design/README.md` explains the folder.
+  - **Removed:** the merged branches `phase-3-wake`, `phase-4-notify`, `phase-5-ui`; the stale root `build/` and empty `.kotlin/` folders; `__pycache__/` is now git-ignored.
+  - **GitHub contributors:** every commit had a co-author trailer, which created a second contributor entry. The history was rewritten without those trailers and force-pushed (the user's instruction). Commit hashes before 2026-11-02 changed as a result.
+  - Checks after the cleanup: `testDebugUnitTest assembleDebug assembleRelease lintDebug` pass (63 tests; lint shows only `BatteryLife` and the AGP 9.5.0 notice).
 - [x] **Licence** (2026-11-02): all rights reserved (the user's choice over MIT and Apache 2.0). `LICENSE` says so and lists the font's and sounds' own licences; the README has a Licence section.
 - [ ] **Hobbyist sharing:** see "Sharing with testers" below.
 
@@ -456,7 +407,7 @@ Google's "hobbyist account" is now the **limited distribution account** in the A
 - [ ] A privacy policy (Dawnly is fully offline and collects nothing, but Play still asks for one), store listing, and screenshots (the README ones can be reused).
 - [ ] Not v1, from PLAN.md section 4: a "Still awake?" nudge for falling back asleep after dismissing. The hook is `WakeWatcher.onAwake`.
 
-**Build notes:** in PowerShell, quote the Kotlin flag or it splits at the dot: `.\gradlew.bat --max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process" assembleRelease`. Final check 2026-11-02: `testDebugUnitTest assembleDebug lintDebug` passes (62 tests; lint shows only `BatteryLife` and the AGP 9.5.0 notice).
+**Build notes:** in PowerShell, quote the Kotlin flag or it splits at the dot: `.\gradlew.bat --max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process" assembleRelease`. Final check 2026-11-02: `testDebugUnitTest assembleDebug lintDebug` passes (63 tests; lint shows only `BatteryLife` and the AGP 9.5.0 notice).
 
 ---
 
