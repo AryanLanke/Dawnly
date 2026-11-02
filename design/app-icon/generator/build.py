@@ -1,7 +1,7 @@
 """Builds the Dawnly app icon from icon.py. Renders with headless Chrome (no Python packages needed).
 
-    python build.py                  day.svg, night.svg, their 512px PNGs and preview.html
-    python build.py --android night  also export that state as the app's launcher icon layers
+    python build.py                  egg.svg, egg-512.png and preview.html
+    python build.py --android egg    also export it as the app's launcher icon layers
 
 The launcher icon ships as bitmap layers (mipmap-*/ic_launcher_{background,foreground,monochrome}.png)
 because the glass needs blur, which Android vector drawables can't draw.
@@ -65,14 +65,14 @@ h1{font-size:20px;margin:0 0 6px}p{color:#5a6377;max-width:640px;margin:0 0 20px
 .ic img{position:absolute;left:-25%;top:-25%;width:150%;height:150%}
 .col{display:flex;flex-direction:column;gap:8px;align-items:center;font-size:11px;color:#8a93a6}
 </style></head><body>
-<h1>Dawnly app icon: Floor Light</h1>
-<p>Liquid glass. Day and night are the same scene at two light levels. Shown as an Android launcher
-shows it, at 108px and 48px, on light and dark home screens. The app ships the night version.</p>
+<h1>Dawnly app icon: Sunny Egg</h1>
+<p>A fried egg: a white of soft blue glass and a glossy yolk. Shown as an Android launcher shows it,
+at 108px and 48px, round and squircle, on light and dark home screens.</p>
 """ + ''.join(f"""<div class="panel {bg}">
-<div class="col"><div class="ic" style="width:108px;height:108px"><img src="day.svg"></div>day</div>
-<div class="col"><div class="ic" style="width:108px;height:108px"><img src="night.svg"></div>night</div>
-<div class="col"><div class="ic" style="width:48px;height:48px"><img src="day.svg"></div>
-<div class="ic" style="width:48px;height:48px"><img src="night.svg"></div>48px</div></div>
+<div class="col"><div class="ic" style="width:108px;height:108px"><img src="egg.svg"></div>squircle</div>
+<div class="col"><div class="ic" style="width:108px;height:108px;border-radius:50%"><img src="egg.svg"></div>round</div>
+<div class="col"><div class="ic" style="width:48px;height:48px"><img src="egg.svg"></div>
+<div class="ic" style="width:48px;height:48px;border-radius:50%"><img src="egg.svg"></div>48px</div></div>
 """ for bg in ('light', 'dark')) + '</body></html>\n'
 
 
