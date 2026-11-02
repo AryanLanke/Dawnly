@@ -1,0 +1,12 @@
+Copyright (c) 2026 Aryan Lanke. All rights reserved.
+
+The source code, design and other original material in this repository are
+shared for viewing only. No permission is granted to copy, modify, distribute,
+sublicense or use any part of it, in whole or in part, without the prior
+written permission of the copyright holder.
+
+Third-party material keeps its own licence:
+- The Figtree font (app/src/main/res/font/): SIL Open Font License 1.1, see
+  app/src/main/assets/licenses/figtree_OFL.txt.
+- The notification sounds (app/src/main/res/raw/): Mixkit Sound Effects Free
+  License, see app/src/main/assets/licenses/mixkit_sounds.txt.

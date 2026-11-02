@@ -118,3 +118,7 @@ Tested on a Nothing Phone (2a), Android 16, with Google Clock. Dawnly reads and 
 
 - [Figtree](https://github.com/erikdkennedy/figtree) by Erik Kennedy, SIL Open Font License ([licence](app/src/main/assets/licenses/figtree_OFL.txt)).
 - Notification sounds from [Mixkit](https://mixkit.co/free-sound-effects/), Mixkit Sound Effects Free License ([details](app/src/main/assets/licenses/mixkit_sounds.txt)).
+
+## Licence
+
+Copyright © 2026 Aryan Lanke. All rights reserved: the code is here to read, not to reuse. See [LICENSE](LICENSE). The font and sounds above keep their own licences.
