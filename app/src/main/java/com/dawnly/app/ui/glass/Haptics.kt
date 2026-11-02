@@ -17,9 +17,9 @@ import androidx.compose.ui.platform.LocalContext
  * (`performHapticFeedback`) is dropped entirely when the phone's "Touch feedback" setting is off,
  * which it is on the user's phone; the user asked for Dawnly to vibrate anyway (2026-11-03). So
  * this drives the vibrator itself, as media vibration, which that setting doesn't silence. The
- * "Media vibration" strength in system settings still applies.
+ * "Media vibration" strength in system settings still applies. The EFFECT_* constants are plain
+ * ints, only played on Android 10+; older phones get a short buzz instead.
  */
-// The EFFECT_* constants are plain ints, only played on Android 10+; older phones get a short buzz.
 @SuppressLint("InlinedApi")
 class Haptics(context: Context) {
     private val vibrator: Vibrator? =
