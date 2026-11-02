@@ -37,10 +37,10 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
 
     /**
      * Asks the Clock app to dismiss the next alarm, or opens it if it can't. [activity] starts it.
-     * Dawnly comes back over the Clock app once the alarm is dismissed.
+     * Dawnly comes back over the Clock app once the alarm is dismissed, with the reversed sound.
      */
     fun dismissAlarm(activity: Activity) {
-        val result = QuietDismiss.dismiss(activity, app.nextAlarms.current())
+        val result = QuietDismiss.dismiss(activity, app.nextAlarms.current(), backToDawnly = true)
         _dismissResult.value = result.takeUnless { it is DismissResult.Requested }
         app.scope.launch { app.watchScheduler.reconcile() }
     }

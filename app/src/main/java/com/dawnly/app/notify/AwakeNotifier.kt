@@ -116,6 +116,7 @@ object AwakeNotifier {
             .filter { it.id == OLD_CHANNEL || (it.id.startsWith(CHANNEL_PREFIX) && it.id != wanted) }
             .forEach { manager.deleteNotificationChannel(it.id) }
         if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound)
+        DismissedNotice.useSound(context, sound)
     }
 
     /**

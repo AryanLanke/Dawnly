@@ -35,8 +35,8 @@ class DismissAlarmActivity : Activity() {
         val check = DismissGuard.check(promptAlarmAt, next?.triggerAt, Instant.now())
         Log.i(TAG, "Prompt for $promptAlarmAt, next alarm ${next?.triggerAt}: $check")
         when (check) {
-            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next)) {
-                // The Clock app dismisses it, and Dawnly comes back once the next alarm moves on.
+            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false)) {
+                // The Clock app dismisses it, then the user goes back to the app they were in.
                 is DismissResult.Requested -> Unit
                 is DismissResult.OpenedClock -> toast(R.string.dismiss_opened_clock, result.clock.label)
                 DismissResult.NoClockApp -> toast(R.string.dismiss_no_clock)

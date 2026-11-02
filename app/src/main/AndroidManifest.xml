@@ -27,7 +27,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
-         screen apps so opening them doesn't count as opening an app. -->
+         screen apps so opening them doesn't count as opening an app. Launcher apps: after a
+         dismiss, the user goes back to the app they were in (QuietDismiss). -->
     <queries>
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />
@@ -38,6 +39,10 @@
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
         </intent>
     </queries>
 

@@ -35,7 +35,7 @@ Kotlin · Jetpack Compose · fully offline · no account · runs only before you
    | Music playing | `AudioManager` | Only adds to movement |
 
    Each sign's progress toward its goal adds up, and you count as awake at 100%: one sign at its goal, or a mix (3 of 5 minutes on screen plus 20 of 50 steps). A quick 3 AM time check adds only a sliver. Music never counts alone, because people fall asleep to music.
-4. **Asks before it acts.** A notification asks whether to dismiss the alarm. **Dismiss alarm** sends `AlarmClock.ACTION_DISMISS_ALARM` to the Clock app. If the Clock app can't take that request, Dawnly opens it and says why. You can opt in to **Dismiss automatically**: then Dawnly shows a one-minute countdown you can stop before it dismisses.
+4. **Asks before it acts.** A notification asks whether to dismiss the alarm. **Dismiss alarm** sends `AlarmClock.ACTION_DISMISS_ALARM` to the Clock app. If the Clock app can't take that request, Dawnly opens it and says why. You can opt in to **Dismiss automatically**: then Dawnly shows a one-minute countdown you can stop before it dismisses. This works with the phone locked in a pocket. When the alarm is dismissed, Dawnly plays your notification sound backwards and goes back to the app you were in, so no Clock screen is left open.
 
 ### Architecture
 
@@ -46,7 +46,7 @@ app/src/main/java/com/dawnly/app/
 ├─ data/      next alarm + Clock app intents, DataStore settings, saved wake progress
 ├─ domain/    pure Kotlin, unit tested: WatchPlanner (watch state), WakeTracker + WakeScore (wake detection)
 ├─ service/   WatchScheduler (the single reconcile() entry point), WatchService, WakeWatcher (sensors, broadcasts)
-├─ notify/    AwakeNotifier (the prompt), DismissGuard, QuietDismiss, auto-dismiss
+├─ notify/    AwakeNotifier (the prompt), DismissGuard, QuietDismiss, ReturnPlan, DismissedNotice, auto-dismiss
 └─ ui/        Compose screens and the glass design system (ui/glass), theme, permissions
 ```
 

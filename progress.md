@@ -4,12 +4,24 @@
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
 
-**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). Done on 2026-11-02: the signed release build, the licence, the overlay hint, two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar), the new app icon, and a repo cleanup. The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist. **Next session starts with auto-dismiss on a locked phone (below), before anything else.**
-**Last updated:** 2026-11-02
+**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). Done on 2026-11-02: the signed release build, the licence, the overlay hint, two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar), the new app icon, and a repo cleanup. The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist. **Auto-dismiss on a locked phone works (tested 2026-11-03); the reversed "dismissed" sound and going back to the previous app are built, not yet installed (below).**
+**Last updated:** 2026-11-03
 
 ---
 
-## ▶ Next session: auto-dismiss with the phone locked (the user's top priority)
+## ▶ Auto-dismiss with the phone locked (the user's top priority)
+
+**Result, 2026-11-03: it works.** Step 1 Run A on the Nothing Phone, release 0.1.0: screen off (power button 00:49:24, display OFF at 00:51:25), phone in a pocket, walking with Spotify playing. Watching began 00:50:00; awake at 00:50:28 (Sensitivity High, no screen use); at 00:51:28 `DismissAlarmActivity` started from the background (`BAL_ALLOW_SAW_PERMISSION`) and Google Clock dismissed the 1:05 alarm **without asking to unlock**. Google Clock then opened its alarm list behind the lock screen and Dawnly came forward over it, so after unlocking an app was open instead of Spotify.
+- Gotcha for testers: an alarm is only watched if it was set **before** its window opened (`WatchPlanner`, "leaves it alone" otherwise). Set test alarms more than one window ahead.
+- Run B (lock screen showing) is moved to the testing phase.
+
+**Done, 2026-11-03 (Step 2a, with the user's new rules; see memory "dismiss-leaves-phone-as-is"):**
+- Every dismiss (auto, the prompt's button, Today's button) posts **"Alarm dismissed"** (`DismissedNotice`) with the chosen sound **played backwards** (`res/raw/sound_*_reversed.ogg`, made with ffmpeg `areverse` + leading-silence trim, 340 KB for all 17; Phone default borrows the reversed flute). Its own per-sound channels `dismissed_<sound>`, swapped with the prompt's in `AwakeNotifier.useSound`. Unlocked it clears itself after a minute; locked it waits on the lock screen. Replaces the old toast.
+- **No app left open:** `QuietDismiss` now goes back to the app that was in front before the dismiss (Usage access events; `ReturnPlan`, unit tested), the home screen if unknown, or Dawnly when dismissed from Dawnly's Today screen. Manifest `<queries>` gains MAIN/LAUNCHER so the app can be relaunched.
+- Settings text and README say it works with the phone locked.
+- **To test later (testing phase):** locked auto-dismiss lands back in Spotify (or home) after unlock; the reversed sound plays in a pocket; Today's button and the prompt's button play it too; Run B with the lock screen showing; without Usage access it goes home.
+
+### The plan as written before the test
 
 **What the user wants (2026-11-02):** with **Dismiss automatically** on, the alarm should go away by itself when they're already up and busy, e.g. working out, walking, or listening to music, with the phone **locked** in a pocket or on the floor. They shouldn't have to unlock the phone for it. Do this before any other work.
 

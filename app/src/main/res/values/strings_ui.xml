@@ -93,7 +93,7 @@
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>
     <string name="settings_auto_dismiss">Dismiss automatically</string>
-    <string name="settings_auto_dismiss_detail">After a 1-minute warning you can stop</string>
+    <string name="settings_auto_dismiss_detail">After a 1-minute warning you can stop. Works with the phone locked</string>
     <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
     <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>
     <string name="settings_permissions_label">Permissions</string>
