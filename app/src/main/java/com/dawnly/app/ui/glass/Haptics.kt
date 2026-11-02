@@ -1,6 +1,5 @@
 package com.dawnly.app.ui.glass
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
 import android.os.Build
@@ -17,10 +16,11 @@ import androidx.compose.ui.platform.LocalContext
  * (`performHapticFeedback`) is dropped entirely when the phone's "Touch feedback" setting is off,
  * which it is on the user's phone; the user asked for Dawnly to vibrate anyway (2026-11-03). So
  * this drives the vibrator itself, as media vibration, which that setting doesn't silence. The
- * "Media vibration" strength in system settings still applies. The EFFECT_* constants are plain
- * ints, only played on Android 10+; older phones get a short buzz instead.
+ * "Media vibration" strength in system settings still applies.
+ *
+ * Plain short buzzes rather than Android's built-in click and tick effects: on the user's phone
+ * (no amplitude control) those played but were too faint to feel.
  */
-@SuppressLint("InlinedApi")
 class Haptics(context: Context) {
     private val vibrator: Vibrator? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -31,24 +31,20 @@ class Haptics(context: Context) {
         }
 
     /** A glass button pressed. */
-    fun click() = play(VibrationEffect.EFFECT_CLICK, fallbackMillis = 12)
+    fun click() = play(millis = 30)
 
     /** A choice or a page changing: segments, tabs, swiping between Today and Settings. */
-    fun tick() = play(VibrationEffect.EFFECT_TICK, fallbackMillis = 8)
+    fun tick() = play(millis = 25)
 
     /** A switch flipped. */
     fun toggle(on: Boolean) = if (on) click() else tick()
 
     /** Press and hold: a firmer buzz that says "now slide". */
-    fun longPress() = play(VibrationEffect.EFFECT_HEAVY_CLICK, fallbackMillis = 25)
+    fun longPress() = play(millis = 60)
 
-    private fun play(effect: Int, fallbackMillis: Long) {
+    private fun play(millis: Long) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        val vibration = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            VibrationEffect.createPredefined(effect)
-        } else {
-            VibrationEffect.createOneShot(fallbackMillis, VibrationEffect.DEFAULT_AMPLITUDE)
-        }
+        val vibration = VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             vibrator.vibrate(vibration, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA))
         } else {
