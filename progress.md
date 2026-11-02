@@ -6,8 +6,8 @@
 >
 > **Exception (user's decision, 2026-11-01):** Phases 3, 4, and 5 ran **in parallel** in three coding sessions, one git worktree each. That's over: everything is merged into `main` and the worktrees are removed.
 
-**Current phase:** Phase 7, release prep (not started). Phases 0–6 are done (2026-11-01); Phase 6 finished in one session, which also did session B's and session A's follow-up lists (the user's request). See "Where things stand" below and the Phase 7 checklist.
-**Last updated:** 2026-11-01
+**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). The signed release build, the licence and the overlay hint are done (2026-11-02); the CI check, the release device test, hobbyist sharing and the Samsung/Xiaomi tests are open. See the Phase 7 checklist.
+**Last updated:** 2026-11-02
 
 > **The project moved on 2026-10-31** from `C:\Users\aryan\OneDrive\Desktop\Dawnly` to **`C:\Users\aryan\dev\Dawnly`**. OneDrive locked files in `app/build/` mid-build, so every incremental build failed with "Unable to delete directory". Open VS Code in the new folder. Once the new copy is confirmed working, delete the OneDrive copy (it has the same uncommitted changes, so nothing is lost).
 
@@ -21,7 +21,8 @@ The user asked the Phase 6 session to do session B's and A's lists itself, then 
 - **Samsung and Xiaomi** are still untested (no phones). Test before sharing the app.
 - **The reboot test** from Phase 2: the user chose to skip it.
 - **Delete the two test alarms** in Google Clock, "Dawnly demo" (11:19 pm) and "Dawnly test" (11:40 pm). Both were dismissed, so they're off, but still in the list.
-- **No licence file.** Without a LICENSE the code is "all rights reserved". Add one if others should be able to reuse it.
+- **Licence:** all rights reserved (the user's choice, 2026-11-02), in `LICENSE`.
+- **Release key** (2026-11-02): `C:\Users\aryan\dawnly-keys\dawnly-release.jks`, password in the git-ignored `keystore.properties`. On this PC only, not backed up (the user's choice). If it's lost, Dawnly can't be updated on testers' phones or registered with Google.
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for the hobbyist release).
 
 ## Earlier: Parallel work (Phases 3, 4, 5)
@@ -97,7 +98,7 @@ adb shell am start -n com.dawnly.app/.MainActivity   # launch
 | 4 | Notification and one-tap dismiss, plus the fallback | ✅ Done (2026-11-01). Follow-up: "Up already?" copy, opt-in auto-dismiss (device-tested), Clock screen cut to a flicker |
 | 5 | UI polish: glass design system, all screens, motion, dark mode, onboarding | ✅ Done (2026-11-01), merged second. Includes the notification sound picker; the prompt now plays the chosen sound |
 | 6 | Portfolio finish: README, GIF, challenges section, CI, app icon | ✅ Done (2026-11-01). README with screenshots, GIF and challenges; CI; icon; default sound Flute |
-| 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | ⬜ Not started. See "Phase 7" |
+| 7 | Release prep: remaining checks, Samsung/Xiaomi, signed release, hobbyist sharing | 🔶 In progress (2026-11-02). Signed 0.1.0 release built and R8-checked, licence, overlay hint done. Open: CI check, release device test, hobbyist sharing, Samsung/Xiaomi |
 
 ---
 
@@ -415,27 +416,39 @@ Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Ch
 
 After the test, auto-dismiss was turned off again and "Display over other apps" reset, so the phone is as it was.
 
-### Phase 7 — Release prep (next, not started)
-Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through Google's free hobbyist account (up to 20 devices) first, maybe the Play Store later.
+### Phase 7 — Release prep (in progress, started 2026-11-02)
+Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through Google's free limited distribution account first, maybe the Play Store later.
 
 **Checks to finish**
-- [ ] **CI on GitHub:** open github.com/AryanLanke/Dawnly → **Actions** tab → the top run ("Make Flute the default prompt sound", `d0f564c`) should have a green tick. If it's red, open it and copy the error into a new session.
+- [ ] **CI on GitHub** (the user checks; the repo is private and `gh` isn't installed): github.com/AryanLanke/Dawnly → **Actions** tab → the top run should have a green tick. If it's red, open it, click the failed step, and copy the error into a session.
 - [x] **Auto-dismiss device test:** passed (2026-11-01), see "Device test: auto-dismiss" in Phase 6.
-- [ ] **Small fix:** on Android 11+ the Allow button for auto-dismiss opens the list of all apps, not Dawnly's page. Make the reason text say "find Dawnly and turn it on", or show a short hint after tapping Allow.
+- [x] **Overlay hint** (2026-11-02): on Android 11+ the reason under **Dismiss automatically** now ends "Allow opens a list of apps: tap Dawnly there and turn it on." (`settings_auto_dismiss_find`). Android 8–10 open Dawnly's own page, so they don't show it. Not yet seen on the phone. Usage access (onboarding) also opens the app list; it has no hint yet.
 - [ ] **Delete the test alarms:** Clock app → **Alarm** tab → touch and hold the 11:19 pm "Dawnly demo" alarm → **Delete**. Do the same for the 11:40 pm "Dawnly test" alarm.
 - [ ] **Reboot test** (Phase 2), if wanted: restart the phone during a watch window and check watching carries on.
 
 **Before sharing the app**
 - [ ] **Samsung and Xiaomi:** run the Phase 1 test steps (read and dismiss the next alarm) and the onboarding battery screens on each. Record the results in the Phase 1 table.
-- [ ] **Release build:** a signing key (keep it out of git), `assembleRelease`, and a check that R8 didn't break anything (DataStore, notifications, the receivers).
-- [ ] **Version:** set `versionName` / `versionCode` for the first shared build (now 0.1.0).
-- [ ] **Licence:** pick one (for example MIT) and add a LICENSE file, or leave the code "all rights reserved".
-- [ ] **Hobbyist sharing:** set up the Google developer account and send the build to testers.
+- [x] **Signing key** (2026-11-02): `C:\Users\aryan\dawnly-keys\dawnly-release.jks` (PKCS12, RSA 4096, alias `dawnly`, CN=Aryan Lanke, valid to 2054). SHA-256 `DC:6D:70:4D:EA:FD:FF:B7:6B:32:2B:87:D0:1F:88:C1:0D:32:1E:AA:21:6D:CE:9F:28:49:89:72:F3:4E:0E:BE`. Its path and the generated password are in `keystore.properties` at the repo root (git-ignored, as are `*.jks` and `*.keystore`). `app/build.gradle.kts` signs release builds with it when that file exists and leaves them unsigned otherwise (CI only builds debug). The user is to copy the password into a password manager. Kept on this PC only (the user's choice); a second copy somewhere safe is still advisable.
+- [x] **Version:** 0.1.0, versionCode 1 (the user's choice; already set). Bump versionCode for every build sent to testers.
+- [x] **Release build** (2026-11-02): `assembleRelease` → `app/build/outputs/apk/release/app-release.apk`, 5.1 MB (debug is 17 MB), APK signature v2 with the key above, not debuggable. R8 checks, from the APK and `mapping.txt`: every manifest component keeps its class name (`DawnlyApp`, `MainActivity`, `WatchService`, `WatchAlarmReceiver`, `SystemEventsReceiver`, `DismissAlarmActivity`, `NotYetReceiver`, `AutoDismissReceiver`); the debug-only receivers aren't in it; all 17 `raw/sound_*` and `font/figtree` survive resource shrinking with their names; log tags are string constants, so `adb logcat -s …` works the same. DataStore and Haze bring their own R8 rules, nothing in the app uses reflection, and enums are saved by `name`, which R8 keeps. `proguard-rules.pro` needed nothing.
+- [x] **Fixed on the way:** bundled sounds were handed to notification channels as `android.resource://…/<resource number>`. A channel keeps its sound for good, and resource numbers can shift between versions, so an update could have played the wrong sound. `AlertSound.uri()` now uses `…/raw/sound_flute` (names survive R8, checked above).
+- [ ] **Release device test** (needs the user's OK). The release key differs from the debug key, so Android won't install over the debug build: uninstall Dawnly first (settings and onboarding start fresh, and the "Dawnly debug" icon goes). Then: onboarding (all steps); Settings (change every setting, close Dawnly from Recents, reopen: settings kept); a 5-min watch window with the phone locked (the watching notification appears, and goes at the alarm); use the phone in the window (the "Up already?" prompt with the Flute sound); **Dismiss alarm** (Google Clock dismisses it, Dawnly comes back); **Not yet**; change the alarm with the prompt showing (the prompt goes); sound picker previews; auto-dismiss with the new hint. Logs: `adb logcat -s WatchScheduler WakeWatcher AwakeNotifier DismissAlarmActivity QuietDismiss AutoDismiss ClockApp`.
+- [x] **Licence** (2026-11-02): all rights reserved (the user's choice over MIT and Apache 2.0). `LICENSE` says so and lists the font's and sounds' own licences; the README has a Licence section.
+- [ ] **Hobbyist sharing:** see "Sharing with testers" below.
+
+**Sharing with testers (researched 2026-11-02)**
+Google's "hobbyist account" is now the **limited distribution account** in the Android Developer Console (`https://android.google.com/developerconsole`). It's free and needs no ID: a Google Account with 2-Step Verification, a Google payments profile (legal name and address) and a contact email. It registers package names and shares an app with **up to 50 devices** (Google's guide says 50; its FAQ still says 20) through a QR code or link that each tester accepts on their phone. Sources: developer.android.com/developer-verification/guides/limited-distribution and …/guides/faq.
+- **What's enforced now:** since 2026-09-30, unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand only. Everywhere else a sideloaded APK installs as before until the global rollout in 2027. adb installs are never affected.
+- **So, today:** testers can install `app-release.apk` directly (e.g. from a Google Drive link, with "Install unknown apps" allowed for the browser or Files app).
+- **For 2027:** register `com.dawnly.app` with the release key's SHA-256 in the console's **Package names** tab. If the key is lost, the package can't be registered.
+- [ ] Account created · [ ] `com.dawnly.app` registered · [ ] build sent to testers
 
 **Before the Play Store (later)**
 - [ ] Play policy reasons for `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `SYSTEM_ALERT_WINDOW`, `PACKAGE_USAGE_STATS`, and the `specialUse` foreground service.
 - [ ] A privacy policy (Dawnly is fully offline and collects nothing, but Play still asks for one), store listing, and screenshots (the README ones can be reused).
 - [ ] Not v1, from PLAN.md section 4: a "Still awake?" nudge for falling back asleep after dismissing. The hook is `WakeWatcher.onAwake`.
+
+**Build notes:** in PowerShell, quote the Kotlin flag or it splits at the dot: `.\gradlew.bat --max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process" assembleRelease`. Final check 2026-11-02: `testDebugUnitTest assembleDebug lintDebug` passes (62 tests; lint shows only `BatteryLife` and the AGP 9.5.0 notice).
 
 ---
 
