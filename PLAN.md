@@ -32,7 +32,7 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
 ## 5. Tech stack
 - **Language:** Kotlin
 - **UI:** Jetpack Compose (Material 3 as the base, heavily customised — see section 6)
-- **Glass/blur effects:** Haze library (frosted translucent layers)
+- **Glass effects:** drawn in Compose (tint, rim, shadow); no blur library (dropped 2026-11-03 for smooth scrolling)
 - **Architecture:** MVVM, single module, clear packages (`ui`, `data`, `domain`, `service`)
 - **Settings storage:** Jetpack DataStore
 - **Dependency management:** Gradle version catalog (`libs.versions.toml`)
@@ -59,7 +59,7 @@ I set an alarm for 5:30 AM, wake up at 5:00 on my own, pick up my phone and star
 - **Two modes, light and dark.** Settings has an Appearance option: Light, Dark, System (follows the phone), or Clock (night look from 7 pm to 6 am, morning look the rest of the day; added 2026-11-03). Default: System.
 - **Background, a living sky** (changed 2026-11-02 to a friend's mockup the user picked). Light mode is morning: a pale blue sky (`#C6DDFF` → `#D9E8FF` → `#E6F0FF`), a soft sun glow in the top-right corner and three white clouds slowly drifting across (48–62 second loops). Dark mode is night: near-black `#0A0B12` with two soft blue glows, six twinkling stars, eight shooting stars and a soft moon in the top-right corner. This movement behind the glass is the signature of the app.
 - **Sky in Compose:** drawn in the draw phase only (`ui/glass/FlowingBackground.kt`) from one frame clock, so it redraws without recomposing. Only animate while the screen is visible, and keep it still when the system "reduce animations" setting is on.
-- **Glass:** almost clear, light blur (3dp) with a little saturation (135%) via Haze, so the sky is clearly visible through it. Light mode: white at 5% (32% for selected items), white border at 35%. Dark mode: light blue at 6% (20% selected), white border at 18%. A liquid rim (bright where light catches the top-left edge, fading around the shape), thin inner highlights, and a soft shadow lifting it off the sky. Never frosted or milky. Seen signs get a plain blue tick (`#1A4FD6`, `#4A8DFF` in dark mode).
+- **Glass:** almost clear, no blur, so the sky is clearly visible through it (the mockup's 3px blur was dropped on 2026-11-03: it barely showed and made scrolling stutter). Light mode: white at 5% (32% for selected items), white border at 35%. Dark mode: light blue at 6% (20% selected), white border at 18%. A liquid rim (bright where light catches the top-left edge, fading around the shape), thin inner highlights, and a soft shadow lifting it off the sky. Never frosted or milky. Seen signs get a plain blue tick (`#1A4FD6`, `#4A8DFF` in dark mode).
 - **Colors:** light mode uses dark navy text `#0E1E45` and blue `#1A4FD6` for main buttons, switches, and the progress ring. Dark mode uses white text and white main buttons with blue text. Everything stays in the blue family.
 - **Font:** Figtree (Google Fonts) only. Light 300 for big times, Regular 400 for body, SemiBold 600 for titles and buttons.
 - **Shapes:** cards 28dp corners, buttons 16–20dp, pills and tab bar fully rounded.

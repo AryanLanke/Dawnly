@@ -54,14 +54,14 @@ Debug-only code (the wake detection screen and an adb test receiver) lives in `a
 
 - **One entry point.** Everything that can change the plan (opening the app, a settings change, the next alarm changing, a reboot, an app update, our own alarm firing) calls `WatchScheduler.reconcile()`. It works the state out from scratch every time, so it's safe to call any number of times.
 - **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (63 in total).
-- **The UI is a design system, not a theme.** `ui/glass/` has translucent glass surfaces (blur via [Haze](https://github.com/chrisbanes/haze)), a living sky behind the glass (morning clouds in light mode, stars, shooting stars and a moon in dark mode) drawn in the draw phase only, spring motion, and a progress ring. Everything is Compose, with light and dark modes, and the motion stays still when the system's reduce-animations setting is on. The mockups it was built from are in [design/mockups.html](design/mockups.html), and the app icon (a fried egg with a white of blue glass) and the script that draws it are in [design/app-icon](design/app-icon).
+- **The UI is a design system, not a theme.** `ui/glass/` has translucent glass surfaces (rim and shadow drawn once into bitmaps, so scrolling holds 120 Hz), a living sky behind the glass (morning clouds in light mode, stars, shooting stars and a moon in dark mode) drawn in the draw phase only, spring motion, and a progress ring. Everything is Compose, with light and dark modes, and the motion stays still when the system's reduce-animations setting is on. The mockups it was built from are in [design/mockups.html](design/mockups.html), and the app icon (a fried egg with a white of blue glass) and the script that draws it are in [design/app-icon](design/app-icon).
 
 ## Tech stack
 
 | | |
 |---|---|
 | Language | Kotlin 2.4 |
-| UI | Jetpack Compose (Material 3 base, heavily customised), Haze for blur, Figtree font |
+| UI | Jetpack Compose (Material 3 base, heavily customised), Figtree font |
 | Architecture | MVVM, single module, `ui` / `data` / `domain` / `service` / `notify` packages |
 | Storage | Jetpack DataStore (Preferences) |
 | Background work | `AlarmManager` exact alarms, a foreground service, dynamically registered receivers, sensors |

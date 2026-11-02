@@ -25,8 +25,6 @@ data class DawnlyColors(
     /** Glass tint, and the stronger tint for selected items. */
     val glass: Color,
     val glassStrong: Color,
-    /** Below Android 12 there's no blur, so glass gets a stronger tint to stay readable. */
-    val glassFallback: Color,
     /** The thin white rim around glass. */
     val edge: Color,
     /** The bright line along the top edge of glass. */
@@ -64,7 +62,6 @@ val LightColors = DawnlyColors(
     textSoft = Navy.copy(alpha = 0.6f),
     glass = Color.White.copy(alpha = 0.05f),
     glassStrong = Color.White.copy(alpha = 0.32f),
-    glassFallback = Color.White.copy(alpha = 0.5f),
     edge = Color.White.copy(alpha = 0.22f),
     highlight = Color.White.copy(alpha = 0.95f),
     rimStrength = 0.8f,
@@ -89,7 +86,6 @@ val DarkColors = DawnlyColors(
     textSoft = Color.White.copy(alpha = 0.68f),
     glass = Color(0xFFBEDCFF).copy(alpha = 0.06f),
     glassStrong = Color(0xFFD2E6FF).copy(alpha = 0.2f),
-    glassFallback = Color(0xFF14204A).copy(alpha = 0.6f),
     edge = Color(0xFFDCE8FF).copy(alpha = 0.04f),
     highlight = Color(0xFFDCE8FF).copy(alpha = 0.24f),
     rimStrength = 0.4f,

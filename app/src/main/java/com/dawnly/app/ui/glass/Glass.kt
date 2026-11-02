@@ -20,8 +20,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ShaderBrush
@@ -44,11 +42,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.ui.theme.DawnlyColors
 import com.dawnly.app.ui.theme.DawnlyTheme
-import dev.chrisbanes.haze.HazeInput
-import dev.chrisbanes.haze.HazePerformanceMode
-import dev.chrisbanes.haze.blur.HazeBlurStyle
-import dev.chrisbanes.haze.blur.HazeColorEffect
-import dev.chrisbanes.haze.blur.hazeBlur
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -63,21 +56,16 @@ object GlassShapes {
     val Pill = CircleShape
 }
 
-/** The mockup's `saturate(135%)`: it keeps the sky a little richer through the glass. */
-private val Saturate = HazeColorEffect.colorFilter(
-    ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(1.35f) }),
-)
-
 /**
- * Clear liquid glass: a light blur of the sky behind it (Android 12+), an almost clear tint, a
- * bright rim where light catches the top-left edge and fades around the shape, thin inner
- * highlights, and a soft shadow lifting it off the sky. Below Android 12 there's no blur, so the
- * tint gets stronger instead.
+ * Clear liquid glass: an almost clear tint, a bright rim where light catches the top-left edge and
+ * fades around the shape, thin inner highlights, and a soft shadow lifting it off the sky.
  *
- * The sky moves every frame, so glass is redrawn every frame too. Its soft parts (the shadow and
- * the rim's glow) are blurred once into small bitmaps and reused, and the sky blur runs at low
- * resolution (the sky has no fine detail, so that doesn't show; it keeps the GPU, and so the lag
- * between finger and screen, down). Drawing them fresh each frame took ~40 ms.
+ * No blur of the sky behind (2026-11-03): the mockup's 3px blur over an already soft sky barely
+ * showed, but re-blurring the moving sky under every panel each frame made Settings stutter. The
+ * user compared both on the phone and kept the smooth one.
+ *
+ * The sky moves every frame, so glass is redrawn every frame too. Its rim and shadow are drawn once
+ * into bitmaps and reused; drawing them fresh each frame took ~40 ms.
  *
  * @param strong the brighter tint for selected items.
  * @param onClick makes the glass a button that sinks a little while pressed.
@@ -93,16 +81,7 @@ fun GlassSurface(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val colors = DawnlyTheme.colors
-    val haze = LocalHazeState.current
     val tint = if (strong) colors.glassStrong else colors.glass
-    val style = remember(tint, colors.glassFallback) {
-        HazeBlurStyle {
-            blurRadius(3.dp)
-            noiseFactor(0f)
-            colorEffects(listOf(Saturate, HazeColorEffect.tint(tint)))
-            fallbackColorEffect(HazeColorEffect.tint(colors.glassFallback))
-        }
-    }
     val interactions = remember { MutableInteractionSource() }
     val scale by pressScale(interactions)
     val haptic = rememberHaptics()
@@ -115,13 +94,7 @@ fun GlassSurface(
             }
             .outerShadow(shape, colors.lift, blur = 30.dp, offsetY = 10.dp)
             .clip(shape)
-            .then(
-                if (haze != null) {
-                    Modifier.hazeBlur(HazeInput.Sources(haze), style, HazePerformanceMode.Performance)
-                } else {
-                    Modifier.background(tint)
-                },
-            )
+            .background(tint)
             .then(GlassRimElement(shape, colors))
             .then(
                 if (onClick != null) {

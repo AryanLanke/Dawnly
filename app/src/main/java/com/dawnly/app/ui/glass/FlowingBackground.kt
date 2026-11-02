@@ -9,7 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.LongState
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
@@ -35,11 +34,6 @@ import androidx.core.graphics.withTranslation
 import com.dawnly.app.ui.theme.DawnlyColors
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
-
-/** What glass blurs. Null in previews, where glass falls back to a plain tint. */
-val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
 
 /*
  * Sizes and timings are the mockup's CSS (a 280 x 610 screen). Lengths are mockup px scaled by the
@@ -107,12 +101,10 @@ private const val TWINKLE_MILLIS = 3_500
 @Composable
 fun FlowingBackground(modifier: Modifier = Modifier) {
     val colors = DawnlyTheme.colors
-    val haze = LocalHazeState.current
     val time = skyClock()
     Box(
         modifier
             .fillMaxSize()
-            .then(if (haze != null) Modifier.hazeSource(haze) else Modifier)
             .drawWithCache {
                 val sky = if (colors.isDark) nightSky(colors) else morningSky(colors)
                 onDrawBehind { sky(time.longValue) }

@@ -49,7 +49,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -68,7 +67,6 @@ import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.ui.glass.FlowingBackground
 import com.dawnly.app.ui.glass.GlassTabBar
-import com.dawnly.app.ui.glass.LocalHazeState
 import com.dawnly.app.ui.home.HomeScreen
 import com.dawnly.app.ui.home.HomeViewModel
 import com.dawnly.app.ui.onboarding.OnboardingScreen
@@ -83,7 +81,6 @@ import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
 import com.dawnly.app.ui.theme.clockSaysNight
-import dev.chrisbanes.haze.rememberHazeState
 
 /** The whole app: theme, the flowing background, then onboarding or the two tabs. */
 @Composable
@@ -99,22 +96,20 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
     SystemBarsFollow(dark)
 
     DawnlyTheme(darkTheme = dark) {
-        CompositionLocalProvider(LocalHazeState provides rememberHazeState()) {
-            Box(Modifier.fillMaxSize()) {
-                FlowingBackground()
-                val done = onboardingDone ?: return@Box
-                val permissions = rememberPermissionsController()
-                val oemBattery = remember { OemBattery.detect(Build.MANUFACTURER) }
-                AnimatedContent(
-                    targetState = done,
-                    transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.96f)) togetherWith fadeOut() },
-                    label = "root",
-                ) { isDone ->
-                    if (isDone) {
-                        MainTabs(home, settings, permissions, oemBattery)
-                    } else {
-                        Onboarding(main, permissions, oemBattery)
-                    }
+        Box(Modifier.fillMaxSize()) {
+            FlowingBackground()
+            val done = onboardingDone ?: return@Box
+            val permissions = rememberPermissionsController()
+            val oemBattery = remember { OemBattery.detect(Build.MANUFACTURER) }
+            AnimatedContent(
+                targetState = done,
+                transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.96f)) togetherWith fadeOut() },
+                label = "root",
+            ) { isDone ->
+                if (isDone) {
+                    MainTabs(home, settings, permissions, oemBattery)
+                } else {
+                    Onboarding(main, permissions, oemBattery)
                 }
             }
         }
