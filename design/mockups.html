@@ -3,33 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dawnly – Blue glass UI mockups</title>
+<title>Dawnly – Glass UI mockups</title>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --page-bg:#E9EDF5; --page-text:#14203F; --page-muted:#5A6684;
-  --wall:#F7F9FE; --blob1:#A9CCFF; --blob2:#C7E2FF; --blob3:#8FB8FF;
+  --wall:#F7F9FE; --glow:rgba(169,204,255,.55); --star:#7FB0FF; --star-head:#5E95FF;
   --text:#0E1E45; --text-soft:rgba(14,30,69,.6);
-  --glass:rgba(255,255,255,.14); --glass-strong:rgba(255,255,255,.42); --edge:rgba(255,255,255,.75);
+  --glass:rgba(255,255,255,.05); --glass-strong:rgba(255,255,255,.32); --edge:rgba(255,255,255,.35); --lift:0 10px 30px rgba(60,90,160,.14);
   --line:rgba(14,30,69,.10); --track:rgba(14,30,69,.12);
-  --accent:#1A4FD6; --on-accent:#FFFFFF;
+  --accent:#1A4FD6; --on-accent:#FFFFFF; --tick:#1A4FD6;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --page-bg:#070B17; --page-text:#E8ECF7; --page-muted:#97A2C0;
-  --wall:#050A1A; --blob1:#5E95FF; --blob2:#8CBCFF; --blob3:#4A7FF0;
+  --wall:#0A0B12; --glow:rgba(94,120,220,.28); --star:#CFE2FF; --star-head:#FFFFFF;
   --text:#FFFFFF; --text-soft:rgba(255,255,255,.68);
-  --glass:rgba(190,220,255,.08); --glass-strong:rgba(210,230,255,.2); --edge:rgba(255,255,255,.32);
+  --glass:rgba(190,220,255,.06); --glass-strong:rgba(210,230,255,.2); --edge:rgba(255,255,255,.18); --lift:0 10px 30px rgba(0,0,0,.35);
   --line:rgba(255,255,255,.14); --track:rgba(255,255,255,.18);
-  --accent:#FFFFFF; --on-accent:#1A4FD6;
+  --accent:#FFFFFF; --on-accent:#1A4FD6; --tick:#4A8DFF;
   color-scheme:dark;}}
 :root[data-theme="dark"]{
   --page-bg:#070B17; --page-text:#E8ECF7; --page-muted:#97A2C0;
-  --wall:#050A1A; --blob1:#5E95FF; --blob2:#8CBCFF; --blob3:#4A7FF0;
+  --wall:#0A0B12; --glow:rgba(94,120,220,.28); --star:#CFE2FF; --star-head:#FFFFFF;
   --text:#FFFFFF; --text-soft:rgba(255,255,255,.68);
-  --glass:rgba(190,220,255,.08); --glass-strong:rgba(210,230,255,.2); --edge:rgba(255,255,255,.32);
+  --glass:rgba(190,220,255,.06); --glass-strong:rgba(210,230,255,.2); --edge:rgba(255,255,255,.18); --lift:0 10px 30px rgba(0,0,0,.35);
   --line:rgba(255,255,255,.14); --track:rgba(255,255,255,.18);
-  --accent:#FFFFFF; --on-accent:#1A4FD6;
+  --accent:#FFFFFF; --on-accent:#1A4FD6; --tick:#4A8DFF;
   color-scheme:dark;}
 *{box-sizing:border-box;margin:0}
 body{font-family:Figtree,system-ui,sans-serif;background:var(--page-bg);color:var(--page-text);padding:28px 16px 48px}
@@ -44,23 +44,49 @@ figure{display:flex;flex-direction:column;align-items:center;gap:10px}
 figcaption{font-size:.9rem;color:var(--page-muted)}
 .phone{width:300px;height:630px;border-radius:44px;padding:10px;background:#03050b;box-shadow:0 24px 60px rgba(0,0,0,.25)}
 .screen{position:relative;isolation:isolate;width:100%;height:100%;border-radius:36px;overflow:hidden;color:var(--text);background:var(--wall)}
-/* Flowing blue shapes */
-.flow{position:absolute;inset:0;z-index:-1;pointer-events:none}
-.flow i{position:absolute;border-radius:50%;filter:blur(18px);opacity:.9}
-.flow i:nth-child(1){width:240px;height:240px;left:-60px;top:40px;background:radial-gradient(circle,var(--blob1),transparent 68%);animation:a 16s ease-in-out infinite alternate}
-.flow i:nth-child(2){width:280px;height:280px;right:-90px;top:260px;background:radial-gradient(circle,var(--blob2),transparent 68%);animation:b 19s ease-in-out infinite alternate}
-.flow i:nth-child(3){width:220px;height:220px;left:10px;bottom:-60px;background:radial-gradient(circle,var(--blob3),transparent 68%);animation:c 22s ease-in-out infinite alternate}
-@keyframes a{50%{transform:translate(140px,120px) scale(1.15)}100%{transform:translate(60px,320px) scale(.9)}}
-@keyframes b{50%{transform:translate(-150px,-160px) scale(.9)}100%{transform:translate(-60px,140px) scale(1.2)}}
-@keyframes c{50%{transform:translate(120px,-220px) scale(1.2)}100%{transform:translate(160px,-40px) scale(.95)}}
-figure:nth-child(2) .flow i{animation-delay:-6s}
-figure:nth-child(3) .flow i{animation-delay:-11s}
-figure:nth-child(4) .flow i{animation-delay:-15s}
-@media (prefers-reduced-motion:reduce){.flow i{animation:none}}
+/* Shooting stars behind the glass */
+.flow{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background:radial-gradient(70% 40% at 70% 10%,var(--glow),transparent 70%),radial-gradient(60% 35% at 20% 95%,var(--glow),transparent 70%)}
+.flow i{position:absolute;top:var(--y);left:var(--x);width:var(--len,110px);height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--star));filter:blur(.6px);opacity:0;
+  transform-origin:left center;transform:rotate(145deg);
+  animation:shoot var(--d,7s) linear var(--w,0s) infinite}
+.flow i::after{content:"";position:absolute;right:-2px;top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;
+  background:var(--star-head);box-shadow:0 0 8px 2px var(--star)}
+@keyframes shoot{0%{opacity:0;transform:rotate(145deg) translateX(0)}4%{opacity:var(--o,1)}35%{opacity:0;transform:rotate(145deg) translateX(420px)}100%{opacity:0;transform:rotate(145deg) translateX(420px)}}
+/* Morning sky: pale blue, soft sun glow, slow drifting clouds */
+:root:not([data-theme="dark"]) .flow{background:linear-gradient(180deg,#C6DDFF 0%,#D9E8FF 55%,#E6F0FF 100%)}
+.flow i,.flow b,.moon{display:none}
+.sun{position:absolute;right:-50px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,#FFF4D6 0%,rgba(255,236,190,.75) 25%,rgba(255,236,190,0) 70%)}
+.cloud{position:absolute;height:34px;border-radius:40px;background:#FFFFFF;filter:blur(3px) drop-shadow(0 6px 8px rgba(120,160,230,.25));animation:drift linear infinite}
+.cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+.cloud::before{width:46%;height:150%;left:18%;top:-55%}
+.cloud::after{width:34%;height:120%;left:52%;top:-35%}
+.cloud.c1{width:150px;top:150px;left:-130px;animation-duration:48s}
+.cloud.c2{width:110px;top:330px;left:-100px;animation-duration:62s;animation-delay:-30s;opacity:.85}
+.cloud.c3{width:170px;top:500px;left:-150px;animation-duration:55s;animation-delay:-14s;opacity:.9}
+@keyframes drift{to{transform:translateX(460px)}}
+/* Night sky: shooting stars, twinkles and a soft moon */
+:root[data-theme="dark"] .sun,:root[data-theme="dark"] .cloud{display:none}
+:root[data-theme="dark"] .flow i,:root[data-theme="dark"] .flow b,:root[data-theme="dark"] .moon{display:block}
+.flow b{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:tw 3.5s ease-in-out infinite alternate}
+@keyframes tw{to{opacity:.15}}
+.moon{position:absolute;right:-22px;top:-6px;width:120px;height:120px;opacity:.5;
+  filter:blur(1.4px) drop-shadow(0 0 30px rgba(255,246,220,.6)) drop-shadow(0 0 80px rgba(255,246,220,.35));animation:moonfloat 16s ease-in-out infinite alternate}
+@keyframes moonfloat{to{transform:translateY(-4px) rotate(2deg)}}
+figure:nth-child(2) .flow i{animation-delay:calc(var(--w,0s) - 2.3s)}
+figure:nth-child(3) .flow i{animation-delay:calc(var(--w,0s) - 4.1s)}
+figure:nth-child(4) .flow i{animation-delay:calc(var(--w,0s) - 5.7s)}
+@media (prefers-reduced-motion:reduce){.flow i,.flow b,.cloud,.moon{animation:none}}
 .status{display:flex;justify-content:space-between;padding:12px 22px 0;font-size:.72rem;font-weight:600}
-.glass{background:var(--glass);border:1px solid var(--edge);
-  backdrop-filter:blur(8px) saturate(170%);-webkit-backdrop-filter:blur(8px) saturate(170%);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 -1px 1px rgba(255,255,255,.3),inset 0 0 14px rgba(255,255,255,.18),0 4px 16px rgba(10,30,90,.08)}
+.glass{position:relative;background:var(--glass);border:1px solid var(--edge);
+  backdrop-filter:blur(3px) saturate(135%);-webkit-backdrop-filter:blur(3px) saturate(135%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 1px 0 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(255,255,255,.25),inset 0 0 18px rgba(255,255,255,.05),var(--lift)}
+/* Liquid-glass rim: bright light catching the top-left edge, fading around the shape */
+.glass::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,1) 0%,rgba(255,255,255,.25) 28%,rgba(255,255,255,0) 50%,rgba(255,255,255,.15) 75%,rgba(255,255,255,.7) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
 .soft{color:var(--text-soft)}
 .card{border-radius:28px;margin:0 14px;padding:16px 18px}
 .ring{position:relative;width:210px;height:210px;margin:28px auto 22px;border-radius:50%;display:grid;place-items:center}
@@ -71,7 +97,7 @@ figure:nth-child(4) .flow i{animation-delay:-15s}
 .row2{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:.9rem}
 .row2+.row2{border-top:1px solid var(--line)}
 .row2 small{display:block;font-size:.74rem;margin-top:2px}
-.check{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;background:var(--accent);color:var(--on-accent)}
+.check{width:22px;height:22px;display:block}
 .tabs{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:4px;border-radius:999px;padding:5px}
 .tabs span{padding:9px 20px;border-radius:999px;font-size:.82rem;font-weight:500}
 .tabs .on{background:var(--glass-strong)}
@@ -110,13 +136,48 @@ figure:nth-child(4) .flow i{animation-delay:-15s}
 </head>
 <body>
 <header>
-  <h1>Dawnly – Blue glass UI mockups</h1>
-  <p>Clear blue glass over a white (light mode) or near-black (dark mode) background, with soft blue shapes slowly flowing behind. Use the buttons to switch between light and dark mode.</p>
+  <h1>Dawnly – Glass UI mockups</h1>
+  <p>Clear glass over a living sky. Morning: pale blue sky, a soft sun glow and slow drifting clouds. Evening: shooting stars, twinkling stars, and a soft detailed moon, all softened behind the glass. Use the buttons to switch between light and dark mode.</p>
   <div class="modes" role="group" aria-label="Mode"><button data-m="light">Light</button><button data-m="dark">Dark</button></div>
 </header>
 <div class="row">
 
-<figure><div class="phone"><div class="screen"><div class="flow"><i></i><i></i><i></i></div>
+<figure><div class="phone"><div class="screen"><div class="flow">
+<i style="--x:85%;--y:4%;--d:19.8s;--w:0.0s"></i>
+<i style="--x:60%;--y:30%;--d:24.2s;--w:9.9s;--len:90px"></i>
+<i style="--x:95%;--y:18%;--d:13.2s;--w:2.2s"></i>
+<i style="--x:70%;--y:2%;--d:16.5s;--w:5.7s;--len:140px"></i>
+<i style="--x:100%;--y:45%;--d:17.6s;--w:8.4s"></i>
+<i style="--x:45%;--y:8%;--d:14.3s;--w:11.4s;--len:80px"></i>
+<i style="--x:90%;--y:60%;--d:20.9s;--w:14.1s"></i>
+<i style="--x:75%;--y:38%;--d:15.4s;--w:0.9s;--len:120px"></i>
+<b style="left:18%;top:12%"></b><b style="left:42%;top:22%;animation-delay:-1s"></b><b style="left:80%;top:30%;animation-delay:-2s"></b><b style="left:12%;top:48%;animation-delay:-.5s"></b><b style="left:66%;top:70%;animation-delay:-1.6s"></b><b style="left:30%;top:84%;animation-delay:-2.4s"></b>
+<svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+<defs>
+<radialGradient id="mb" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#FBF8EE"/><stop offset=".7" stop-color="#E6E0CF"/><stop offset="1" stop-color="#B9B3A3"/></radialGradient>
+<radialGradient id="mc" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#C9C2AE"/><stop offset="1" stop-color="#ADA693"/></radialGradient>
+<radialGradient id="ms" cx="18%" cy="40%" r="90%"><stop offset=".55" stop-color="#0A0B12" stop-opacity="0"/><stop offset="1" stop-color="#0A0B12" stop-opacity=".55"/></radialGradient>
+<filter id="mblur"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs>
+<circle cx="50" cy="50" r="48" fill="url(#mb)"/>
+<g fill="#CFC8B5" opacity=".75" filter="url(#mblur)">
+<path d="M28 30 C36 22 50 24 52 34 C54 42 44 46 36 44 C28 42 22 36 28 30Z"/>
+<path d="M56 52 C64 46 76 50 76 60 C76 68 66 72 58 68 C52 64 50 56 56 52Z"/>
+<path d="M30 60 C36 56 44 60 42 66 C40 72 32 72 29 68 C27 65 27 62 30 60Z"/>
+</g>
+<g>
+<circle cx="66" cy="28" r="6" fill="url(#mc)"/><circle cx="65" cy="27" r="6" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".8"/>
+<circle cx="40" cy="78" r="4.5" fill="url(#mc)"/><circle cx="39.4" cy="77.3" r="4.5" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".7"/>
+<circle cx="78" cy="44" r="3" fill="url(#mc)"/>
+<circle cx="22" cy="50" r="2.6" fill="url(#mc)"/>
+<circle cx="56" cy="86" r="2.2" fill="url(#mc)"/>
+<circle cx="48" cy="18" r="2" fill="url(#mc)"/>
+<circle cx="70" cy="76" r="3.4" fill="url(#mc)"/><circle cx="69.5" cy="75.4" r="3.4" fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width=".6"/>
+</g>
+<circle cx="50" cy="50" r="48" fill="url(#ms)"/>
+</svg>
+<span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+</div>
   <div class="status"><span>4:58</span><span>5G 82%</span></div>
   <div class="ring glass">
     <svg viewBox="0 0 210 210" aria-hidden="true">
@@ -126,14 +187,49 @@ figure:nth-child(4) .flow i{animation-delay:-15s}
     <div><b>5:30</b><span class="soft">Watching since 4:30</span></div>
   </div>
   <div class="card glass">
-    <div class="row2"><span>Phone unlocked</span><span class="check">✓</span></div>
+    <div class="row2"><span>Phone unlocked</span><svg class="check" viewBox="0 0 24 24" aria-label="Done"><path d="M5 12.6l4.6 4.6L19 7.2" fill="none" style="stroke:var(--tick)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div class="row2"><span>Screen use</span><span class="soft">3 of 5 min</span></div>
     <div class="row2"><span>Steps</span><span class="soft">42 of 50</span></div>
   </div>
   <div class="tabs glass"><span class="on">Today</span><span>Settings</span></div>
 </div></div><figcaption>Home, watching</figcaption></figure>
 
-<figure><div class="phone"><div class="screen"><div class="flow"><i></i><i></i><i></i></div>
+<figure><div class="phone"><div class="screen"><div class="flow">
+<i style="--x:85%;--y:4%;--d:19.8s;--w:0.0s"></i>
+<i style="--x:60%;--y:30%;--d:24.2s;--w:9.9s;--len:90px"></i>
+<i style="--x:95%;--y:18%;--d:13.2s;--w:2.2s"></i>
+<i style="--x:70%;--y:2%;--d:16.5s;--w:5.7s;--len:140px"></i>
+<i style="--x:100%;--y:45%;--d:17.6s;--w:8.4s"></i>
+<i style="--x:45%;--y:8%;--d:14.3s;--w:11.4s;--len:80px"></i>
+<i style="--x:90%;--y:60%;--d:20.9s;--w:14.1s"></i>
+<i style="--x:75%;--y:38%;--d:15.4s;--w:0.9s;--len:120px"></i>
+<b style="left:18%;top:12%"></b><b style="left:42%;top:22%;animation-delay:-1s"></b><b style="left:80%;top:30%;animation-delay:-2s"></b><b style="left:12%;top:48%;animation-delay:-.5s"></b><b style="left:66%;top:70%;animation-delay:-1.6s"></b><b style="left:30%;top:84%;animation-delay:-2.4s"></b>
+<svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+<defs>
+<radialGradient id="mb" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#FBF8EE"/><stop offset=".7" stop-color="#E6E0CF"/><stop offset="1" stop-color="#B9B3A3"/></radialGradient>
+<radialGradient id="mc" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#C9C2AE"/><stop offset="1" stop-color="#ADA693"/></radialGradient>
+<radialGradient id="ms" cx="18%" cy="40%" r="90%"><stop offset=".55" stop-color="#0A0B12" stop-opacity="0"/><stop offset="1" stop-color="#0A0B12" stop-opacity=".55"/></radialGradient>
+<filter id="mblur"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs>
+<circle cx="50" cy="50" r="48" fill="url(#mb)"/>
+<g fill="#CFC8B5" opacity=".75" filter="url(#mblur)">
+<path d="M28 30 C36 22 50 24 52 34 C54 42 44 46 36 44 C28 42 22 36 28 30Z"/>
+<path d="M56 52 C64 46 76 50 76 60 C76 68 66 72 58 68 C52 64 50 56 56 52Z"/>
+<path d="M30 60 C36 56 44 60 42 66 C40 72 32 72 29 68 C27 65 27 62 30 60Z"/>
+</g>
+<g>
+<circle cx="66" cy="28" r="6" fill="url(#mc)"/><circle cx="65" cy="27" r="6" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".8"/>
+<circle cx="40" cy="78" r="4.5" fill="url(#mc)"/><circle cx="39.4" cy="77.3" r="4.5" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".7"/>
+<circle cx="78" cy="44" r="3" fill="url(#mc)"/>
+<circle cx="22" cy="50" r="2.6" fill="url(#mc)"/>
+<circle cx="56" cy="86" r="2.2" fill="url(#mc)"/>
+<circle cx="48" cy="18" r="2" fill="url(#mc)"/>
+<circle cx="70" cy="76" r="3.4" fill="url(#mc)"/><circle cx="69.5" cy="75.4" r="3.4" fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width=".6"/>
+</g>
+<circle cx="50" cy="50" r="48" fill="url(#ms)"/>
+</svg>
+<span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+</div>
   <div class="status"><span></span><span>5G 81%</span></div>
   <div class="lock"><div class="d">Saturday, 31 October</div><div class="t">5:04</div></div>
   <div class="notif glass">
@@ -144,7 +240,42 @@ figure:nth-child(4) .flow i{animation-delay:-15s}
   </div>
 </div></div><figcaption>The gentle notification</figcaption></figure>
 
-<figure><div class="phone"><div class="screen"><div class="flow"><i></i><i></i><i></i></div>
+<figure><div class="phone"><div class="screen"><div class="flow">
+<i style="--x:85%;--y:4%;--d:19.8s;--w:0.0s"></i>
+<i style="--x:60%;--y:30%;--d:24.2s;--w:9.9s;--len:90px"></i>
+<i style="--x:95%;--y:18%;--d:13.2s;--w:2.2s"></i>
+<i style="--x:70%;--y:2%;--d:16.5s;--w:5.7s;--len:140px"></i>
+<i style="--x:100%;--y:45%;--d:17.6s;--w:8.4s"></i>
+<i style="--x:45%;--y:8%;--d:14.3s;--w:11.4s;--len:80px"></i>
+<i style="--x:90%;--y:60%;--d:20.9s;--w:14.1s"></i>
+<i style="--x:75%;--y:38%;--d:15.4s;--w:0.9s;--len:120px"></i>
+<b style="left:18%;top:12%"></b><b style="left:42%;top:22%;animation-delay:-1s"></b><b style="left:80%;top:30%;animation-delay:-2s"></b><b style="left:12%;top:48%;animation-delay:-.5s"></b><b style="left:66%;top:70%;animation-delay:-1.6s"></b><b style="left:30%;top:84%;animation-delay:-2.4s"></b>
+<svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+<defs>
+<radialGradient id="mb" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#FBF8EE"/><stop offset=".7" stop-color="#E6E0CF"/><stop offset="1" stop-color="#B9B3A3"/></radialGradient>
+<radialGradient id="mc" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#C9C2AE"/><stop offset="1" stop-color="#ADA693"/></radialGradient>
+<radialGradient id="ms" cx="18%" cy="40%" r="90%"><stop offset=".55" stop-color="#0A0B12" stop-opacity="0"/><stop offset="1" stop-color="#0A0B12" stop-opacity=".55"/></radialGradient>
+<filter id="mblur"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs>
+<circle cx="50" cy="50" r="48" fill="url(#mb)"/>
+<g fill="#CFC8B5" opacity=".75" filter="url(#mblur)">
+<path d="M28 30 C36 22 50 24 52 34 C54 42 44 46 36 44 C28 42 22 36 28 30Z"/>
+<path d="M56 52 C64 46 76 50 76 60 C76 68 66 72 58 68 C52 64 50 56 56 52Z"/>
+<path d="M30 60 C36 56 44 60 42 66 C40 72 32 72 29 68 C27 65 27 62 30 60Z"/>
+</g>
+<g>
+<circle cx="66" cy="28" r="6" fill="url(#mc)"/><circle cx="65" cy="27" r="6" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".8"/>
+<circle cx="40" cy="78" r="4.5" fill="url(#mc)"/><circle cx="39.4" cy="77.3" r="4.5" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".7"/>
+<circle cx="78" cy="44" r="3" fill="url(#mc)"/>
+<circle cx="22" cy="50" r="2.6" fill="url(#mc)"/>
+<circle cx="56" cy="86" r="2.2" fill="url(#mc)"/>
+<circle cx="48" cy="18" r="2" fill="url(#mc)"/>
+<circle cx="70" cy="76" r="3.4" fill="url(#mc)"/><circle cx="69.5" cy="75.4" r="3.4" fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width=".6"/>
+</g>
+<circle cx="50" cy="50" r="48" fill="url(#ms)"/>
+</svg>
+<span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+</div>
   <div class="status"><span>9:12</span><span>5G 64%</span></div>
   <div class="title">Settings</div>
   <div class="label soft">Start watching before the alarm</div>
@@ -160,7 +291,42 @@ figure:nth-child(4) .flow i{animation-delay:-15s}
   <div class="tabs glass"><span>Today</span><span class="on">Settings</span></div>
 </div></div><figcaption>Settings</figcaption></figure>
 
-<figure><div class="phone"><div class="screen"><div class="flow"><i></i><i></i><i></i></div>
+<figure><div class="phone"><div class="screen"><div class="flow">
+<i style="--x:85%;--y:4%;--d:19.8s;--w:0.0s"></i>
+<i style="--x:60%;--y:30%;--d:24.2s;--w:9.9s;--len:90px"></i>
+<i style="--x:95%;--y:18%;--d:13.2s;--w:2.2s"></i>
+<i style="--x:70%;--y:2%;--d:16.5s;--w:5.7s;--len:140px"></i>
+<i style="--x:100%;--y:45%;--d:17.6s;--w:8.4s"></i>
+<i style="--x:45%;--y:8%;--d:14.3s;--w:11.4s;--len:80px"></i>
+<i style="--x:90%;--y:60%;--d:20.9s;--w:14.1s"></i>
+<i style="--x:75%;--y:38%;--d:15.4s;--w:0.9s;--len:120px"></i>
+<b style="left:18%;top:12%"></b><b style="left:42%;top:22%;animation-delay:-1s"></b><b style="left:80%;top:30%;animation-delay:-2s"></b><b style="left:12%;top:48%;animation-delay:-.5s"></b><b style="left:66%;top:70%;animation-delay:-1.6s"></b><b style="left:30%;top:84%;animation-delay:-2.4s"></b>
+<svg class="moon" viewBox="0 0 100 100" aria-hidden="true">
+<defs>
+<radialGradient id="mb" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#FBF8EE"/><stop offset=".7" stop-color="#E6E0CF"/><stop offset="1" stop-color="#B9B3A3"/></radialGradient>
+<radialGradient id="mc" cx="40%" cy="35%" r="60%"><stop offset="0" stop-color="#C9C2AE"/><stop offset="1" stop-color="#ADA693"/></radialGradient>
+<radialGradient id="ms" cx="18%" cy="40%" r="90%"><stop offset=".55" stop-color="#0A0B12" stop-opacity="0"/><stop offset="1" stop-color="#0A0B12" stop-opacity=".55"/></radialGradient>
+<filter id="mblur"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs>
+<circle cx="50" cy="50" r="48" fill="url(#mb)"/>
+<g fill="#CFC8B5" opacity=".75" filter="url(#mblur)">
+<path d="M28 30 C36 22 50 24 52 34 C54 42 44 46 36 44 C28 42 22 36 28 30Z"/>
+<path d="M56 52 C64 46 76 50 76 60 C76 68 66 72 58 68 C52 64 50 56 56 52Z"/>
+<path d="M30 60 C36 56 44 60 42 66 C40 72 32 72 29 68 C27 65 27 62 30 60Z"/>
+</g>
+<g>
+<circle cx="66" cy="28" r="6" fill="url(#mc)"/><circle cx="65" cy="27" r="6" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".8"/>
+<circle cx="40" cy="78" r="4.5" fill="url(#mc)"/><circle cx="39.4" cy="77.3" r="4.5" fill="none" stroke="#FFFFFF" stroke-opacity=".5" stroke-width=".7"/>
+<circle cx="78" cy="44" r="3" fill="url(#mc)"/>
+<circle cx="22" cy="50" r="2.6" fill="url(#mc)"/>
+<circle cx="56" cy="86" r="2.2" fill="url(#mc)"/>
+<circle cx="48" cy="18" r="2" fill="url(#mc)"/>
+<circle cx="70" cy="76" r="3.4" fill="url(#mc)"/><circle cx="69.5" cy="75.4" r="3.4" fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width=".6"/>
+</g>
+<circle cx="50" cy="50" r="48" fill="url(#ms)"/>
+</svg>
+<span class="sun"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+</div>
   <div class="status"><span>9:00</span><span>5G 90%</span></div>
   <div class="ob">
     <div class="steps"><i class="on"></i><i></i><i></i><i></i></div>

@@ -13,8 +13,13 @@ data class DawnlyColors(
     val isDark: Boolean,
     /** The plain background behind everything. */
     val wall: Color,
-    /** The three flowing shapes behind the glass. */
-    val blobs: List<Color>,
+    /** The morning sky, top to bottom (light mode). Empty at night, where the wall shows. */
+    val sky: List<Color>,
+    /** The soft glows in the night sky. */
+    val glow: Color,
+    /** Shooting star trails, and the brighter dot at their head. */
+    val star: Color,
+    val starHead: Color,
     val text: Color,
     val textSoft: Color,
     /** Glass tint, and the stronger tint for selected items. */
@@ -26,6 +31,8 @@ data class DawnlyColors(
     val edge: Color,
     /** The bright line along the top edge of glass. */
     val highlight: Color,
+    /** The soft shadow that lifts glass off the sky. */
+    val lift: Color,
     /** The soft shadow under selected pills. */
     val selectedShadow: Color,
     /** Dividers between rows. */
@@ -35,6 +42,8 @@ data class DawnlyColors(
     /** Main buttons, switches when on, the progress ring. */
     val accent: Color,
     val onAccent: Color,
+    /** The check that marks a sign as seen. */
+    val tick: Color,
 )
 
 private val Navy = Color(0xFF0E1E45)
@@ -43,37 +52,47 @@ private val Blue = Color(0xFF1A4FD6)
 val LightColors = DawnlyColors(
     isDark = false,
     wall = Color(0xFFF7F9FE),
-    blobs = listOf(Color(0xFFA9CCFF), Color(0xFFC7E2FF), Color(0xFF8FB8FF)),
+    sky = listOf(Color(0xFFC6DDFF), Color(0xFFD9E8FF), Color(0xFFE6F0FF)),
+    glow = Color(0xFFA9CCFF).copy(alpha = 0.55f),
+    star = Color(0xFF7FB0FF),
+    starHead = Color(0xFF5E95FF),
     text = Navy,
     textSoft = Navy.copy(alpha = 0.6f),
-    glass = Color.White.copy(alpha = 0.14f),
-    glassStrong = Color.White.copy(alpha = 0.42f),
+    glass = Color.White.copy(alpha = 0.05f),
+    glassStrong = Color.White.copy(alpha = 0.32f),
     glassFallback = Color.White.copy(alpha = 0.5f),
-    edge = Color.White.copy(alpha = 0.75f),
+    edge = Color.White.copy(alpha = 0.35f),
     highlight = Color.White.copy(alpha = 0.95f),
+    lift = Color(0xFF3C5AA0).copy(alpha = 0.14f),
     selectedShadow = Color(0xFF0A1E5A).copy(alpha = 0.15f),
     line = Navy.copy(alpha = 0.10f),
     track = Navy.copy(alpha = 0.12f),
     accent = Blue,
     onAccent = Color.White,
+    tick = Blue,
 )
 
 val DarkColors = DawnlyColors(
     isDark = true,
-    wall = Color(0xFF050A1A),
-    blobs = listOf(Color(0xFF5E95FF), Color(0xFF8CBCFF), Color(0xFF4A7FF0)),
+    wall = Color(0xFF0A0B12),
+    sky = emptyList(),
+    glow = Color(0xFF5E78DC).copy(alpha = 0.28f),
+    star = Color(0xFFCFE2FF),
+    starHead = Color.White,
     text = Color.White,
     textSoft = Color.White.copy(alpha = 0.68f),
-    glass = Color(0xFFBEDCFF).copy(alpha = 0.08f),
+    glass = Color(0xFFBEDCFF).copy(alpha = 0.06f),
     glassStrong = Color(0xFFD2E6FF).copy(alpha = 0.2f),
     glassFallback = Color(0xFF14204A).copy(alpha = 0.6f),
-    edge = Color.White.copy(alpha = 0.32f),
-    highlight = Color.White.copy(alpha = 0.6f),
+    edge = Color.White.copy(alpha = 0.18f),
+    highlight = Color.White.copy(alpha = 0.95f),
+    lift = Color.Black.copy(alpha = 0.35f),
     selectedShadow = Color.Black.copy(alpha = 0.25f),
     line = Color.White.copy(alpha = 0.14f),
     track = Color.White.copy(alpha = 0.18f),
     accent = Color.White,
     onAccent = Blue,
+    tick = Color(0xFF4A8DFF),
 )
 
 val LocalDawnlyColors = staticCompositionLocalOf { LightColors }

@@ -255,16 +255,10 @@ private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onCli
     }
 }
 
-/** The filled check that marks a signal as seen. */
+/** The blue tick that marks a sign as seen, or the chosen item in a list. */
 @Composable
-fun CheckBadge(modifier: Modifier = Modifier, size: Dp = 24.dp) {
-    val colors = DawnlyTheme.colors
-    Box(
-        modifier = modifier.size(size).background(colors.accent, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(GlassIcons.Check, contentDescription = null, tint = colors.onAccent, modifier = Modifier.size(size * 0.62f))
-    }
+fun CheckBadge(modifier: Modifier = Modifier, size: Dp = 22.dp) {
+    Icon(GlassIcons.Check, contentDescription = null, tint = DawnlyTheme.colors.tick, modifier = modifier.size(size))
 }
 
 /** A glass tile holding an icon, as in the onboarding permission card. */

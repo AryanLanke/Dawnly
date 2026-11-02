@@ -2,16 +2,16 @@
 
 | Path | What it is |
 |------|------------|
-| `mockups.html` | The approved UI mockups (PLAN.md, Appendix A). Open in a browser; it has a light/dark toggle. |
-| `app-icon/` | The app icon, "Floor Light": `day.svg` and `night.svg` masters, 512px PNGs, and `preview.html`, which shows them the way a launcher does. The app ships the night version. |
-| `app-icon/generator/` | Python that draws the icon (`icon.py`, `liquid.py`) and renders it with headless Chrome (`build.py`). No packages needed. |
+| `mockups.html` | The approved UI mockups (PLAN.md, Appendix A): clear glass over a morning sky (light) or a night sky (dark). Open in a browser; it has a light/dark toggle. |
+| `app-icon/` | The app icon, "Sunny Egg": a fried egg with a white of blue glass. `egg.svg`, a 512px PNG, and `preview.html`, which shows it the way a launcher does. |
+| `app-icon/generator/` | Python that draws the icon (`icon.py`) and renders it with headless Chrome (`build.py`). No packages needed. |
 | `sounds/` | The notification sound masters and the script that makes the app's sounds from them (below). |
 
 To change the icon, edit `app-icon/generator/icon.py`, then run from that folder:
 
 ```
-python build.py                  # day/night masters, PNGs and preview.html
-python build.py --android night  # also export the launcher icon layers into app/src/main/res
+python build.py                # egg.svg, its PNG and preview.html
+python build.py --android egg  # also export the launcher icon layers into app/src/main/res
 ```
 
 ## Sounds

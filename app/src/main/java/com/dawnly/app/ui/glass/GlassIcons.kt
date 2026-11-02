@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 
 /** The few line icons Dawnly needs, drawn here so no icon library is required. Tint when drawing. */
 object GlassIcons {
-    val Check = icon("Check", stroke = "M5.5,12.5 L10,17 L18.5,7.5", strokeWidth = 2.4f)
+    val Check = icon("Check", stroke = "M5,12.6 L9.6,17.2 L19,7.2", strokeWidth = 2.6f)
 
     val Minus = icon("Minus", stroke = "M6,12 H18")
 
