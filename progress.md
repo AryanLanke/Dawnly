@@ -69,7 +69,7 @@ Check from the logs of the Step 1 walk how fast the score reaches 100% without s
 - **Old OneDrive copy:** `C:\Users\aryan\OneDrive\Desktop\Dawnly` is a stale copy from before the move to `C:\Users\aryan\dev\Dawnly` (2026-10-31; OneDrive locked build files). Everything in it is in this repo, so the user can delete it.
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` and `SYSTEM_ALERT_WINDOW` need a Play policy justification before any Play Store release (fine for limited distribution).
 
-**Git:** only `main`, on https://github.com/AryanLanke/Dawnly. The last commits (the locked auto-dismiss plan) aren't pushed yet; push when the user says so. The user is the only author and contributor of every commit (the history was rewritten on 2026-11-02 to make it so).
+**Git:** only `main`, on https://github.com/AryanLanke/Dawnly. Everything up to the locked auto-dismiss work and the new sounds is pushed (2026-11-03). Push only when the user says so. The user is the only author and contributor of every commit (the history was rewritten on 2026-11-02 to make it so).
 
 **Useful commands** (new terminals have `JAVA_HOME`, `ANDROID_HOME`, and adb on `PATH`; restart VS Code if they're missing). On a busy PC add the low-memory flags `--max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process"`.
 ```
