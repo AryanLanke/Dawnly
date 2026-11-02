@@ -30,12 +30,14 @@ data class HomeUiState(
             is WatchState.Watching -> {
                 // The service publishes as soon as it starts; until then nothing has been seen yet.
                 val signals = live ?: WakeSignals()
+                val score = WakeScore.of(signals, settings)
                 HomeUiState(
                     status = HomeStatus.Watching(
                         alarmAt = state.alarmAt,
                         startedAt = state.startedAt,
                         progress = state.progress(now),
-                        awake = WakeScore.of(signals, settings).isAwake,
+                        wakeProgress = score.value,
+                        awake = score.isAwake,
                     ),
                     signals = signalRows(settings, signals),
                 )
@@ -75,13 +77,15 @@ sealed interface HomeStatus {
     data class Waiting(val alarmAt: Instant, val startsAt: Instant) : HomeStatus
 
     /**
-     * Inside the watch window. [awake] comes from the same [WakeScore] that sends the prompt, so
-     * Home says "You're up early" exactly when the prompt goes out.
+     * Inside the watch window. [progress] is how much of the window has passed. [wakeProgress] and
+     * [awake] come from the same [WakeScore] that sends the prompt, so Home fills its "Signs you're
+     * up" bar and says "You're up early" exactly as the prompt goes out.
      */
     data class Watching(
         val alarmAt: Instant,
         val startedAt: Instant,
         val progress: Float,
+        val wakeProgress: Float,
         val awake: Boolean,
     ) : HomeStatus
 

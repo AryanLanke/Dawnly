@@ -93,6 +93,20 @@ class HomeUiStateTest {
     }
 
     @Test
+    fun `the signs bar shows the wake score, full once awake`() {
+        val settings = WakeSignalSettings(useSteps = true, useMovement = false, useMusic = false)
+        val live = WakeSignals(screenOnTime = Duration.ofMinutes(3), steps = 10)
+        // 3 of 5 minutes (0.6) plus 10 of 50 steps (0.2).
+        val partly = HomeUiState.from(watching, live, settings, windowStart).status as HomeStatus.Watching
+        assertEquals(0.8f, partly.wakeProgress, 0.001f)
+
+        // Past the goal the bar stays full rather than overflowing.
+        val more = live.copy(screenOnTime = Duration.ofMinutes(9), steps = 80)
+        val full = HomeUiState.from(watching, more, settings, windowStart).status as HomeStatus.Watching
+        assertEquals(1f, full.wakeProgress, 0.001f)
+    }
+
+    @Test
     fun `skipped alarms show no signals`() {
         val state = HomeUiState.from(WatchState.Skipped(alarm), WakeSignals(steps = 80), allSigns, windowStart)
         assertEquals(HomeStatus.Skipped(alarm), state.status)

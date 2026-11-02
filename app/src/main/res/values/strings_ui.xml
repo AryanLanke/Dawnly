@@ -43,6 +43,12 @@
         <item quantity="other">%1$d steps</item>
     </plurals>
     <string name="home_signal_seen">Seen</string>
+    <string name="home_wake_title">Signs you\'re awake</string>
+    <string name="home_wake_hint">Dawnly asks once this fills</string>
+    <string name="home_wake_percent">%1$d%%</string>
+    <string name="home_wake_description">%1$d%% of the way to asking</string>
+    <string name="home_confirm_dismiss">Dismiss your %1$s alarm?</string>
+    <string name="common_cancel">Cancel</string>
     <string name="home_exact_off_title">Watching may start late</string>
     <string name="home_exact_off_body">Allow Alarms &amp; reminders so Dawnly starts on time.</string>
     <string name="home_notifications_off_title">Notifications are off</string>

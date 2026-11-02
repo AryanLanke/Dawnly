@@ -24,11 +24,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +56,7 @@ import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.PreviewFrame
 import com.dawnly.app.ui.glass.PrimaryButton
+import com.dawnly.app.ui.glass.ProgressBar
 import com.dawnly.app.ui.glass.ProgressRing
 import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
@@ -133,19 +139,13 @@ private fun HomeContent(
             SpringIn(order++) { NoteCard(stringResource(R.string.home_skipped_detail)) }
         }
         if (state.signals.isNotEmpty()) {
-            SpringIn(order++) { SignalCard(state.signals) }
+            SpringIn(order++) { SignalCard(state.signals, (status as? HomeStatus.Watching)?.wakeProgress) }
         }
         AnimatedVisibility(visible = dismissResult != null, enter = fadeIn(), exit = fadeOut()) {
             dismissResult?.let { NoteCard(describe(it), onClick = onClearDismissResult) }
         }
         if (status is HomeStatus.Watching) {
-            SpringIn(order) {
-                if (status.awake) {
-                    PrimaryButton(stringResource(R.string.dismiss_alarm), onDismissAlarm)
-                } else {
-                    GlassButton(stringResource(R.string.dismiss_alarm), onDismissAlarm)
-                }
-            }
+            SpringIn(order) { DismissAction(status.alarmAt, status.awake, onDismissAlarm) }
         }
         Spacer(Modifier.height(8.dp))
     }
@@ -209,11 +209,64 @@ private fun AlarmTime(alarmAt: Instant) {
     }
 }
 
+/**
+ * The button pops in when watching starts, right where a tap meant for something else can land,
+ * so a tap only asks; dismissing takes a second, deliberate tap.
+ */
 @Composable
-private fun SignalCard(rows: List<SignalRow>) {
+private fun DismissAction(alarmAt: Instant, awake: Boolean, onDismiss: () -> Unit) {
+    var confirming by rememberSaveable(alarmAt) { mutableStateOf(false) }
+    val dismiss = stringResource(R.string.dismiss_alarm)
+    AnimatedContent(
+        targetState = confirming,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "dismiss",
+    ) { asking ->
+        if (!asking) {
+            if (awake) PrimaryButton(dismiss, { confirming = true }) else GlassButton(dismiss, { confirming = true })
+            return@AnimatedContent
+        }
+        GlassSurface(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    stringResource(R.string.home_confirm_dismiss, formatTime(alarmAt)),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PrimaryButton(dismiss, { confirming = false; onDismiss() }, Modifier.weight(1f))
+                    GlassButton(stringResource(R.string.common_cancel), { confirming = false }, Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The signs that are on. While watching, a "Signs you're awake" bar on top shows [wakeProgress],
+ * the same score that sends the prompt, so it's clear how far off the question is.
+ */
+@Composable
+private fun SignalCard(rows: List<SignalRow>, wakeProgress: Float?) {
     GlassList {
+        if (wakeProgress != null) {
+            val percent = (wakeProgress * 100).roundToInt()
+            val description = stringResource(R.string.home_wake_description, percent)
+            Column(
+                Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = description
+                    progressBarRangeInfo = ProgressBarRangeInfo(wakeProgress, 0f..1f)
+                },
+            ) {
+                GlassRow(
+                    title = stringResource(R.string.home_wake_title),
+                    subtitle = stringResource(R.string.home_wake_hint),
+                ) { Soft(stringResource(R.string.home_wake_percent, percent)) }
+                ProgressBar(wakeProgress, Modifier.padding(bottom = 14.dp))
+            }
+        }
         rows.forEachIndexed { index, row ->
-            GlassRow(title = signalTitle(row.kind), divider = index > 0) {
+            GlassRow(title = signalTitle(row.kind), divider = index > 0 || wakeProgress != null) {
                 AnimatedContent(
                     targetState = row,
                     contentKey = { it.met },

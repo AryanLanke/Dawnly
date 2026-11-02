@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
@@ -55,5 +58,27 @@ fun ProgressRing(
             }
         }
         Box(contentAlignment = Alignment.Center, content = content)
+    }
+}
+
+/**
+ * The ring's straight sibling: a thin rounded bar on the same track and accent colours. It fills
+ * from empty when it first appears, then glides to each new value.
+ *
+ * @param progress 0 to 1.
+ */
+@Composable
+fun ProgressBar(progress: Float, modifier: Modifier = Modifier) {
+    val colors = DawnlyTheme.colors
+    val animated = remember { Animatable(0f) }
+    val spec = DawnlyMotion.gentle<Float>()
+    LaunchedEffect(progress) { animated.animateTo(progress.coerceIn(0f, 1f), spec) }
+
+    Canvas(modifier.fillMaxWidth().height(5.dp)) {
+        val radius = CornerRadius(size.height / 2)
+        drawRoundRect(colors.track, cornerRadius = radius)
+        // Never thinner than a dot, so a sliver of progress still reads as round.
+        val width = (size.width * animated.value).coerceAtLeast(if (animated.value > 0f) size.height else 0f)
+        if (width > 0f) drawRoundRect(colors.accent, size = Size(width, size.height), cornerRadius = radius)
     }
 }
