@@ -4,10 +4,46 @@
 >
 > Rules from PLAN.md: work one phase at a time. End each phase with a summary and the steps to verify it on a device. Ask before adding any library not listed in PLAN.md section 5. Update this file whenever a step is done.
 
-**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). Done on 2026-11-02: the signed release build, the licence, the overlay hint, two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar), the new app icon, and a repo cleanup. The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist.
+**Current phase:** Phase 7, release prep (in progress). Phases 0–6 are done (2026-11-01). Done on 2026-11-02: the signed release build, the licence, the overlay hint, two Today-screen changes (Dismiss alarm asks first; a "Signs you're awake" bar), the new app icon, and a repo cleanup. The user wants the app made good first and **testing later as its own phase**: device tests (release walkthrough, reboot, Samsung/Xiaomi) wait until then. Also open: the CI check and hobbyist sharing. See the Phase 7 checklist. **Next session starts with auto-dismiss on a locked phone (below), before anything else.**
 **Last updated:** 2026-11-02
 
 ---
+
+## ▶ Next session: auto-dismiss with the phone locked (the user's top priority)
+
+**What the user wants (2026-11-02):** with **Dismiss automatically** on, the alarm should go away by itself when they're already up and busy, e.g. working out, walking, or listening to music, with the phone **locked** in a pocket or on the floor. They shouldn't have to unlock the phone for it. Do this before any other work.
+
+**What we know already**
+- Auto-dismiss has only been tested with the phone **unlocked** (home screen, 2026-11-01, see "Device test: auto-dismiss" in Phase 6). Nothing in the code handles the lock screen yet.
+- Detection works with the phone locked: steps, movement and music are read by the running service whatever the lock state. Screen use only counts while unlocked, so a locked workout relies on steps + movement (+ music).
+- The 1-minute countdown is an exact alarm (`setExactAndAllowWhileIdle`, in `AwakeNotifier`), so it fires even in Doze, screen off.
+- When the minute is up, `AutoDismissReceiver` starts `DismissAlarmActivity` (allowed from the background by "Display over other apps"). That activity sends `ACTION_DISMISS_ALARM` to the Clock app, and `QuietDismiss` then brings Dawnly back to the front with a toast.
+- **The open question is the Clock app.** Android's open-source Clock (AOSP DeskClock, `HandleApiCalls.kt`, read 2026-11-02) has **no lock-screen check**: it dismisses the next alarm in the background (pre-dismiss for an upcoming alarm) and opens its alarm list. Google Clock is closed source and may differ (e.g. ask to unlock first); Samsung and Xiaomi clocks are unknown. Only a test on the phone can tell.
+
+**Step 1: test on the Nothing Phone (about 15 minutes, needs the user's OK and the phone)**
+Exception to "testing later": this is a yes/no feasibility question like Phase 1, and the plan depends on it.
+1. Set a Google Clock alarm about 10 minutes ahead and a short watch window (Settings → custom, e.g. 10 min). Turn on **Dismiss automatically** (and "Display over other apps").
+2. Lock the phone and let the screen go off. Get "awake" without unlocking: walk around with music playing (the real use case; Sensitivity High makes it quicker). Alternative: the adb trigger `adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app` only exists in the debug build, which can't install over the release build without uninstalling (settings start fresh).
+3. Leave the phone locked for the whole minute. Then check, without unlocking first, whether the alarm still shows on the lock screen, then unlock and check Google Clock.
+4. Logs: `adb logcat -s AwakeNotifier AutoDismiss DismissAlarmActivity QuietDismiss ClockApp` plus `adb shell dumpsys alarm | grep -A2 "next alarm clock"` (or Dawnly's Home) to see whether the next alarm moved.
+5. Repeat once with the lock screen showing (screen on, not unlocked), since Android treats that differently from screen off.
+
+**Step 2a: if Google Clock dismisses while locked (most likely, going by AOSP)**
+- In `QuietDismiss`: when the phone is locked (`KeyguardManager.isKeyguardLocked`), don't bring Dawnly to the front or show a toast (nobody sees them, and Dawnly would be sitting there after unlock). Post a quiet notification instead: "Your 5:30 alarm was dismissed. You were up and moving." so it's on the lock screen when they look.
+- Keep `DismissAlarmActivity` doing its work in `onCreate` (it runs behind the lock screen); check the log shows it running while locked.
+- Unit test the locked/unlocked choice (pure function, like `AutoDismissPlan`).
+- Settings' auto-dismiss text and README: say it works with the phone locked.
+
+**Step 2b: if Google Clock asks to unlock first**
+Choose with the user (don't decide alone):
+- **Dismiss at the next unlock:** if the countdown ends while locked, wait; the moment they unlock (`USER_PRESENT`), dismiss, if it's still before the alarm. If they don't unlock in time, the alarm rings as normal. Safe, but it doesn't cover a workout where they never unlock.
+- **Not recommended:** muting the alarm sound instead of dismissing it. It could make them miss a real alarm and it's not a real dismiss.
+- Either way, the countdown notification should say so ("Unlock to dismiss your 5:30 alarm").
+
+**Step 3: detection during a workout with the phone locked**
+Check from the logs of the Step 1 walk how fast the score reaches 100% without screen use (steps + movement + music). If it's too slow at Medium, consider counting music more strongly when it plays together with steps. Discuss before changing the scoring.
+
+**Later:** Samsung and Xiaomi clocks in the testing phase (Phase 1 table), locked and unlocked.
 
 ## ▶ Where things stand (2026-11-02)
 
