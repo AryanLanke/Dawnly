@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
@@ -23,7 +24,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
@@ -172,36 +172,29 @@ private class GlassRimNode(private var shape: Shape, private var colors: DawnlyC
 
     override fun ContentDrawScope.draw() {
         val rim = cache?.takeIf { it.size == size } ?: Rim(this, shape, colors).also { cache = it }
-        clipPath(rim.path) {
-            if (colors.sheen.alpha > 0f) drawRect(rim.sheen)
-            for ((inset, color) in rim.insets) {
-                clipPath(inset, ClipOp.Difference) { drawRect(color) }
-            }
-            // Strokes are centred on the outline, so half of each shows inside the clip.
-            drawPath(rim.path, colors.edge, style = Stroke(width = 2.dp.toPx()))
-            drawSprite(rim.bloom)
-            drawPath(rim.path, ShaderBrush(rim.light), style = Stroke(width = 3.dp.toPx()))
-        }
+        drawSprite(rim.sprite)
         drawContent()
     }
 }
 
-/** Everything the rim needs for one size of glass. */
+/**
+ * The rim for one size of glass, drawn once into a bitmap. Clipping to rounded outlines several
+ * times per surface on every frame (the sky moves, so glass redraws constantly) took the render
+ * thread ~11.6 ms a frame, past the 8.3 ms a 120 Hz frame allows, and scrolling stuttered.
+ */
 private class Rim(scope: DrawScope, shape: Shape, colors: DawnlyColors) {
     val size: Size = scope.size
-    val path = Path().apply { addOutline(shape.createOutline(size, scope.layoutDirection, scope)) }
-    val insets: List<Pair<Path, Color>>
-    val light: Shader
-    val sheen = Brush.verticalGradient(0f to colors.sheen, 0.45f to colors.sheen.copy(alpha = 0f))
-    val bloom: Sprite
+    val sprite: Sprite
 
     init {
+        val path = Path().apply { addOutline(shape.createOutline(size, scope.layoutDirection, scope)) }
+        val sheen = Brush.verticalGradient(0f to colors.sheen, 0.45f to colors.sheen.copy(alpha = 0f))
         val px = with(scope) { 1.dp.toPx() }
         val strength = colors.rimStrength
         val tone = if (colors.isDark) Color(0xFFDCE8FF) else Color.White
         fun shifted(x: Float, y: Float) = Path().apply { addPath(path, Offset(x, y)) }
         // Each inset box-shadow is the shape minus itself moved by 1px: a hairline on one side.
-        insets = listOf(
+        val insets = listOf(
             shifted(0f, px) to colors.highlight,
             shifted(px, 0f) to tone.copy(alpha = 0.15f * strength),
             shifted(0f, -px) to tone.copy(alpha = 0.12f * strength),
@@ -211,7 +204,7 @@ private class Rim(scope: DrawScope, shape: Shape, colors: DawnlyColors) {
         val dir = Offset(sin(angle).toFloat(), -cos(angle).toFloat())
         val half = (size.width * abs(dir.x) + size.height * abs(dir.y)) / 2
         val center = Offset(size.width / 2, size.height / 2)
-        light = LinearGradientShader(
+        val light = LinearGradientShader(
             from = center - dir * half,
             to = center + dir * half,
             colors = listOf(1f, 0.25f, 0f, 0.15f, 0.7f).map { tone.copy(alpha = it * strength) },
@@ -225,15 +218,24 @@ private class Rim(scope: DrawScope, shape: Shape, colors: DawnlyColors) {
             maskFilter = BlurMaskFilter(3 * px, BlurMaskFilter.Blur.NORMAL)
         }
         val outline = path.asAndroidPath()
-        bloom = Sprite.draw(scope, scope.layoutDirection, size, margin = 0f, scale = 0.5f) {
-            drawIntoCanvas { it.nativeCanvas.drawPath(outline, bloomPaint) }
+        sprite = Sprite.draw(scope, scope.layoutDirection, size, margin = 0f) {
+            clipPath(path) {
+                if (colors.sheen.alpha > 0f) drawRect(sheen)
+                for ((inset, color) in insets) {
+                    clipPath(inset, ClipOp.Difference) { drawRect(color) }
+                }
+                // Strokes are centred on the outline, so half of each shows inside the clip.
+                drawPath(path, colors.edge, style = Stroke(width = 2 * px))
+                drawIntoCanvas { it.nativeCanvas.drawPath(outline, bloomPaint) }
+                drawPath(path, ShaderBrush(light), style = Stroke(width = 3 * px))
+            }
         }
     }
 }
 
 /**
  * A soft shadow drawn only outside [shape], like CSS box-shadow, so it doesn't grey out the
- * translucent glass on top. Blurred once into a half-size bitmap per size, then reused.
+ * translucent glass on top. Blurred and cut out once into a half-size bitmap per size, then reused.
  */
 fun Modifier.outerShadow(shape: Shape, color: Color, blur: Dp = 8.dp, offsetY: Dp = 2.dp): Modifier =
     this then OuterShadowElement(shape, color, blur, offsetY)
@@ -246,7 +248,6 @@ private data class OuterShadowElement(val shape: Shape, val color: Color, val bl
 }
 
 private class OuterShadowNode(private var spec: OuterShadowElement) : Modifier.Node(), DrawModifierNode {
-    private var path: Path? = null
     private var sprite: Sprite? = null
     private var spriteSize = Size.Unspecified
 
@@ -267,13 +268,14 @@ private class OuterShadowNode(private var spec: OuterShadowElement) : Modifier.N
                 if (blur > 0f) maskFilter = BlurMaskFilter(blur / 2, BlurMaskFilter.Blur.NORMAL)
             }
             val shadow = android.graphics.Path(outline.asAndroidPath()).apply { offset(0f, dy) }
-            path = outline
             sprite = Sprite.draw(this, layoutDirection, size, margin = blur + abs(dy), scale = 0.5f) {
                 drawIntoCanvas { it.nativeCanvas.drawPath(shadow, paint) }
+                // Only outside the shape, so it doesn't grey the clear glass on top.
+                drawPath(outline, Color.Black, blendMode = BlendMode.Clear)
             }
             spriteSize = size
         }
-        clipPath(path!!, ClipOp.Difference) { drawSprite(sprite!!) }
+        drawSprite(sprite!!)
         drawContent()
     }
 }
