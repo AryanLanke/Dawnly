@@ -465,6 +465,7 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
     - **Hold and slide** (`ui/glass/HoldAndSlide.kt`): press and hold the tab bar or any segmented choice (it buzzes), slide (the pill follows the finger, a tick per option), let go to pick. On the tab bar the page changes as the finger crosses over. Replaces "long-press a tab opens it".
     - **When you're up:** the original descriptions are back (the user: the shorter ones were harder to understand). Labels stay Ask me / Warn first / Right away.
     - **Fainter edges:** side and bottom hairlines, the 1dp edge, the rim and its bloom are all lighter, in light and dark.
+  - **Haptics not felt** (2026-11-03): the phone's "Touch feedback" is off (`TOUCH = OFF` in `dumpsys vibrator_manager`), so every `performHapticFeedback` from Dawnly was logged `ignored_for_settings`. The user chose "Dawnly vibrates anyway": `Haptics` now drives the vibrator itself with `USAGE_MEDIA` (MEDIUM on their phone) and the `VIBRATE` permission (normal, granted at install).
   - To check in the testing phase: the sky's speed and smoothness, readability of text on the clearer glass in both modes, the icon on the home screen and as a themed icon.
 
 **Sharing with testers (researched 2026-11-02)**

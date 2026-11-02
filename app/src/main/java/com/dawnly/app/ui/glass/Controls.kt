@@ -13,12 +13,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.border
@@ -282,7 +280,7 @@ fun GlassStepper(
 @Composable
 private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onClick: () -> Unit) {
     val alpha by animateFloatAsState(if (enabled) 1f else 0.35f, label = "stepAlpha")
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberHaptics()
     val step by rememberUpdatedState(onClick)
     val canStep by rememberUpdatedState(enabled)
     GlassSurface(
@@ -292,7 +290,7 @@ private fun StepButton(icon: ImageVector, label: String, enabled: Boolean, onCli
             .pointerInput(Unit) {
                 repeatWhileHeld {
                     if (canStep) {
-                        haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                        haptics.tick()
                         step()
                     }
                 }
@@ -348,13 +346,13 @@ fun GlassSlider(
     modifier: Modifier = Modifier,
 ) {
     val colors = DawnlyTheme.colors
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberHaptics()
     Slider(
         value = value.toFloat(),
         onValueChange = { raw ->
             val stepped = raw.roundToInt().coerceIn(0, max)
             if (stepped != value) {
-                haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                haptics.tick()
                 onValueChange(stepped)
             }
         },
