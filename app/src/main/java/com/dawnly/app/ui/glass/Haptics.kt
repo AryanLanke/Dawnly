@@ -1,68 +1,29 @@
 package com.dawnly.app.ui.glass
 
-import android.content.Context
-import android.media.AudioAttributes
-import android.os.Build
-import android.os.VibrationAttributes
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 
-/**
- * The small vibrations Dawnly gives under the finger. Android's own touch feedback
- * (`performHapticFeedback`) is dropped entirely when the phone's "Touch feedback" setting is off,
- * which it is on the user's phone; the user asked for Dawnly to vibrate anyway (2026-11-03). So
- * this drives the vibrator itself, as media vibration, which that setting doesn't silence. The
- * "Media vibration" strength in system settings still applies.
- *
- * Plain short buzzes rather than Android's built-in click and tick effects: on the user's phone
- * (no amplitude control) those played but were too faint to feel.
- */
-class Haptics(context: Context) {
-    private val vibrator: Vibrator? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(VibratorManager::class.java)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Vibrator::class.java)
-        }
-
+/** The small vibrations Dawnly gives under the finger. They follow the phone's touch-vibration setting. */
+class Haptics(private val feedback: HapticFeedback) {
     /** A glass button pressed. */
-    fun click() = play(millis = 30)
+    fun click() = feedback.performHapticFeedback(HapticFeedbackType.ContextClick)
 
     /** A choice or a page changing: segments, tabs, swiping between Today and Settings. */
-    fun tick() = play(millis = 25)
+    fun tick() = feedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
 
     /** A switch flipped. */
-    fun toggle(on: Boolean) = if (on) click() else tick()
+    fun toggle(on: Boolean) =
+        feedback.performHapticFeedback(if (on) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
 
-    /** Press and hold: a firmer buzz that says "now slide". */
-    fun longPress() = play(millis = 60)
-
-    private fun play(millis: Long) {
-        val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        val vibration = VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            vibrator.vibrate(vibration, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(vibration, MediaVibration)
-        }
-    }
-
-    private companion object {
-        val MediaVibration: AudioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-    }
+    /** Press and hold. */
+    fun longPress() = feedback.performHapticFeedback(HapticFeedbackType.LongPress)
 }
 
 @Composable
 fun rememberHaptics(): Haptics {
-    val context = LocalContext.current
-    return remember(context) { Haptics(context.applicationContext) }
+    val feedback = LocalHapticFeedback.current
+    return remember(feedback) { Haptics(feedback) }
 }

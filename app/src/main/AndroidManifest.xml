@@ -25,10 +25,6 @@
     <!-- Opt-in auto-dismiss only: lets Dawnly open the Clock app from the background, which
          Android 10+ blocks otherwise. Asked when the user turns that switch on. Nothing is drawn. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- The small vibrations under the finger (holding a tab, sliding between choices). Driven
-         directly so they work with the phone's "Touch feedback" off (the user's choice). A normal
-         permission, granted at install. -->
-    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
          screen apps so opening them doesn't count as opening an app. Launcher apps: after a
