@@ -452,6 +452,7 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
   - **Glass** (`Glass.kt`): 3dp blur, 135% saturation, 5%/6% tint, a 1.5dp liquid rim lit from the top-left, 1dp inset highlights, and a soft lift shadow. Seen signs and the chosen sound get a plain blue tick (`CheckBadge`). Screen layouts didn't change.
   - **Icon "Sunny Egg"**: the user's egg picture redrawn as SVG in `design/app-icon/generator/icon.py` (`python build.py --android egg`); Floor Light and `liquid.py` removed.
   - Built in a separate worktree while another session worked on main, then fast-forwarded. `testDebugUnitTest assembleDebug lintDebug` pass (no new lint warnings).
+  - **Clock appearance** (2026-11-03): at 2 am the user saw the morning sky (Dawnly was set to Light while the phone was dark) and asked for an option where the clock decides. Appearance now has Light / Dark / System / Clock; Clock is night from 7 pm to 6 am (`ui/theme/NightClock.kt`, 3 tests), rechecked whenever the app comes back on screen and at the boundary while open. Default is still System.
   - To check in the testing phase: the sky's speed and smoothness, readability of text on the clearer glass in both modes, the icon on the home screen and as a themed icon.
 
 **Sharing with testers (researched 2026-11-02)**
