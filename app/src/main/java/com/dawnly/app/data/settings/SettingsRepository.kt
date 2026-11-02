@@ -20,6 +20,21 @@ private val Context.settingsStore by preferencesDataStore(name = "settings")
 /** Light, dark, or follow the phone. */
 enum class Appearance { Light, Dark, System }
 
+/**
+ * What Dawnly does once it's sure the user is up (the user's three choices, 2026-11-03). Both
+ * automatic ones need "Display over other apps" (see `AwakeNotifier`).
+ */
+enum class DismissMode {
+    /** A notification asks; the user taps "Dismiss alarm" themselves. The default. */
+    Ask,
+
+    /** "Dismissing your 5:30 alarm in 1 minute", which the user can stop, then it's dismissed. */
+    Warn,
+
+    /** Dismissed straight away. "Alarm dismissed" and the reversed sound say so afterwards. */
+    Instant,
+}
+
 /** The user's settings. */
 class SettingsRepository(context: Context) {
     private val store = context.applicationContext.settingsStore
@@ -80,16 +95,19 @@ class SettingsRepository(context: Context) {
         }
     }
 
-    /**
-     * Dismiss the alarm without asking, after a one-minute warning that can be stopped. Off by
-     * default; turning it on needs "Display over other apps" (see `AwakeNotifier`).
-     */
-    val autoDismiss: Flow<Boolean> = store.safeData
-        .map { it[AUTO_DISMISS] ?: false }
+    /** Ask until the user picks otherwise. Saved before the three choices, auto-dismiss on meant [DismissMode.Warn]. */
+    val dismissMode: Flow<DismissMode> = store.safeData
+        .map { prefs ->
+            prefs[DISMISS_MODE]?.let { name -> DismissMode.entries.firstOrNull { it.name == name } }
+                ?: if (prefs[OLD_AUTO_DISMISS] == true) DismissMode.Warn else DismissMode.Ask
+        }
         .distinctUntilChanged()
 
-    suspend fun setAutoDismiss(on: Boolean) {
-        store.edit { it[AUTO_DISMISS] = on }
+    suspend fun setDismissMode(mode: DismissMode) {
+        store.edit {
+            it[DISMISS_MODE] = mode.name
+            it.remove(OLD_AUTO_DISMISS)
+        }
     }
 
     val appearance: Flow<Appearance> = store.safeData
@@ -115,7 +133,8 @@ class SettingsRepository(context: Context) {
         val USE_MOVEMENT = booleanPreferencesKey("use_movement")
         val MOVEMENT_GOAL_MINUTES = intPreferencesKey("movement_goal_minutes")
         val USE_MUSIC = booleanPreferencesKey("use_music")
-        val AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
+        val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
+        val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
         val APPEARANCE = stringPreferencesKey("appearance")
     }
 }

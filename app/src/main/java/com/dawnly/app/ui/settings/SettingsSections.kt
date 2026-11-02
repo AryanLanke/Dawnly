@@ -23,6 +23,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
+import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.format.formatDuration
@@ -151,36 +152,43 @@ private fun Sign.subtitle(signals: WakeSignalSettings): String = when (this) {
 }
 
 /**
- * Off by default. Turning it on without "Display over other apps" first says why it's needed,
- * with one tap to allow it; the switch turns on once it's allowed.
+ * Ask by default. Picking an automatic choice without "Display over other apps" first says why it's
+ * needed, with one tap to allow it; the choice is saved once it's allowed.
  */
 @Composable
-internal fun AutoDismissSection(
-    on: Boolean,
+internal fun DismissModeSection(
+    mode: DismissMode,
     overlayAllowed: Boolean,
-    onChange: (Boolean) -> Unit,
-    onAllowOverlay: () -> Unit,
+    onChange: (DismissMode) -> Unit,
+    onAllowOverlay: (DismissMode) -> Unit,
 ) {
-    var asking by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(on) { if (on) asking = false }
-    GlassList {
-        GlassRow(
-            title = stringResource(R.string.settings_auto_dismiss),
-            subtitle = stringResource(R.string.settings_auto_dismiss_detail),
-        ) {
-            GlassSwitch(on, { wanted ->
-                when {
-                    !wanted -> {
-                        asking = false
-                        onChange(false)
-                    }
-                    overlayAllowed -> onChange(true)
-                    else -> asking = true
+    var waiting by rememberSaveable { mutableStateOf<DismissMode?>(null) }
+    LaunchedEffect(mode) { if (mode == waiting) waiting = null }
+    val modes = DismissMode.entries
+    val shown = waiting ?: mode
+    Column {
+        SectionLabel(stringResource(R.string.settings_dismiss_label))
+        GlassSegmented(
+            options = modes.map { stringResource(it.label) },
+            selected = modes.indexOf(shown),
+            onSelect = { index ->
+                val picked = modes[index]
+                if (picked == DismissMode.Ask || overlayAllowed) {
+                    waiting = null
+                    onChange(picked)
+                } else {
+                    waiting = picked
                 }
-            })
-        }
-        AnimatedVisibility(visible = asking && !on) {
-            Column(Modifier.padding(bottom = 14.dp)) {
+            },
+        )
+        Text(
+            stringResource(shown.detail),
+            style = MaterialTheme.typography.bodySmall,
+            color = DawnlyTheme.colors.textSoft,
+            modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+        )
+        AnimatedVisibility(visible = waiting != null) {
+            Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp)) {
                 // Android 11+ ignores the package Uri and opens the list of all apps.
                 val why = stringResource(R.string.settings_auto_dismiss_why)
                 val findDawnly = stringResource(R.string.settings_auto_dismiss_find)
@@ -189,23 +197,37 @@ internal fun AutoDismissSection(
                     style = MaterialTheme.typography.bodySmall,
                     color = DawnlyTheme.colors.textSoft,
                 )
-                AccentPill(stringResource(R.string.common_allow), onAllowOverlay, Modifier.padding(top = 10.dp))
+                AccentPill(stringResource(R.string.common_allow), { waiting?.let(onAllowOverlay) }, Modifier.padding(top = 10.dp))
             }
         }
     }
 }
 
+private val DismissMode.label
+    get() = when (this) {
+        DismissMode.Ask -> R.string.dismiss_mode_ask
+        DismissMode.Warn -> R.string.dismiss_mode_warn
+        DismissMode.Instant -> R.string.dismiss_mode_instant
+    }
+
+private val DismissMode.detail
+    get() = when (this) {
+        DismissMode.Ask -> R.string.dismiss_mode_ask_detail
+        DismissMode.Warn -> R.string.dismiss_mode_warn_detail
+        DismissMode.Instant -> R.string.dismiss_mode_instant_detail
+    }
+
 @Composable
 internal fun PermissionsSection(
     permissions: PermissionState,
-    autoDismiss: Boolean,
+    dismissMode: DismissMode,
     oemBattery: OemBattery?,
     onRequest: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
 ) {
-    // Display over other apps only matters with auto-dismiss on, e.g. if it was taken back since.
+    // Display over other apps only matters when Dawnly dismisses by itself, e.g. if it was taken back since.
     val shown = AppPermission.entries.filter {
-        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && autoDismiss))
+        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && dismissMode != DismissMode.Ask))
     }
     Column {
         SectionLabel(stringResource(R.string.settings_permissions_label))

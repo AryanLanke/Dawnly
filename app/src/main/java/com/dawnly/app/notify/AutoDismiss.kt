@@ -6,11 +6,43 @@ import android.content.Intent
 import android.provider.Settings
 import android.util.Log
 import com.dawnly.app.dawnly
+import com.dawnly.app.data.settings.DismissMode
 import java.time.Duration
 import java.time.Instant
 
+/** What Dawnly does once the user is up. Decided by [AutoDismissPlan.decide]. */
+sealed interface AwakeAction {
+    /** The "Up already?" prompt; the user dismisses. */
+    data object Ask : AwakeAction
+
+    /** The one-minute warning, then [AutoDismissReceiver] dismisses at [dismissAt]. */
+    data class Warn(val dismissAt: Instant) : AwakeAction
+
+    /** Dismiss now, no warning. */
+    data object DismissNow : AwakeAction
+}
+
 /** When an opted-in auto-dismiss goes ahead. Pure, so it's unit tested. */
 object AutoDismissPlan {
+    /**
+     * Turns the user's [mode] into what happens now. Every automatic choice fails safe to asking:
+     * without "Display over other apps" ([canOpenClock]) Dawnly can't reach the Clock app from the
+     * background, and a warning needs time, an exact alarm, and notifications to be seen and stopped.
+     */
+    fun decide(
+        mode: DismissMode,
+        now: Instant,
+        alarmAt: Instant,
+        canOpenClock: Boolean,
+        canTimeExactly: Boolean,
+        canNotify: Boolean,
+    ): AwakeAction {
+        if (mode == DismissMode.Ask || !canOpenClock) return AwakeAction.Ask
+        if (mode == DismissMode.Instant) return AwakeAction.DismissNow
+        val dismissAt = dismissAt(now, alarmAt)
+        return if (dismissAt != null && canTimeExactly && canNotify) AwakeAction.Warn(dismissAt) else AwakeAction.Ask
+    }
+
     /** How long the "Dismissing your 5:30 alarm in 1 minute" warning shows before it acts. */
     val WARNING: Duration = Duration.ofMinutes(1)
 

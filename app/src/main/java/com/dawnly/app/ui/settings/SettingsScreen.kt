@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
@@ -101,10 +102,10 @@ fun SettingsScreen(
                     }
                 },
                 onAppearanceChange = viewModel::setAppearance,
-                onAutoDismissChange = viewModel::setAutoDismiss,
-                onAllowOverlay = {
+                onDismissModeChange = viewModel::setDismissMode,
+                onAllowOverlay = { mode ->
                     onRequestPermission(AppPermission.Overlay) { granted ->
-                        if (granted) viewModel.setAutoDismiss(true)
+                        if (granted) viewModel.setDismissMode(mode)
                     }
                 },
                 onRequestPermission = { onRequestPermission(it) {} },
@@ -126,8 +127,8 @@ private fun SettingsContent(
     onSignalsChange: (WakeSignalSettings) -> Unit,
     onSignNeedsPermission: (Sign) -> Unit,
     onAppearanceChange: (Appearance) -> Unit,
-    onAutoDismissChange: (Boolean) -> Unit,
-    onAllowOverlay: () -> Unit,
+    onDismissModeChange: (DismissMode) -> Unit,
+    onAllowOverlay: (DismissMode) -> Unit,
     onRequestPermission: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
     onOpenSounds: () -> Unit,
@@ -164,16 +165,16 @@ private fun SettingsContent(
         SpringIn(order = 3) { SoundRow(state.sound, onOpenSounds) }
         Gap()
         SpringIn(order = 4) {
-            AutoDismissSection(
-                on = state.autoDismiss,
+            DismissModeSection(
+                mode = state.dismissMode,
                 overlayAllowed = AppPermission.Overlay in permissions,
-                onChange = onAutoDismissChange,
+                onChange = onDismissModeChange,
                 onAllowOverlay = onAllowOverlay,
             )
         }
         Gap()
         SpringIn(order = 5) {
-            PermissionsSection(permissions, state.autoDismiss, oemBattery, onRequestPermission, onOpenOemBattery)
+            PermissionsSection(permissions, state.dismissMode, oemBattery, onRequestPermission, onOpenOemBattery)
         }
         Gap()
         SpringIn(order = 6) {
@@ -222,7 +223,7 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             onSignalsChange = {},
             onSignNeedsPermission = {},
             onAppearanceChange = {},
-            onAutoDismissChange = {},
+            onDismissModeChange = {},
             onAllowOverlay = {},
             onRequestPermission = {},
             onOpenOemBattery = {},

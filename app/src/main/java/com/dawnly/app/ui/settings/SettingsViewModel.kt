@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.data.sound.SoundStore
 import com.dawnly.app.domain.wake.WakeSignalSettings
@@ -24,7 +25,7 @@ data class SettingsUiState(
     val signals: WakeSignalSettings,
     val appearance: Appearance,
     val sound: AlertSound,
-    val autoDismiss: Boolean = false,
+    val dismissMode: DismissMode = DismissMode.Ask,
 )
 
 class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
@@ -36,7 +37,7 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
         app.settings.wakeSignals,
         app.settings.appearance,
         sounds.selected,
-        app.settings.autoDismiss,
+        app.settings.dismissMode,
         ::SettingsUiState,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -58,9 +59,9 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAppearance(appearance) }
     }
 
-    /** Turn on only once "Display over other apps" is allowed; the screen asks for it first. */
-    fun setAutoDismiss(on: Boolean) {
-        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAutoDismiss(on) }
+    /** The automatic choices only once "Display over other apps" is allowed; the screen asks for it first. */
+    fun setDismissMode(mode: DismissMode) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setDismissMode(mode) }
     }
 
     fun setSound(sound: AlertSound) {

@@ -35,7 +35,7 @@ Kotlin · Jetpack Compose · fully offline · no account · runs only before you
    | Music playing | `AudioManager` | Only adds to movement |
 
    Each sign's progress toward its goal adds up, and you count as awake at 100%: one sign at its goal, or a mix (3 of 5 minutes on screen plus 20 of 50 steps). A quick 3 AM time check adds only a sliver. Music never counts alone, because people fall asleep to music.
-4. **Asks before it acts.** A notification asks whether to dismiss the alarm. **Dismiss alarm** sends `AlarmClock.ACTION_DISMISS_ALARM` to the Clock app. If the Clock app can't take that request, Dawnly opens it and says why. You can opt in to **Dismiss automatically**: then Dawnly shows a one-minute countdown you can stop before it dismisses. This works with the phone locked in a pocket. When the alarm is dismissed, Dawnly plays your notification sound backwards and goes back to the app you were in, so no Clock screen is left open.
+4. **Asks before it acts.** A notification asks whether to dismiss the alarm. **Dismiss alarm** sends `AlarmClock.ACTION_DISMISS_ALARM` to the Clock app. If the Clock app can't take that request, Dawnly opens it and says why. In Settings, **When you're up** offers three choices: **Ask me** (the default), **Warn first** (a one-minute countdown you can stop, then Dawnly dismisses), or **Right away** (Dawnly dismisses with no warning). Both automatic choices work with the phone locked in a pocket. When the alarm is dismissed, Dawnly plays your notification sound backwards and goes back to the app you were in, so no Clock screen is left open.
 
 ### Architecture
 
@@ -86,7 +86,7 @@ Debug-only code (the wake detection screen and an adb test receiver) lives in `a
 
 **Never dismissing the wrong alarm.** `ACTION_DISMISS_ALARM` with "next alarm" dismisses whatever is next *when the request arrives*. A prompt about today's 5:30 tapped after that alarm was already dismissed would skip tomorrow's. `DismissGuard` (unit tested) checks the prompt's alarm is still next and still ahead, both before posting and again before dismissing. The prompt is also removed as soon as the next alarm changes.
 
-**Auto-dismiss from the background.** Starting another app's activity from the background is blocked on Android 10+, so the opt-in auto-dismiss asks for "Display over other apps", the one standard exemption. Dawnly asks only when that switch is turned on, and never draws anything over other apps. If the countdown can't be shown, or can't finish before the alarm, Dawnly asks instead.
+**Auto-dismiss from the background.** Starting another app's activity from the background is blocked on Android 10+, so the automatic choices ask for "Display over other apps", the one standard exemption. Dawnly asks only when one of them is picked, and never draws anything over other apps. If the countdown can't be shown, or can't finish before the alarm, Dawnly asks instead.
 
 ## Build and run
 

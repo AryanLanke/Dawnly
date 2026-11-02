@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import com.dawnly.app.MainActivity
 import com.dawnly.app.R
 import com.dawnly.app.dawnly
+import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
 import java.time.Duration
 import java.time.Instant
@@ -33,9 +34,10 @@ import kotlinx.coroutines.launch
  * the user is up.
  *
  * By default the prompt only asks: its "Dismiss alarm" button opens [DismissAlarmActivity], which
- * checks the alarm is still the right one before asking the Clock app. With auto-dismiss on
- * (Settings), it warns "Dismissing your 5:30 alarm in 1 minute" instead, and [AutoDismissReceiver]
- * dismisses when the minute is up unless the user tapped "Not yet".
+ * checks the alarm is still the right one before asking the Clock app. The user can choose
+ * otherwise in Settings ([DismissMode]): "Warn first" shows "Dismissing your 5:30 alarm in 1 minute"
+ * and [AutoDismissReceiver] dismisses when the minute is up unless the user tapped "Not yet";
+ * "Right away" dismisses at once.
  */
 object AwakeNotifier {
     private const val TAG = "AwakeNotifier"
@@ -61,8 +63,31 @@ object AwakeNotifier {
         }
         val app = context.dawnly
         app.scope.launch {
-            val dismissAt = autoDismissAt(context, alarmAt)
-            if (dismissAt != null) warnThenDismiss(context, alarmAt, dismissAt) else post(context, alarmAt)
+            val mode = app.settings.dismissMode.first()
+            val action = AutoDismissPlan.decide(
+                mode = mode,
+                now = Instant.now(),
+                alarmAt = alarmAt,
+                canOpenClock = Settings.canDrawOverlays(context),
+                canTimeExactly = app.watchScheduler.canScheduleExactAlarms(),
+                canNotify = canNotify(context),
+            )
+            if (mode != DismissMode.Ask) Log.i(TAG, "Dismiss mode $mode for the alarm at $alarmAt: $action")
+            when (action) {
+                AwakeAction.Ask -> post(context, alarmAt)
+                is AwakeAction.Warn -> warnThenDismiss(context, alarmAt, action.dismissAt)
+                AwakeAction.DismissNow -> dismissNow(context, alarmAt)
+            }
+        }
+    }
+
+    /** No warning: straight to [DismissAlarmActivity], as [AutoDismissReceiver] does after the minute. */
+    private fun dismissNow(context: Context, alarmAt: Instant) {
+        try {
+            context.startActivity(DismissAlarmActivity.intent(context, alarmAt))
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Couldn't dismiss straight away; asking instead", e)
+            post(context, alarmAt)
         }
     }
 
@@ -117,25 +142,6 @@ object AwakeNotifier {
             .forEach { manager.deleteNotificationChannel(it.id) }
         if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound)
         DismissedNotice.useSound(context, sound)
-    }
-
-    /**
-     * When to auto-dismiss, or null to ask instead. Every condition fails safe: without a warning
-     * the user can see and stop, or without a way to act on time, Dawnly just asks.
-     */
-    private suspend fun autoDismissAt(context: Context, alarmAt: Instant): Instant? {
-        val app = context.dawnly
-        if (!app.settings.autoDismiss.first()) return null
-        val dismissAt = AutoDismissPlan.dismissAt(Instant.now(), alarmAt)
-        val reason = when {
-            dismissAt == null -> "the alarm is too close for a one-minute warning"
-            !Settings.canDrawOverlays(context) -> "Display over other apps is off"
-            !app.watchScheduler.canScheduleExactAlarms() -> "without exact alarms the minute could stretch to an hour"
-            !canNotify(context) -> "notifications are off, so there'd be no warning"
-            else -> return dismissAt
-        }
-        Log.i(TAG, "Auto-dismiss is on, but asking instead: $reason")
-        return null
     }
 
     /** "Dismissing your 5:30 alarm in 1 minute", with a live countdown, then [AutoDismissReceiver]. */

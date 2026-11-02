@@ -92,8 +92,13 @@
     <string name="sensitivity_low">Low</string>
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>
-    <string name="settings_auto_dismiss">Dismiss automatically</string>
-    <string name="settings_auto_dismiss_detail">After a 1-minute warning you can stop. Works with the phone locked</string>
+    <string name="settings_dismiss_label">When you\'re up</string>
+    <string name="dismiss_mode_ask">Ask me</string>
+    <string name="dismiss_mode_warn">Warn first</string>
+    <string name="dismiss_mode_instant">Right away</string>
+    <string name="dismiss_mode_ask_detail">Dawnly asks, and you tap Dismiss alarm yourself.</string>
+    <string name="dismiss_mode_warn_detail">Dawnly dismisses the alarm after a 1-minute warning you can stop. Works with the phone locked.</string>
+    <string name="dismiss_mode_instant_detail">Dawnly dismisses the alarm straight away, with no warning. Works with the phone locked; you\'ll hear your sound played backwards.</string>
     <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
     <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>
     <string name="settings_permissions_label">Permissions</string>
