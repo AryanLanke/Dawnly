@@ -37,6 +37,7 @@ Exception to "testing later": this is a yes/no feasibility question like Phase 1
 **Step 2b: if Google Clock asks to unlock first**
 Choose with the user (don't decide alone):
 - **Dismiss at the next unlock:** if the countdown ends while locked, wait; the moment they unlock (`USER_PRESENT`), dismiss, if it's still before the alarm. If they don't unlock in time, the alarm rings as normal. Safe, but it doesn't cover a workout where they never unlock.
+- **Preferred fallback: press Google Clock's own "Dismiss" button.** Google Clock posts an "Upcoming alarm" notification with a **Dismiss** action before each alarm (Samsung Clock has one too). With "Notification access" (a `NotificationListenerService`, a special permission the user turns on), Dawnly can find that notification and send its Dismiss action's `PendingIntent` itself. That is the Clock app's own dismiss, so it should work with the phone locked and without the Clock screen appearing. To check: when Google Clock posts the notification (it must be up when the countdown ends; watch windows are at most a few hours), and that sending the action works while locked. Needs a Play policy reason later, like the other special permissions.
 - **Not recommended:** muting the alarm sound instead of dismissing it. It could make them miss a real alarm and it's not a real dismiss.
 - Either way, the countdown notification should say so ("Unlock to dismiss your 5:30 alarm").
 
