@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The light line above the tabs (the user's idea, 2026-11-03). One is picked at random each time
+     Dawnly opens; tapping it shows another. Keep them short, kind and one line long. -->
+<resources>
+    <string name="funny_line_next">Show another line</string>
+    <string-array name="funny_lines">
+        <item>Hi, how are you doing?</item>
+        <item>What made you open this app?</item>
+        <item>What\'s up?</item>
+        <item>Up already? Impressive.</item>
+        <item>Your bed misses you already.</item>
+        <item>Coffee first, decisions later.</item>
+        <item>Early bird mode: on.</item>
+        <item>The alarm doesn\'t know you\'re up. Yet.</item>
+        <item>Look at you, being awake and stuff.</item>
+        <item>Snooze is a state of mind.</item>
+        <item>Rise and shine. Or just rise.</item>
+        <item>The sun\'s not even up. Respect.</item>
+        <item>Still in bed, aren\'t you?</item>
+        <item>Your pillow called. It wants you back.</item>
+        <item>Nice pyjamas. Probably.</item>
+        <item>Stretch first. You\'ve earned it.</item>
+        <item>Tomorrow-you says thanks.</item>
+        <item>Good things come to those who wake.</item>
+        <item>Alarm clocks fear you.</item>
+        <item>Shh. The alarm is sleeping.</item>
+        <item>Plot twist: you\'re already up.</item>
+        <item>Morning person in training.</item>
+        <item>One more minute? We saw that.</item>
+        <item>Hydrate. Then dominate.</item>
+        <item>Did you just check your phone in bed?</item>
+        <item>Fun fact: Dawnly never sleeps in.</item>
+        <item>Beat the alarm. Win the morning.</item>
+        <item>Brave of you to be awake.</item>
+        <item>Breakfast is the real alarm.</item>
+        <item>Your blanket is not a lifestyle.</item>
+        <item>Today\'s forecast: 100% you.</item>
+        <item>Who needs a rooster anyway?</item>
+        <item>Up before the alarm? Legend.</item>
+        <item>Sleep is temporary. Coffee is forever.</item>
+        <item>Does yawning count as a sign?</item>
+        <item>Relax, Dawnly\'s got the alarm.</item>
+        <item>Feet on the floor. You\'ve got this.</item>
+        <item>Ready when you are. No rush.</item>
+        <item>The early bird gets the quiet.</item>
+        <item>Alarm: 0. You: 1.</item>
+        <item>Ten more seconds of blanket. Go.</item>
+        <item>Every legend starts by getting up.</item>
+        <item>Shower thoughts loading…</item>
+        <item>Hello again, night owl.</item>
+        <item>You sleep, we watch. Simple.</item>
+        <item>Your alarm just got nervous.</item>
+        <item>Sweet dreams, or sweet mornings?</item>
+        <item>Good to see you. Really.</item>
+        <item>Tap me. I have more of these.</item>
+        <item>Mornings: now with fewer alarms.</item>
+    </string-array>
+</resources>

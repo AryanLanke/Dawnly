@@ -12,8 +12,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.windowInsetsTopHeight
@@ -22,6 +20,23 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.text.style.TextAlign
+import com.dawnly.app.ui.glass.GlassShapes
+import com.dawnly.app.ui.glass.rememberHaptics
+import kotlin.random.Random
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -46,7 +61,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
@@ -139,28 +153,29 @@ private fun MainTabs(
     permissions: PermissionsController,
     oemBattery: OemBattery?,
 ) {
-    var tab by rememberSaveable { mutableIntStateOf(TODAY) }
-    BackHandler(enabled = tab != TODAY) { tab = TODAY }
+    val pager = rememberPagerState(initialPage = TODAY) { 2 }
+    val scope = rememberCoroutineScope()
+    val haptic = rememberHaptics()
     val reduceMotion = LocalReduceMotion.current
-    // Room for the floating tab bar, so the last card can scroll clear of it.
-    val padding = screenPadding(bottomExtra = 96.dp)
+    fun goTo(page: Int) {
+        scope.launch {
+            if (reduceMotion) pager.scrollToPage(page)
+            else pager.animateScrollToPage(page, animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f))
+        }
+    }
+    BackHandler(enabled = pager.targetPage != TODAY) { goTo(TODAY) }
+    // A tick each time a page settles, after a swipe or a tap on a tab.
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.settledPage }.drop(1).collect { haptic.tick() }
+    }
+    // Room for the funny line and the floating tab bar, so the last card can scroll clear of them.
+    val padding = screenPadding(bottomExtra = 128.dp)
 
     Box(Modifier.fillMaxSize()) {
-        AnimatedContent(
-            targetState = tab,
-            transitionSpec = {
-                if (reduceMotion) {
-                    fadeIn() togetherWith fadeOut()
-                } else {
-                    val direction = if (targetState > initialState) 1 else -1
-                    val slide = spring<IntOffset>(dampingRatio = 0.85f, stiffness = 380f)
-                    (slideInHorizontally(slide) { it / 8 * direction } + fadeIn()) togetherWith
-                        (slideOutHorizontally(slide) { -it / 8 * direction } + fadeOut())
-                }
-            },
-            label = "tab",
-        ) { shown ->
-            when (shown) {
+        // Today and Settings side by side: the pages follow the finger, and the other one stays
+        // composed so a swipe starts without a hitch.
+        HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
+            when (page) {
                 TODAY -> HomeScreen(
                     viewModel = home,
                     permissions = permissions.state,
@@ -178,14 +193,49 @@ private fun MainTabs(
             }
         }
         StatusBarFade(Modifier.align(Alignment.TopCenter))
-        GlassTabBar(
-            tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
-            selected = tab,
-            onSelect = { tab = it },
-            modifier = Modifier
+        Column(
+            Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
                 .padding(bottom = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            FunnyLine(Modifier.padding(bottom = 8.dp))
+            GlassTabBar(
+                tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
+                selected = pager.targetPage,
+                position = { pager.currentPage + pager.currentPageOffsetFraction },
+                onSelect = ::goTo,
+            )
+        }
+    }
+}
+
+/** A light line above the tabs, a different one each time Dawnly opens. Tap it for another. */
+@Composable
+private fun FunnyLine(modifier: Modifier = Modifier) {
+    val lines = stringArrayResource(R.array.funny_lines)
+    var index by rememberSaveable { mutableIntStateOf(Random.nextInt(lines.size)) }
+    val haptic = rememberHaptics()
+    AnimatedContent(
+        targetState = index,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "funnyLine",
+        modifier = modifier,
+    ) { shown ->
+        Text(
+            lines[shown % lines.size],
+            style = MaterialTheme.typography.bodySmall,
+            color = DawnlyTheme.colors.textSoft,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .clip(GlassShapes.Pill)
+                .clickable(onClickLabel = stringResource(R.string.funny_line_next)) {
+                    haptic.tick()
+                    // Any other line, never the same one twice in a row.
+                    index = (index + 1 + Random.nextInt(lines.size - 1)) % lines.size
+                }
+                .padding(horizontal = 14.dp, vertical = 6.dp),
         )
     }
 }
@@ -195,7 +245,7 @@ private const val TODAY = 0
 /** Fades scrolled content out under the status bar, so its icons stay readable. */
 @Composable
 private fun StatusBarFade(modifier: Modifier = Modifier) {
-    val wall = DawnlyTheme.colors.wall
+    val wall = DawnlyTheme.colors.let { it.sky.firstOrNull() ?: it.wall }
     Box(
         modifier
             .fillMaxWidth()

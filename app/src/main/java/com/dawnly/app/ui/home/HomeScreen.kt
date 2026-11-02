@@ -87,14 +87,14 @@ private fun HomeContent(
     ) {
         Spacer(Modifier.height(20.dp))
         SpringIn(order = 0) {
+            AlarmRing(status, now, Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp))
+        }
+        SpringIn(order = 0) {
             Text(
                 stringResource(hello(status, now)),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
             )
-        }
-        SpringIn(order = 0) {
-            AlarmRing(status, now, Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp))
         }
         Spacer(Modifier.height(8.dp))
 
@@ -134,7 +134,7 @@ private fun HomeContent(
     }
 }
 
-/** The friendly line above the ring. It follows what's happening, and says good night at night. */
+/** The friendly line under the ring. It follows what's happening, and says good night at night. */
 private fun hello(status: HomeStatus, now: Instant): Int = when (status) {
     HomeStatus.Loading, HomeStatus.NoAlarm -> R.string.home_hello_no_alarm
     is HomeStatus.Waiting ->

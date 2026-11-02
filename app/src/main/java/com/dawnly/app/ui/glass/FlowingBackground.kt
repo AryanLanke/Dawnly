@@ -1,7 +1,6 @@
 package com.dawnly.app.ui.glass
 
 import android.graphics.BlurMaskFilter
-import android.os.Build
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +19,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -135,13 +133,11 @@ private fun skyClock(): LongState {
     return time
 }
 
-/** Blur is only drawn with hardware acceleration from Android 9; below that shapes stay crisp. */
+/** A soft paint for shapes drawn once into a [Sprite]; blurring them every frame is far too slow. */
 private fun blurPaint(color: Color, radius: Float) =
     android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color.toArgb()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && radius > 0f) {
-            maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
-        }
+        if (radius > 0f) maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
     }
 
 private fun CacheDrawScope.morningSky(colors: DawnlyColors): DrawScope.(Long) -> Unit {
@@ -156,23 +152,25 @@ private fun CacheDrawScope.morningSky(colors: DawnlyColors): DrawScope.(Long) ->
         radius = 141 * u,
     )
     val cloudPaint = blurPaint(Color.White, 4 * u)
-    val shadowPaint = blurPaint(Color(0xFF78A0E6), 6 * u)
-    val shapes = Clouds.map { cloudShape(it.width * u, CLOUD_HEIGHT * u) }
+    val shadowPaint = blurPaint(Color(0xFF78A0E6).copy(alpha = 0.25f), 6 * u)
+    // Each cloud and its shadow, blurred once. The puffs reach about 19px above the pill.
+    val clouds = Clouds.map { cloud ->
+        val box = Size(cloud.width * u, CLOUD_HEIGHT * u)
+        val shape = cloudShape(box.width, box.height)
+        Sprite.draw(this, layoutDirection, box, margin = 26 * u) {
+            drawIntoCanvas { canvas ->
+                canvas.nativeCanvas.withTranslation(0f, 6 * u) { drawPath(shape, shadowPaint) }
+                canvas.nativeCanvas.drawPath(shape, cloudPaint)
+            }
+        }
+    }
     return { time ->
         drawRect(sky)
         drawCircle(sun, radius = 141 * u, center = sunCenter)
         Clouds.forEachIndexed { i, cloud ->
             val phase = ((time + cloud.aheadMillis) % cloud.periodMillis) / cloud.periodMillis.toFloat()
             val x = (cloud.left + CLOUD_TRAVEL * phase) * u
-            val y = cloud.top * size.height
-            cloudPaint.alpha = (cloud.alpha * 255).toInt()
-            shadowPaint.alpha = (cloud.alpha * 0.25f * 255).toInt()
-            drawIntoCanvas { canvas ->
-                canvas.nativeCanvas.withTranslation(x, y) {
-                    withTranslation(0f, 6 * u) { drawPath(shapes[i], shadowPaint) }
-                    drawPath(shapes[i], cloudPaint)
-                }
-            }
+            drawSprite(clouds[i], Offset(x, cloud.top * size.height), alpha = cloud.alpha)
         }
     }
 }
@@ -192,8 +190,7 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
         Rect(Offset(0.2f * size.width, 0.95f * size.height), Size(0.6f * size.width, 0.35f * size.height)),
     )
     val trail = Brush.horizontalGradient(0f to Color.Transparent, 1f to colors.star)
-    val headGlow = blurPaint(colors.star, 6 * u)
-    val moon = Moon(u)
+    val moon = Moon(this, u)
     return { time ->
         drawRect(colors.wall)
         for (glow in glows) {
@@ -212,7 +209,7 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
             val alpha = lerp(0.5f, 0.15f, EaseInOut.transform(if (q > 1f) 2f - q else q))
             drawCircle(Color.White, radius = u, center = Offset(star.x * size.width, star.y * size.height), alpha = alpha)
         }
-        for (star in ShootingStars) drawShootingStar(star, time, u, trail, headGlow, colors.starHead)
+        for (star in ShootingStars) drawShootingStar(star, time, u, trail, colors.star, colors.starHead)
         moon.draw(this, time)
     }
 }
@@ -226,7 +223,7 @@ private fun DrawScope.drawShootingStar(
     time: Long,
     u: Float,
     trail: Brush,
-    headGlow: android.graphics.Paint,
+    glow: Color,
     head: Color,
 ) {
     if (time < star.waitMillis) return
@@ -240,26 +237,25 @@ private fun DrawScope.drawShootingStar(
         translate(STAR_TRAVEL * u * p / 0.35f, 0f)
     }) {
         drawLine(trail, Offset.Zero, Offset(length, 0f), strokeWidth = 2 * u, cap = StrokeCap.Round, alpha = alpha)
-        headGlow.alpha = (alpha * 255).toInt()
-        drawIntoCanvas { it.nativeCanvas.drawCircle(length, 0f, 4.5f * u, headGlow) }
-        drawCircle(head, radius = 2.5f * u, center = Offset(length, 0f), alpha = alpha)
+        // The CSS box-shadow glow, as a gradient: cheap to draw every frame, unlike a blur.
+        val tip = Offset(length, 0f)
+        drawCircle(
+            Brush.radialGradient(0f to glow, 0.45f to glow.copy(alpha = 0.5f), 1f to glow.copy(alpha = 0f), center = tip, radius = 6 * u),
+            radius = 6 * u,
+            center = tip,
+            alpha = alpha,
+        )
+        drawCircle(head, radius = 2.5f * u, center = tip, alpha = alpha)
     }
 }
 
 /**
  * The soft moon in the top corner, from the mockup's SVG (a 100-unit drawing shown 120px wide): a
  * cream disc, three blurred seas, craters with a lit rim, and shade on its far side, with a warm
- * glow around it, all at half strength. It floats up a little and turns 2° and back.
+ * glow around it, all at half strength. Drawn once into a sprite; each frame only floats it up a
+ * little and turns it 2° and back.
  */
-private class Moon(private val u: Float) {
-    private val body = Brush.radialGradient(
-        0f to Color(0xFFFBF8EE), 0.7f to Color(0xFFE6E0CF), 1f to Color(0xFFB9B3A3),
-        center = Offset(40.4f, 38.5f), radius = 62.4f,
-    )
-    private val shade = Brush.radialGradient(
-        0.55f to Color(0x000A0B12), 1f to Color(0x8C0A0B12),
-        center = Offset(19.3f, 40.4f), radius = 86.4f,
-    )
+private class Moon(scope: CacheDrawScope, private val u: Float) {
     private val glow = Brush.radialGradient(
         0f to Glow.copy(alpha = 0.6f),
         0.42f to Glow.copy(alpha = 0.55f),
@@ -268,11 +264,31 @@ private class Moon(private val u: Float) {
         center = Center,
         radius = 115f,
     )
-    private val seas = android.graphics.Path().apply {
-        for (d in Seas) addPath(PathParser().parsePathString(d).toPath().asAndroidPath())
+    private val disc: Sprite
+
+    init {
+        val body = Brush.radialGradient(
+            0f to Color(0xFFFBF8EE), 0.7f to Color(0xFFE6E0CF), 1f to Color(0xFFB9B3A3),
+            center = Offset(40.4f, 38.5f), radius = 62.4f,
+        )
+        val shade = Brush.radialGradient(
+            0.55f to Color(0x000A0B12), 1f to Color(0x8C0A0B12),
+            center = Offset(19.3f, 40.4f), radius = 86.4f,
+        )
+        val seas = android.graphics.Path().apply {
+            for (d in Seas) addPath(PathParser().parsePathString(d).toPath().asAndroidPath())
+        }
+        val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 2.2f)
+        val s = 1.2f * u
+        disc = Sprite.draw(scope, scope.layoutDirection, Size(100 * s, 100 * s), margin = 2 * u) {
+            scale(s, s, pivot = Offset.Zero) {
+                drawCircle(body, radius = 48f, center = Center)
+                drawIntoCanvas { it.nativeCanvas.drawPath(seas, seaPaint) }
+                for (c in Craters) drawCrater(c)
+                drawCircle(shade, radius = 48f, center = Center)
+            }
+        }
     }
-    private val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 2.2f)
-    private val half = Paint().apply { alpha = 0.5f }
 
     fun draw(scope: DrawScope, time: Long) = with(scope) {
         // moonfloat: 16 s each way, eased.
@@ -280,18 +296,12 @@ private class Moon(private val u: Float) {
         val t = EaseInOut.transform(if (q > 1f) 2f - q else q)
         withTransform({
             translate(size.width - 98 * u, -6 * u - 4 * u * t)
-            scale(1.2f * u, 1.2f * u, pivot = Offset.Zero)
-            rotate(2 * t, pivot = Center)
+            rotate(2 * t, pivot = Offset(60 * u, 60 * u))
         }) {
-            drawIntoCanvas { canvas ->
-                canvas.saveLayer(Rect(-70f, -70f, 170f, 170f), half)
-                drawCircle(glow, radius = 115f, center = Center)
-                drawCircle(body, radius = 48f, center = Center)
-                canvas.nativeCanvas.drawPath(seas, seaPaint)
-                for (c in Craters) drawCrater(c)
-                drawCircle(shade, radius = 48f, center = Center)
-                canvas.restore()
+            scale(1.2f * u, 1.2f * u, pivot = Offset.Zero) {
+                drawCircle(glow, radius = 115f, center = Center, alpha = 0.5f)
             }
+            drawSprite(disc, alpha = 0.5f)
         }
     }
 

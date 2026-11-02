@@ -1,5 +1,6 @@
 package com.dawnly.app
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,9 +20,25 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        preferFastestRefreshRate()
         setContent {
             DawnlyRoot(main, home, settings)
         }
+    }
+
+    /**
+     * Asks for the screen's fastest refresh rate (120 Hz on the test phone) while Dawnly is open.
+     * Without it Android may run the moving sky and swipes at 60 Hz.
+     */
+    private fun preferFastestRefreshRate() {
+        val screen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) display else null
+        @Suppress("DEPRECATION")
+        val current = (screen ?: windowManager.defaultDisplay) ?: return
+        val mode = current.mode
+        val fastest = current.supportedModes
+            .filter { it.physicalWidth == mode.physicalWidth && it.physicalHeight == mode.physicalHeight }
+            .maxByOrNull { it.refreshRate } ?: return
+        window.attributes = window.attributes.apply { preferredDisplayModeId = fastest.modeId }
     }
 
     override fun onResume() {

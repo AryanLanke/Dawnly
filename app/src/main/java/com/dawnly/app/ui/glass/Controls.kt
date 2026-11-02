@@ -156,6 +156,7 @@ fun GlassSwitch(
     modifier: Modifier = Modifier,
 ) {
     val colors = DawnlyTheme.colors
+    val haptic = rememberHaptics()
     val thumbOffset by animateDpAsState(if (checked) 21.dp else 3.dp, DawnlyMotion.bouncy(), label = "thumb")
     val track by animateColorAsState(if (checked) colors.accent else colors.track, label = "track")
     val thumb by animateColorAsState(if (checked) colors.onAccent else Color.White, label = "thumbColor")
@@ -164,7 +165,10 @@ fun GlassSwitch(
             .size(width = 44.dp, height = 26.dp)
             .clip(CircleShape)
             .background(track)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+            .toggleable(value = checked, role = Role.Switch, onValueChange = { on ->
+                haptic.toggle(on)
+                onCheckedChange(on)
+            }),
     ) {
         Box(
             Modifier
@@ -188,6 +192,7 @@ fun GlassSegmented(
     modifier: Modifier = Modifier,
 ) {
     val colors = DawnlyTheme.colors
+    val haptic = rememberHaptics()
     var width by remember { mutableIntStateOf(0) }
     val segment = if (options.isEmpty()) 0f else width / options.size.toFloat()
     val position by animateFloatAsState(selected.coerceAtLeast(0).toFloat(), DawnlyMotion.bouncy(), label = "segment")
@@ -219,7 +224,10 @@ fun GlassSegmented(
                             .selectable(
                                 selected = index == selected,
                                 role = Role.RadioButton,
-                                onClick = { onSelect(index) },
+                                onClick = {
+                                    if (index != selected) haptic.tick()
+                                    onSelect(index)
+                                },
                             ),
                         contentAlignment = Alignment.Center,
                     ) {

@@ -90,9 +90,9 @@
     <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
     <string name="settings_apps_denied">Allow Usage access to count apps opened.</string>
     <string name="settings_sensitivity_label">How quickly Dawnly asks</string>
-    <string name="sensitivity_low">Patient</string>
-    <string name="sensitivity_medium">Balanced</string>
-    <string name="sensitivity_high">Quick</string>
+    <string name="sensitivity_low">Low</string>
+    <string name="sensitivity_medium">Medium</string>
+    <string name="sensitivity_high">High</string>
     <string name="settings_dismiss_label">When you\'re up</string>
     <string name="dismiss_mode_ask">Ask me</string>
     <string name="dismiss_mode_warn">Warn first</string>
