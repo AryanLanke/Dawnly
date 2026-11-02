@@ -1,6 +1,7 @@
 package com.dawnly.app.ui.settings
 
 import android.content.res.Configuration
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
@@ -348,8 +349,11 @@ private fun AutoDismissSection(
         }
         AnimatedVisibility(visible = asking && !on) {
             Column(Modifier.padding(bottom = 14.dp)) {
+                // Android 11+ ignores the package Uri and opens the list of all apps.
+                val why = stringResource(R.string.settings_auto_dismiss_why)
+                val findDawnly = stringResource(R.string.settings_auto_dismiss_find)
                 Text(
-                    stringResource(R.string.settings_auto_dismiss_why),
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) "$why $findDawnly" else why,
                     style = MaterialTheme.typography.bodySmall,
                     color = DawnlyTheme.colors.textSoft,
                 )
