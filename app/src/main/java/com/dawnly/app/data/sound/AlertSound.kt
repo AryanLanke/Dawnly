@@ -36,7 +36,9 @@ enum class AlertSound(@StringRes val label: Int, @RawRes private val raw: Int?) 
 
     /** What to play: a bundled file, or the phone's notification sound. For channels and previews. */
     fun uri(context: Context): Uri = raw
-        ?.let { "android.resource://${context.packageName}/$it".toUri() }
+        // By name, not resource number: a channel keeps its sound across app updates, and the
+        // numbers can shift from one version to the next.
+        ?.let { "android.resource://${context.packageName}/raw/${context.resources.getResourceEntryName(it)}".toUri() }
         ?: Settings.System.DEFAULT_NOTIFICATION_URI
 
     companion object {
