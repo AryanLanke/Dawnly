@@ -26,8 +26,9 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import kotlin.math.hypot
 
 /**
- * Switching light and dark sweeps the new look in from the top-right corner, where the sun and moon
- * sit, across to the bottom-left (the user's choice, 2026-11-03, over a fade of the whole screen).
+ * Switching light and dark sweeps the new look across the screen (the user's choice, 2026-11-03,
+ * over a fade of the whole screen): light comes in from the top-right corner to the bottom-left,
+ * dark from the bottom-left to the top-right. System and Clock go whichever way their look does.
  * The screen as it was is kept as a picture and laid on top, and a soft-edged circle growing from
  * the corner wipes it away. [content] is drawn with [dark] as it stands during the sweep.
  */
@@ -35,6 +36,7 @@ import kotlin.math.hypot
 fun ThemeSweep(dark: Boolean, still: Boolean, content: @Composable (dark: Boolean) -> Unit) {
     var shown by remember { mutableStateOf(dark) }
     var before by remember { mutableStateOf<ImageBitmap?>(null) }
+    var towardDark by remember { mutableStateOf(dark) }
     val sweep = remember { Animatable(1f) }
     val screen = rememberGraphicsLayer()
 
@@ -46,6 +48,7 @@ fun ThemeSweep(dark: Boolean, still: Boolean, content: @Composable (dark: Boolea
         }
         // The old look, as a picture, before anything changes underneath.
         before = screen.toImageBitmap()
+        towardDark = dark
         shown = dark
         sweep.snapTo(0f)
         sweep.animateTo(1f, tween(SWEEP_MS, easing = FastOutSlowInEasing))
@@ -65,7 +68,7 @@ fun ThemeSweep(dark: Boolean, still: Boolean, content: @Composable (dark: Boolea
     before?.let { picture ->
         Canvas(Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
             drawImage(picture)
-            val corner = Offset(size.width, 0f)
+            val corner = if (towardDark) Offset(0f, size.height) else Offset(size.width, 0f)
             // Reaches past the far corner, plus the soft edge, by the end.
             val radius = hypot(size.width, size.height) * 1.15f * sweep.value
             if (radius > 0f) {

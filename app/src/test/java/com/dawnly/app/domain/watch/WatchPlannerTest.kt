@@ -67,10 +67,10 @@ class WatchPlannerTest {
     }
 
     @Test
-    fun `the custom slider stops every minute up to half an hour, then every 5`() {
+    fun `the custom slider stops every minute from 5 to half an hour, then every 5`() {
         val stops = WatchWindow.SLIDER_STOPS.map { it.toMinutes() }
-        assertEquals((1L..30L).toList(), stops.take(30))
-        assertEquals(listOf(35L, 40L), stops.subList(30, 32))
+        assertEquals((5L..30L).toList(), stops.take(26))
+        assertEquals(listOf(35L, 40L), stops.subList(26, 28))
         assertEquals(180L, stops.last())
     }
 }

@@ -78,9 +78,9 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
 }
 
 /**
- * The custom window. The slider moves a minute at a time up to half an hour, where people want
- * exact times like 6 or 8 minutes, then 5 minutes at a time up to 3 hours; minus and plus always
- * move a minute. Under [WatchWindow.RECOMMENDED_MIN] a note says it's very short. While dragging,
+ * The custom window, from 5 minutes to 3 hours. The slider moves a minute at a time up to half an
+ * hour, where people want exact times like 6 or 8 minutes, then 5 minutes at a time; minus and
+ * plus always move a minute. Under [WatchWindow.RECOMMENDED_MIN] a note says it's short. While dragging,
  * the time follows the finger and is saved on letting go, so a swipe is one settings change rather
  * than dozens.
  */

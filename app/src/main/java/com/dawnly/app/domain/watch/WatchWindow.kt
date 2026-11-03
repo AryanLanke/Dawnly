@@ -10,11 +10,11 @@ object WatchWindow {
     /** The custom window's minus and plus move by this. */
     val FINE_STEP: Duration = Duration.ofMinutes(1)
 
-    /** Allowed, but shorter than [RECOMMENDED_MIN] leaves little time to notice someone is up. */
-    val MIN: Duration = Duration.ofMinutes(1)
+    /** The shortest window: less leaves no time to notice someone is up. */
+    val MIN: Duration = Duration.ofMinutes(5)
 
-    /** Below this, Settings says the window is very short. */
-    val RECOMMENDED_MIN: Duration = Duration.ofMinutes(5)
+    /** Below this (5, 6 or 7 minutes), Settings says the window is short. */
+    val RECOMMENDED_MIN: Duration = Duration.ofMinutes(8)
 
     /** Up to this the slider moves a minute at a time; past it, 5 minutes. */
     private val FINE_UNTIL: Duration = Duration.ofMinutes(30)
