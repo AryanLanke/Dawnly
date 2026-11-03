@@ -182,4 +182,12 @@
     <string name="home_hello_watching">Watching quietly</string>
     <string name="home_hello_awake">Morning, early bird!</string>
     <string name="home_hello_skipped">Taking this one off</string>
+
+    <!-- Restricted settings help (Android 13+, apps installed from a file) -->
+    <string name="restricted_title">Android locked %1$s</string>
+    <string name="restricted_body">Dawnly was installed from a file, not an app store, so Android keeps this switch locked until you unlock it. It takes ten seconds:</string>
+    <string name="restricted_step_1">1. Tap Open App info below.</string>
+    <string name="restricted_step_2">2. Tap ⋮ at the top right, then Allow restricted settings.</string>
+    <string name="restricted_step_3">3. Come back and tap Allow again.</string>
+    <string name="restricted_open">Open App info</string>
 </resources>

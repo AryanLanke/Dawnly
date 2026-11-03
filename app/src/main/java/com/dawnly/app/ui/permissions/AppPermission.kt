@@ -3,11 +3,13 @@ package com.dawnly.app.ui.permissions
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.PowerManager
+import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -76,30 +78,70 @@ enum class AppPermission {
     }
 
     /**
-     * Where to send the user to grant this in system settings: the only way for exact alarms,
-     * usage access, battery and overlays, and the fallback once a runtime permission has been denied for good.
+     * Where to send the user to grant this in system settings, best first: the only way for exact
+     * alarms, usage access, battery and overlays, and the fallback once a runtime permission has
+     * been denied for good. Some phones accept a screen's intent and then show nothing, so the
+     * later ones are tried when the first doesn't appear ([PermissionsController]). The last is
+     * always Dawnly's own App info page.
      */
-    fun settingsIntent(context: Context): Intent {
+    fun settingsIntents(context: Context): List<Intent> {
         val packageUri = "package:${context.packageName}".toUri()
-        return when (this) {
-            Notifications -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        val screens = when (this) {
+            Notifications -> listOf(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+            )
             ExactAlarms -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, packageUri)
+                listOf(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, packageUri))
             } else {
-                appDetails(packageUri)
+                emptyList()
             }
-            // Shows a one-tap system dialog. Needs REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in the manifest.
-            Battery -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri)
-            ActivityRecognition -> appDetails(packageUri)
-            Overlay -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri)
+            // A one-tap system dialog (needs REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in the manifest).
+            // Xiaomi phones often swallow it, so then the brand's own screen, then Android's list.
+            Battery -> listOfNotNull(
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri),
+                OemBattery.detect(Build.MANUFACTURER)?.batterySaverScreen(context),
+                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            )
+            ActivityRecognition -> emptyList()
+            Overlay -> listOf(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri))
             // The list of apps; a package Uri isn't honoured on every phone.
-            UsageAccess -> Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+            UsageAccess -> listOf(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
+        return screens + appDetails(packageUri)
     }
+
+    /**
+     * Android 13+ locks a few switches, Usage access and Display over other apps among them, for
+     * apps installed from a file rather than an app store. Turning one on then shows "Restricted
+     * setting" until the user unlocks it from App info: ⋮ > Allow restricted settings.
+     */
+    val canBeLocked: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && (this == UsageAccess || this == Overlay)
 
     companion object {
         fun appDetails(packageUri: android.net.Uri) =
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+
+        fun appDetails(context: Context) = appDetails("package:${context.packageName}".toUri())
+
+        /**
+         * True when Android says Dawnly's restricted settings are locked, false when they're open,
+         * null when it can't tell. The app op behind "Allow restricted settings" isn't in the
+         * public SDK, so this is a hint and the help also shows after a second failed try.
+         */
+        fun restrictedSettingsLocked(context: Context): Boolean? {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+            return try {
+                val mode = context.getSystemService(AppOpsManager::class.java).unsafeCheckOpNoThrow(
+                    "android:access_restricted_settings",
+                    Process.myUid(),
+                    context.packageName,
+                )
+                mode == AppOpsManager.MODE_ERRORED || mode == AppOpsManager.MODE_IGNORED
+            } catch (e: RuntimeException) {
+                null
+            }
+        }
     }
 }

@@ -28,12 +28,21 @@ enum class OemBattery(@StringRes val label: Int, @StringRes val hint: Int) {
             // Autostart first; it's the switch that most often stops alarms on MIUI and HyperOS.
             Xiaomi -> listOf(
                 component("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
-                component("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
-                    .putExtra("package_name", context.packageName)
-                    .putExtra("package_label", context.getString(R.string.app_name)),
+                batterySaverScreen(context),
             )
         }
-        return brandScreens + AppPermission.appDetails("package:${context.packageName}".toUri())
+        return brandScreens.filterNotNull() + AppPermission.appDetails("package:${context.packageName}".toUri())
+    }
+
+    /**
+     * The brand's own "no restrictions" screen for Dawnly, tried when Android's one-tap battery
+     * dialog doesn't show. Xiaomi phones often swallow that dialog without an error.
+     */
+    fun batterySaverScreen(context: Context): Intent? = when (this) {
+        Samsung -> null
+        Xiaomi -> component("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
+            .putExtra("package_name", context.packageName)
+            .putExtra("package_label", context.getString(R.string.app_name))
     }
 
     companion object {
