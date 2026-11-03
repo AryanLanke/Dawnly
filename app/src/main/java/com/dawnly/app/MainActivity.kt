@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.ui.DawnlyRoot
 import com.dawnly.app.ui.MainViewModel
 import com.dawnly.app.ui.home.HomeViewModel
@@ -60,5 +61,6 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Covers a fresh install (no broadcast has arrived yet) and returning from permission settings.
         dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
+        dawnly.scope.launch { ReminderScheduler.sync(this@MainActivity) }
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.dawnly.app.dawnly
+import com.dawnly.app.notify.ReminderScheduler
 import kotlinx.coroutines.launch
 
 /** Our own check alarm, set by [WatchScheduler]: the window opens, or the alarm is due. */
@@ -16,11 +17,15 @@ class WatchAlarmReceiver : BroadcastReceiver() {
 
 /**
  * Events that can change the plan: the next alarm changed, a reboot or app update cleared our
- * alarms, or the user allowed exact alarms. None of these are sent by other apps.
+ * alarms, or the user allowed exact alarms. None of these are sent by other apps. A reboot or an
+ * update also cleared the reminders' alarms, so they're set again too.
  */
 class SystemEventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.i("SystemEventsReceiver", "Received ${intent.action}")
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            context.dawnly.scope.launch { ReminderScheduler.sync(context) }
+        }
         reconcileAsync(context, fromCheckAlarm = false)
     }
 }

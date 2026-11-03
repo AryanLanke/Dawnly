@@ -108,6 +108,11 @@
             android:name=".notify.NotYetReceiver"
             android:exported="false" />
 
+        <!-- The user's reminders on Today: each one's alarm when it's due. -->
+        <receiver
+            android:name=".notify.ReminderReceiver"
+            android:exported="false" />
+
         <!-- Opt-in auto-dismiss: our own alarm, when the one-minute warning runs out. -->
         <receiver
             android:name=".notify.AutoDismissReceiver"

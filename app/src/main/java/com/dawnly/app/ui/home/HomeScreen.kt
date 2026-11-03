@@ -20,6 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.alarm.AppRef
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.watch.WatchState
@@ -51,23 +55,43 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val dismissResult by viewModel.dismissResult.collectAsStateWithLifecycle()
+    val reminders by viewModel.reminders.collectAsStateWithLifecycle()
+    // The reminder being changed, or Adding for a new one; null when the editor is closed.
+    var editing by remember { mutableStateOf<ReminderEdit?>(null) }
     val activity = LocalActivity.current
     HomeContent(
         state = state,
         permissions = permissions,
         dismissResult = dismissResult,
+        reminders = reminders,
+        onEditReminder = { editing = ReminderEdit(it) },
+        onToggleReminder = { reminder, on -> viewModel.saveReminder(reminder.copy(on = on)) },
         onDismissAlarm = { activity?.let(viewModel::dismissAlarm) },
         onClearDismissResult = viewModel::clearDismissResult,
         onRequestPermission = onRequestPermission,
         contentPadding = contentPadding,
     )
+    editing?.let { edit ->
+        ReminderEditor(
+            initial = edit.reminder,
+            onSave = { viewModel.saveReminder(it); editing = null },
+            onDelete = { viewModel.deleteReminder(it); editing = null },
+            onClose = { editing = null },
+        )
+    }
 }
+
+/** The editor's subject: an existing reminder, or null for a new one. */
+private class ReminderEdit(val reminder: Reminder?)
 
 @Composable
 private fun HomeContent(
     state: HomeUiState,
     permissions: PermissionState,
     dismissResult: DismissResult?,
+    reminders: List<Reminder>,
+    onEditReminder: (Reminder?) -> Unit,
+    onToggleReminder: (Reminder, Boolean) -> Unit,
     onDismissAlarm: () -> Unit,
     onClearDismissResult: () -> Unit,
     onRequestPermission: (AppPermission) -> Unit,
@@ -128,8 +152,9 @@ private fun HomeContent(
             dismissResult?.let { NoteCard(describe(it), onClick = onClearDismissResult) }
         }
         if (status is HomeStatus.Watching) {
-            SpringIn(order) { DismissAction(status.alarmAt, status.awake, onDismissAlarm) }
+            SpringIn(order++) { DismissAction(status.alarmAt, status.awake, onDismissAlarm) }
         }
+        SpringIn(order) { RemindersCard(reminders, onEditReminder, onToggleReminder) }
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -165,6 +190,9 @@ private fun HomePreview(state: HomeUiState, dark: Boolean, permissions: Permissi
             state = state,
             permissions = permissions,
             dismissResult = null,
+            reminders = emptyList(),
+            onEditReminder = {},
+            onToggleReminder = { _, _ -> },
             onDismissAlarm = {},
             onClearDismissResult = {},
             onRequestPermission = {},
@@ -214,6 +242,9 @@ private fun OpenedClockPreview() {
             state = watching(WakeSignals(screenOnTime = Duration.ofMinutes(6), steps = 64, movingTime = Duration.ofMinutes(2))),
             permissions = PermissionState.AllGranted,
             dismissResult = DismissResult.OpenedClock(AppRef("com.example.clock", "Clock")),
+            reminders = emptyList(),
+            onEditReminder = {},
+            onToggleReminder = { _, _ -> },
             onDismissAlarm = {},
             onClearDismissResult = {},
             onRequestPermission = {},

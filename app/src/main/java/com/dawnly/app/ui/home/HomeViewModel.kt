@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
 import com.dawnly.app.service.WatchSession
 import java.time.Instant
@@ -29,6 +31,22 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
     ) { state, live, settings, now ->
         HomeUiState.from(state, live, settings, now)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
+
+    /** The user's reminders, shown on Today under the alarm. */
+    val reminders: StateFlow<List<Reminder>> =
+        app.reminders.reminders.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Adds or updates [reminder] and sets its alarm. */
+    fun saveReminder(reminder: Reminder) = changeReminders { app.reminders.save(reminder) }
+
+    fun deleteReminder(id: Long) = changeReminders { app.reminders.delete(id) }
+
+    private fun changeReminders(change: suspend () -> Unit) {
+        app.scope.launch {
+            change()
+            ReminderScheduler.sync(app)
+        }
+    }
 
     private val _dismissResult = MutableStateFlow<DismissResult?>(null)
 

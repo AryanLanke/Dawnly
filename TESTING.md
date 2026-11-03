@@ -177,6 +177,12 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **8.7 Opening sound:** open Dawnly from the launcher with the phone's sound on. **Expect:** the flute plays once; not again when the screen turns; silent in silent mode.
 - [ ] **8.8 Right away sound:** Right away, get detected awake. **Expect:** "Alarm's off" plays the sound forwards. With Ask me or Warn first it still plays backwards.
 
+- [ ] **8.9 Feedback:** Settings, Feedback. **Expect:** Gmail opens a new email to redischarmender@gmail.com, subject "Dawnly feedback", with the version and phone at the bottom.
+- [ ] **8.10 Notification icon:** any Dawnly notification shows the fried egg, not the ring and sun.
+- [ ] **8.11 Music while asleep:** Warn first or Right away, some movement plus music only. **Expect:** "Up already?" asks instead of dismissing; leave it and the alarm rings.
+- [ ] **8.12 Reminders:** Today, Add a reminder: "Drink water", Every 15 min, from now until an hour later. **Expect:** a notification every 15 minutes with the name and why; none outside the times; the switch stops them; editing and deleting work; they come back after a reboot.
+- [ ] **8.13 Daily reminder:** At a time, 2 minutes from now. **Expect:** it comes once at that time, and again the next day.
+
 ## Found while writing this plan (to fix)
 
 - The Android notification setting for "Up before your alarm" still says "…only dismisses it on its own if you turn on Dismiss automatically", the old switch's name. It should name **When you're up**.
