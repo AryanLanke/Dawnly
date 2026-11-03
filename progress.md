@@ -16,6 +16,12 @@ The user's friends tried the APK on a Motorola and a Redmi. All four problems ar
 - **Redmi, Background use "Allow" did nothing:** Xiaomi swallowed the one-tap battery dialog. Each settings permission now has a list of screens (`AppPermission.settingsIntents`). The next is tried when Dawnly isn't covered within 1.5 s or the screen closes within 0.6 s: Xiaomi's battery saver, Android's list, then App info.
 - **Redmi, Warn first left the alarm on:** Xiaomi's Clock opened but didn't dismiss, and Dawnly said nothing. `QuietDismiss` now tries `DismissRequest.Next`, then `ByTime` (hour and minutes), then `ByTimeShown` (no SKIP_UI), 4 s each, and remembers what worked per Clock package (`DismissMemory`). If none works: `DismissFailedNotice` says "Your alarm is still on" (normal sound, not the reversed one) and opens Clock when tapped. If the alarm is more than an hour off, one more try comes 55 min before it (`DismissRetry`), since stock-based Clocks only dismiss once their "upcoming alarm" notice is up. Whether Xiaomi's Clock takes any form is still unknown: needs the friend's phone and a log.
 - **Settings text running through the funny line:** a plain `NavBarFade` gradient behind the line and the tabs (no blur, so still 120 Hz).
+- **No Play Store, no developer mode (the user's call, same day):** Dawnly now needs nothing Android locks during setup.
+  - Usage access left onboarding (`askedUpFront` false); it's asked when the apps-opened sign is turned on, and listed in Settings only then.
+  - Warn first and Right away work without Display over other apps (`ClockReach`): a full-screen notification (`USE_FULL_SCREEN_INTENT`, new `AppPermission.FullScreen`, granted at install, not locked) opens the dismiss by itself when locked, and asks for one tap while the phone is in use. Overlay is now optional, only to skip that tap.
+  - Untested risk: without overlay, going back to the previous app after the dismiss may be blocked (background start), leaving the Clock app open (TESTING.md 7.13).
+  - `OemBattery.Oppo` covers OPPO, OnePlus and realme.
+  - Stores: `docs/app-stores.md`. Xiaomi GetApps looks possible, but whether individual sign-up is free depends on the country. Samsung Galaxy Store wants commercial seller status (D-U-N-S or business papers), so it's probably blocked for an individual. `docs/privacy-policy.md` is the policy link both stores need (live once pushed).
 
 ---
 
