@@ -9,6 +9,18 @@
 
 ---
 
+## ▶ 0.3.0 (2026-11-04): UI polish, Reminders, learning
+
+Built on the ui-polish branch, merged into main. Installed on the user's phone; the APK was shared with friends.
+- Look: rows reach the card edges, no press highlight (NoPress), funny line fades out on Settings, soft night sky (one GPU blur), slower four-point shooting stars, the watch ring as light flowing water, the egg notification icon, light/dark sweeping in from the corner (light from top-right, dark from bottom-left, ThemeSweep).
+- Settings: Clock appearance by default, custom window 5 min to 3 h by the minute (note under 8 min), Feedback (Gmail to redischarmender@gmail.com), Learning from you.
+- Behaviour: flute on opening; Right away plays the sound forwards; music tipping it over always asks.
+- Reminders on Today: daily or every 15 to 60 min between two times, with a glass editor and time wheels, easing in over a frosted Today.
+- Learning (Learning.kt): Not yet / quick Dismiss steer caution; usual weekday and weekend times; trusted signs. After Not yet, Today says "Okay, not yet".
+- Checked on the phone: 120 Hz held, 0 missed frames scrolling Settings in dark mode and spinning the time wheels. The rest is on TESTING.md 8.1 to 8.17.
+
+---
+
 ## ▶ Friends' phones (2026-11-03) — released as 0.2.0 (versionCode 2)
 
 The user's friends tried the APK on a Motorola and a Redmi. All four problems are fixed in code and on the TESTING.md list (7.5–7.10); none tested yet.

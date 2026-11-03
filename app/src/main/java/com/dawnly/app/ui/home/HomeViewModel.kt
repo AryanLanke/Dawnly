@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
@@ -28,9 +29,12 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
         WatchSession.signals,
         app.settings.wakeSignals,
         ticker(),
-        app.learning.learned(app.settings),
-    ) { state, live, settings, now, learned ->
-        HomeUiState.from(state, live, settings, now, learned)
+        // What's learned, and when the user last said Not yet (for "Okay, not yet" on Today).
+        combine(app.learning.learned(app.settings), app.learning.mornings) { learned, mornings ->
+            learned to mornings.lastOrNull()?.takeIf { it.answer == Answer.NotYet }?.askedAt
+        },
+    ) { state, live, settings, now, (learned, notYetAt) ->
+        HomeUiState.from(state, live, settings, now, learned, notYetAt)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 
     /** The user's reminders, shown on Today under the alarm. */

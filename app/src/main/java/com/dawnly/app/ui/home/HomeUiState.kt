@@ -28,7 +28,15 @@ data class HomeUiState(
             mySettings: WakeSignalSettings,
             now: Instant,
             learned: Learned = Learned.Nothing,
-        ): HomeUiState = withLearning(state, live, mySettings.scaledBy(learned.goalFactor(LocalDateTime.ofInstant(now, ZoneId.systemDefault()))), now, learned)
+            notYetAt: Instant? = null,
+        ): HomeUiState = withLearning(
+            state,
+            live,
+            mySettings.scaledBy(learned.goalFactor(LocalDateTime.ofInstant(now, ZoneId.systemDefault()))),
+            now,
+            learned,
+            notYetAt,
+        )
 
         private fun withLearning(
             state: WatchState,
@@ -36,6 +44,7 @@ data class HomeUiState(
             settings: WakeSignalSettings,
             now: Instant,
             learned: Learned,
+            notYetAt: Instant?,
         ): HomeUiState = when (state) {
             WatchState.Idle -> HomeUiState(HomeStatus.NoAlarm)
             is WatchState.Skipped -> HomeUiState(HomeStatus.Skipped(state.alarmAt))
@@ -54,6 +63,7 @@ data class HomeUiState(
                         progress = state.progress(now),
                         wakeProgress = score.value,
                         awake = score.isAwake,
+                        notYet = notYetAt != null && !notYetAt.isBefore(state.startedAt),
                     ),
                     signals = signalRows(settings, signals),
                 )
@@ -95,7 +105,8 @@ sealed interface HomeStatus {
     /**
      * Inside the watch window. [progress] is how much of the window has passed. [wakeProgress] and
      * [awake] come from the same [WakeScore] that sends the prompt, so Home fills its "Signs you're
-     * up" bar and says "You're up early" exactly as the prompt goes out.
+     * up" bar and says "You're up early" exactly as the prompt goes out. [notYet] once the user
+     * answered Not yet in this window: then Home stops cheering and says the alarm will ring.
      */
     data class Watching(
         val alarmAt: Instant,
@@ -103,6 +114,7 @@ sealed interface HomeStatus {
         val progress: Float,
         val wakeProgress: Float,
         val awake: Boolean,
+        val notYet: Boolean = false,
     ) : HomeStatus
 
     data class Skipped(val alarmAt: Instant) : HomeStatus

@@ -22,6 +22,7 @@
     <string name="home_waiting">On watch from %1$s</string>
     <string name="home_watching">Keeping watch since %1$s</string>
     <string name="home_awake">Look who\'s up early</string>
+    <string name="home_not_yet">You said not yet</string>
     <string name="home_skipped">Sitting this one out</string>
     <string name="home_skipped_detail">This alarm was set after watching should have started, so Dawnly lets it ring as usual.</string>
     <string name="home_progress_description">%1$d%% of the watch window has passed</string>
@@ -230,6 +231,7 @@
     <string name="home_hello_day">All set</string>
     <string name="home_hello_watching">Watching quietly</string>
     <string name="home_hello_awake">Morning, early bird!</string>
+    <string name="home_hello_not_yet">Okay, not yet. Your alarm will ring as usual.</string>
     <string name="home_hello_skipped">Taking this one off</string>
 
     <!-- Restricted settings help (Android 13+, apps installed from a file) -->

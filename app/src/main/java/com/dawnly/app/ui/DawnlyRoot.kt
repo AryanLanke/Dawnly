@@ -8,6 +8,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.runtime.key
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -190,8 +197,20 @@ private fun MainTabs(
     // Frosted behind the reminder editor (Android 12+), like glass over the screen. Without the
     // frost, a stronger veil keeps the card readable.
     val canFrost = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val frosted = if (editing != null && canFrost) {
-        Modifier.graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Clamp) }
+    // The editor eases in and out: Today frosts over gradually as the card rises into place.
+    val editorShown = animateFloatAsState(
+        targetValue = if (editing != null) 1f else 0f,
+        animationSpec = tween(EDITOR_MS, easing = FastOutSlowInEasing),
+        label = "editor",
+    )
+    // Kept while the card eases out, after editing is already null.
+    var lastEdit by remember { mutableStateOf<ReminderEdit?>(null) }
+    editing?.let { lastEdit = it }
+    val frosted = if (canFrost) {
+        Modifier.graphicsLayer {
+            val radius = 18.dp.toPx() * editorShown.value
+            renderEffect = if (radius > 0.5f) BlurEffect(radius, radius, TileMode.Clamp) else null
+        }
     } else {
         Modifier
     }
@@ -241,17 +260,37 @@ private fun MainTabs(
                 )
             }
         }
-        editing?.let { edit ->
+        AnimatedVisibility(
+            visible = editing != null,
+            enter = fadeIn(tween(EDITOR_MS)),
+            exit = fadeOut(tween(EDITOR_MS)),
+        ) {
             Box(Modifier.fillMaxSize().background(DawnlyTheme.colors.wall.copy(alpha = if (canFrost) 0.25f else 0.7f)))
-            ReminderEditor(
-                initial = edit.reminder,
-                onSave = { home.saveReminder(it); editing = null },
-                onDelete = { home.deleteReminder(it); editing = null },
-                onClose = { editing = null },
-            )
+            lastEdit?.let { edit ->
+                // A fresh editor for each reminder opened.
+                key(edit) {
+                    Box(
+                        Modifier.animateEnterExit(
+                            enter = scaleIn(tween(EDITOR_MS, easing = FastOutSlowInEasing), initialScale = 0.92f) +
+                                slideInVertically(tween(EDITOR_MS, easing = FastOutSlowInEasing)) { it / 24 },
+                            exit = scaleOut(tween(EDITOR_MS), targetScale = 0.96f),
+                        ),
+                    ) {
+                        ReminderEditor(
+                            initial = edit.reminder,
+                            onSave = { home.saveReminder(it); editing = null },
+                            onDelete = { home.deleteReminder(it); editing = null },
+                            onClose = { editing = null },
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
+/** How long the reminder editor takes to ease in or out. */
+private const val EDITOR_MS = 340
 
 /** What the reminder editor is open for: an existing reminder, or null for a new one. */
 private class ReminderEdit(val reminder: Reminder?)

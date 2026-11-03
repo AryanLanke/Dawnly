@@ -112,4 +112,15 @@ class HomeUiStateTest {
         assertEquals(HomeStatus.Skipped(alarm), state.status)
         assertTrue(state.signals.isEmpty())
     }
+
+    @Test
+    fun `after Not yet in this window, Today knows, and an older one doesn't count`() {
+        val now = windowStart.plus(Duration.ofMinutes(20))
+        val up = WakeSignals(screenOnTime = Duration.ofMinutes(6))
+        val said = HomeUiState.from(watching, up, allSigns, now, notYetAt = now.minusSeconds(60)).status as HomeStatus.Watching
+        assertTrue(said.awake)
+        assertTrue(said.notYet)
+        val yesterday = HomeUiState.from(watching, up, allSigns, now, notYetAt = windowStart.minus(Duration.ofDays(1)))
+        assertFalse((yesterday.status as HomeStatus.Watching).notYet)
+    }
 }

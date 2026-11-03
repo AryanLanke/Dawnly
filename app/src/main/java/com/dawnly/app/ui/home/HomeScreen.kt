@@ -137,7 +137,7 @@ private fun HomeContent(
             dismissResult?.let { NoteCard(describe(it), onClick = onClearDismissResult) }
         }
         if (status is HomeStatus.Watching) {
-            SpringIn(order++) { DismissAction(status.alarmAt, status.awake, onDismissAlarm) }
+            SpringIn(order++) { DismissAction(status.alarmAt, status.awake && !status.notYet, onDismissAlarm) }
         }
         SpringIn(order) { RemindersCard(reminders, onEditReminder, onToggleReminder) }
         Spacer(Modifier.height(8.dp))
@@ -150,7 +150,11 @@ private fun hello(status: HomeStatus, now: Instant): Int = when (status) {
     is HomeStatus.Waiting ->
         if (NightClock.isNight(now.atZone(ZoneId.systemDefault()).toLocalTime())) R.string.home_hello_night
         else R.string.home_hello_day
-    is HomeStatus.Watching -> if (status.awake) R.string.home_hello_awake else R.string.home_hello_watching
+    is HomeStatus.Watching -> when {
+        status.notYet -> R.string.home_hello_not_yet
+        status.awake -> R.string.home_hello_awake
+        else -> R.string.home_hello_watching
+    }
     is HomeStatus.Skipped -> R.string.home_hello_skipped
 }
 

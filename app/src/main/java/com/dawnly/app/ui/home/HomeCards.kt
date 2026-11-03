@@ -78,9 +78,11 @@ internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Mo
             AlarmTime(alarmAt)
             val subtitle = when (status) {
                 is HomeStatus.Waiting -> stringResource(R.string.home_waiting, formatTime(status.startsAt))
-                is HomeStatus.Watching ->
-                    if (status.awake) stringResource(R.string.home_awake)
-                    else stringResource(R.string.home_watching, formatTime(status.startedAt))
+                is HomeStatus.Watching -> when {
+                    status.notYet -> stringResource(R.string.home_not_yet)
+                    status.awake -> stringResource(R.string.home_awake)
+                    else -> stringResource(R.string.home_watching, formatTime(status.startedAt))
+                }
                 else -> stringResource(R.string.home_skipped)
             }
             AnimatedContent(
