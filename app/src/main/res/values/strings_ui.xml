@@ -89,7 +89,7 @@
     <string name="settings_signals_min">Keep at least one on. Music alone doesn\'t count.</string>
     <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
     <string name="settings_apps_denied">Allow Usage access to count apps opened.</string>
-    <string name="settings_sensitivity_label">How quickly Dawnly asks</string>
+    <string name="settings_sensitivity_label">Sensitivity</string>
     <string name="sensitivity_low">Low</string>
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>

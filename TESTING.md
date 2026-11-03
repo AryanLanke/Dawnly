@@ -24,7 +24,7 @@ The signs add up. One full sign is enough, and so are two half signs.
 
 **A quick test alarm, the same every time:**
 1. In Dawnly: **Settings** → **How early should Dawnly start watching?** → **Custom** → slide all the way left to **5 min**.
-2. **Settings** → **More options** → **How quickly Dawnly asks** → **High** (short goals make tests quicker).
+2. **Settings** → **More options** → **Sensitivity** → **High** (short goals make tests quicker).
 3. In the **Clock** app: **Alarm** tab → **+** → pick a time **at least 10 minutes from now** → **OK**.
 4. Dawnly starts watching 5 minutes before that alarm. Today shows "On watch from …" until then.
 
@@ -68,7 +68,7 @@ Removes Dawnly and installs it again, like a new user would. Your Dawnly setting
 - [ ] **2.12** **Notification sound**: tap each sound. **Expect:** each plays once, with a soft fading ending, and gets the blue tick.
 - [ ] **2.13** **Appearance**: Light, Dark, System, Clock. **Expect:** Light = morning sky with clouds; Dark = night sky with stars and a moon; System follows the phone's dark mode; Clock = night from 7 pm to 6 am. Text is easy to read in both.
 - [ ] **2.14** **More options** → signs: turn each one off and on. Try to turn all of them off. **Expect:** at least one must stay on ("Music alone doesn't count").
-- [ ] **2.15** **More options** → **How quickly Dawnly asks**: Low, Medium, High.
+- [ ] **2.15** **More options** → **Sensitivity**: Low, Medium, High.
 - [ ] **2.16** **More options** → permissions: each shows whether it's allowed; tapping a missing one opens the right Android page.
 - [ ] **2.17** Change several settings, swipe Dawnly away in Recents, reopen. **Expect:** every setting kept.
 - [ ] **2.18** Turn the phone sideways (with auto-rotate on). **Expect:** nothing is cut off or overlapping. Turn the phone's font size up (Settings → Display → Font size, largest). **Expect:** still readable, nothing cut off. Put it back after.

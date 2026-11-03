@@ -302,7 +302,7 @@ internal fun shownPermissions(dismissMode: DismissMode): List<AppPermission> =
     }
 
 /**
- * The row that opens the rest of Settings in place: signs, how quickly Dawnly asks, and
+ * The row that opens the rest of Settings in place: signs, sensitivity, and
  * permissions. If a permission still needs allowing it says so, so nothing important hides here.
  */
 @Composable
