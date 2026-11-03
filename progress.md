@@ -173,7 +173,7 @@ Dawnly/
 ├─ design/                           see design/README.md
 │  ├─ mockups.html                   approved UI mockups (PLAN.md Appendix A)
 │  └─ app-icon/                      icon masters, preview.html, generator/ (Python, renders with Chrome)
-├─ docs/                             README screenshots and demo.gif
+├─ docs/                             README screenshots (WebP) and demo.avif
 ├─ gradle/libs.versions.toml         version catalog
 └─ app/src/
    ├─ main/java/com/dawnly/app/
@@ -420,7 +420,7 @@ The glass design from `design/mockups.html` is now the real app: onboarding, Hom
 Dawnly has a portfolio README with light and dark screenshots, a demo GIF, a "Challenges I solved" section, and build steps. CI runs on GitHub Actions. The app icon came from session C. Session B's and A's follow-up lists were done first, in this same session.
 
 - [x] Checked that A and B had merged: they hadn't. The user then asked this session to do both lists itself (see the Phase 3 and Phase 4 sections).
-- [x] **README.md**: the problem, how it works (with the sign table), architecture, tech stack, screenshots (`docs/screenshots/`, Home watching, Settings and the prompt, each in light and dark), the demo GIF (`docs/demo.gif`, 9 s, 3 MB), "Challenges I solved" (background limits, exact alarms and the 1-hour delay, Samsung and Xiaomi battery killers, FGS types, the Skipped rule, one channel per sound, the wrong-alarm guard, auto-dismiss from the background), and how to build and run.
+- [x] **README.md**: the problem, how it works (with the sign table), architecture, tech stack, screenshots (`docs/screenshots/`, Home watching, Settings and the prompt, each in light and dark), the demo (`docs/demo.avif`, re-recorded 2026-11-03 on 0.2.1: setup, watching, the prompt, Dismiss alarm, Alarm's off; 30 s, 406 KB animated AVIF, replacing a 3 MB GIF; screenshots are WebP, about 25 KB each), "Challenges I solved" (background limits, exact alarms and the 1-hour delay, Samsung and Xiaomi battery killers, FGS types, the Skipped rule, one channel per sound, the wrong-alarm guard, auto-dismiss from the background), and how to build and run.
 - [x] Screenshots with `adb exec-out screencap`, the GIF with `adb shell screenrecord`, converted with ffmpeg (installed with the user's OK: `winget install Gyan.FFmpeg`, at `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gyan.FFmpeg_…\ffmpeg-9.0.2-full_build\bin`; open a new terminal to have it on `PATH`). A throwaway "Dawnly demo" alarm was set with `SET_ALARM` and dismissed in the GIF.
 - [x] **Default notification sound: Flute** (user's choice; Retro was picked first, then changed to Flute). `AlertSound.DEFAULT`; nothing saved, or a removed sound, gives Flute.
 - [x] Removed the Phase 1/2 feasibility strings from `strings.xml`. Lint now only reports `BatteryLife` (known, see Phase 5) and a newer AGP.

@@ -7,16 +7,16 @@ I set an alarm for 5:30, wake up at 5:00 on my own, pick up my phone and start m
 Kotlin · Jetpack Compose · fully offline · no account · runs only before your alarm
 
 <p align="center">
-  <img src="docs/demo.gif" width="280" alt="Demo: the Up already? prompt appears, Dismiss alarm is tapped, and Dawnly shows the next alarm">
+  <img src="docs/demo.avif" width="300" alt="Demo: setting up Dawnly and allowing notifications and physical activity, the Are you up? bar filling while it watches, the Up already? prompt, Dismiss alarm, and the Alarm's off notice">
 </p>
 
 ## Screenshots
 
 | | Light | Dark |
 |---|---|---|
-| **Today**, watching before the alarm | <img src="docs/screenshots/home-watching-light.png" width="240" alt="Home in light mode while watching"> | <img src="docs/screenshots/home-watching-dark.png" width="240" alt="Home in dark mode while watching"> |
-| **Settings** | <img src="docs/screenshots/settings-light.png" width="240" alt="Settings in light mode"> | <img src="docs/screenshots/settings-dark.png" width="240" alt="Settings in dark mode"> |
-| **The prompt** | <img src="docs/screenshots/prompt-light.png" width="240" alt="The Up already? notification in light mode"> | <img src="docs/screenshots/prompt-dark.png" width="240" alt="The Up already? notification in dark mode"> |
+| **Today**, watching before the alarm | <img src="docs/screenshots/home-watching-light.webp" width="240" alt="Home in light mode while watching"> | <img src="docs/screenshots/home-watching-dark.webp" width="240" alt="Home in dark mode while watching"> |
+| **Settings** | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode"> |
+| **The prompt** | <img src="docs/screenshots/prompt-light.webp" width="240" alt="The Up already? notification in light mode"> | <img src="docs/screenshots/prompt-dark.webp" width="240" alt="The Up already? notification in dark mode"> |
 
 ## How it works
 
