@@ -8,7 +8,10 @@ import android.content.Intent
 import android.util.Log
 import com.dawnly.app.MainActivity
 import com.dawnly.app.dawnly
+import com.dawnly.app.data.alarm.AppRef
 import com.dawnly.app.data.alarm.ClockApp
+import com.dawnly.app.data.alarm.DismissMemory
+import com.dawnly.app.data.alarm.DismissRequest
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.data.alarm.NextAlarm
 import com.dawnly.app.service.WakeWatcher
@@ -26,14 +29,19 @@ import kotlinx.coroutines.withTimeoutOrNull
  * The request carries `EXTRA_SKIP_UI`, which is documented only for setting alarms; Google Clock
  * opens its alarm list for every dismiss anyway, locked or not. So once the next alarm moves on
  * (the dismiss worked), the user goes back to where they were ([ReturnPlan]) over the Clock app,
- * and [DismissedNotice] says so with the sound played backwards. If the alarm doesn't move, the
- * Clock app stays open so the user can see what went wrong.
+ * and [DismissedNotice] says so with the sound played backwards.
+ *
+ * Not every Clock app acts on the same form of the request (Xiaomi's opened and left the alarm on),
+ * so if the alarm doesn't move, the other forms ([DismissRequest]) are sent in turn, and the one
+ * that worked goes first next time ([DismissMemory]). If none works, the Clock app stays open,
+ * [DismissFailedNotice] says the alarm is still on, and if it's early there's one more try later
+ * ([DismissRetry]).
  */
 object QuietDismiss {
     private const val TAG = "QuietDismiss"
 
-    /** How long the Clock app gets to dismiss before we stop waiting and leave it open. */
-    private const val WAIT_MS = 5_000L
+    /** How long the Clock app gets to dismiss, per form of the request, before we try the next. */
+    private const val WAIT_MS = 4_000L
 
     /** Google Clock opens its alarm list just before it dismisses; let it land so we end up on top. */
     private const val SETTLE_MS = 400L
@@ -45,38 +53,74 @@ object QuietDismiss {
 
     /**
      * [launcher] starts the Clock app, so it must be an activity. [backToDawnly] when the user
-     * tapped dismiss in Dawnly itself; otherwise they go back to the app they were in.
+     * tapped dismiss in Dawnly itself; otherwise they go back to the app they were in. [isRetry]
+     * for the second try, after which there's no third.
      */
-    fun dismiss(launcher: Activity, alarm: NextAlarm?, backToDawnly: Boolean): DismissResult {
+    fun dismiss(launcher: Activity, alarm: NextAlarm?, backToDawnly: Boolean, isRetry: Boolean = false): DismissResult {
         val requestedAt = System.currentTimeMillis()
-        val result = ClockApp(launcher).dismissNextAlarm(launcher, alarm?.ownerPackage)
+        val clock = ClockApp(launcher)
+        val memory = DismissMemory(launcher)
+        val preferred = clock.dismissHandler()?.let { memory.worked(it.packageName) }
+        val order = DismissRequest.order(preferred, haveTime = alarm != null)
+        val result = clock.dismissNextAlarm(launcher, alarm?.ownerPackage, order.first(), alarm?.triggerAt)
         if (result is DismissResult.Requested && alarm != null) {
-            returnWhenDismissed(launcher.applicationContext, alarm.triggerAt, requestedAt, backToDawnly)
+            val attempt = Attempt(alarm.triggerAt, result.handler, order.drop(1), requestedAt, backToDawnly, isRetry)
+            keepTrying(launcher.applicationContext, attempt, result.request)
         }
         return result
     }
 
-    private fun returnWhenDismissed(context: Context, alarmAt: Instant, requestedAt: Long, backToDawnly: Boolean) {
+    private class Attempt(
+        val alarmAt: Instant,
+        val clock: AppRef,
+        val otherForms: List<DismissRequest>,
+        val requestedAt: Long,
+        val backToDawnly: Boolean,
+        val isRetry: Boolean,
+    )
+
+    /** Waits for the alarm to move after [first]; if it doesn't, sends the other forms in turn. */
+    private fun keepTrying(context: Context, attempt: Attempt, first: DismissRequest) {
         val app = context.dawnly
         app.scope.launch {
-            val moved = withTimeoutOrNull(WAIT_MS) {
-                app.nextAlarms.nextAlarm.first { it?.triggerAt != alarmAt }
-                true
-            } ?: false
-            if (!moved) {
-                Log.i(TAG, "The alarm at $alarmAt didn't move; leaving the Clock app open")
-                return@launch
+            var sent = first
+            val left = attempt.otherForms.toMutableList()
+            while (true) {
+                if (moved(context, attempt.alarmAt)) {
+                    Log.i(TAG, "${attempt.clock.packageName} dismissed the alarm at ${attempt.alarmAt} ($sent)")
+                    DismissMemory(context).remember(attempt.clock.packageName, sent)
+                    returnToUser(context, attempt)
+                    return@launch
+                }
+                val next = left.removeFirstOrNull() ?: break
+                Log.i(TAG, "${attempt.clock.packageName} left the alarm on after $sent; trying $next")
+                if (withContext(Dispatchers.Main) { ClockApp(context).send(context, next, attempt.alarmAt) }) sent = next
             }
-            val target = if (backToDawnly) {
-                ReturnTo.Dawnly
-            } else {
-                withContext(Dispatchers.IO) { whereTheUserWas(context, requestedAt) }
-            }
-            delay(SETTLE_MS)
-            withContext(Dispatchers.Main) {
-                goBack(context, target)
-                DismissedNotice.post(context, alarmAt)
-            }
+            Log.i(TAG, "The alarm at ${attempt.alarmAt} didn't move after any request; leaving the Clock app open")
+            val retryAt = DismissRetry.retryAt(Instant.now(), attempt.alarmAt, attempt.isRetry)
+                ?.takeIf { AwakeNotifier.scheduleRetry(context, attempt.alarmAt, it) }
+            DismissFailedNotice.post(context, attempt.alarmAt, attempt.clock.label, retryAt)
+        }
+    }
+
+    /** True once the next alarm is no longer the one at [alarmAt], within [WAIT_MS]. */
+    private suspend fun moved(context: Context, alarmAt: Instant): Boolean =
+        withTimeoutOrNull(WAIT_MS) {
+            context.dawnly.nextAlarms.nextAlarm.first { it?.triggerAt != alarmAt }
+            true
+        } ?: false
+
+    private suspend fun returnToUser(context: Context, attempt: Attempt) {
+        val target = if (attempt.backToDawnly) {
+            ReturnTo.Dawnly
+        } else {
+            withContext(Dispatchers.IO) { whereTheUserWas(context, attempt.requestedAt) }
+        }
+        delay(SETTLE_MS)
+        withContext(Dispatchers.Main) {
+            goBack(context, target)
+            DismissFailedNotice.cancel(context)
+            DismissedNotice.post(context, attempt.alarmAt)
         }
     }
 

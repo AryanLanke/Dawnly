@@ -58,7 +58,27 @@ object AutoDismissPlan {
 }
 
 /**
- * Fires when the auto-dismiss warning runs out. Checks the alarm is still the one the warning was
+ * When to try again after the Clock app left the alarm on. Clock apps built on Android's own only
+ * dismiss an upcoming alarm once its "upcoming alarm" notice is up, which can be as late as an hour
+ * before. So a dismiss tried earlier gets one more go 55 minutes before the alarm. Pure, so it's
+ * unit tested.
+ */
+object DismissRetry {
+    /** How long before the alarm the second try goes. */
+    val BEFORE_ALARM: Duration = Duration.ofMinutes(55)
+
+    /** Closer than this to now, a second try is pointless: the first just failed. */
+    private val MIN_WAIT: Duration = Duration.ofMinutes(5)
+
+    /** When to try again, or null when it's too close or this was the second try already. */
+    fun retryAt(now: Instant, alarmAt: Instant, alreadyRetried: Boolean): Instant? {
+        if (alreadyRetried) return null
+        return alarmAt.minus(BEFORE_ALARM).takeIf { !it.isBefore(now.plus(MIN_WAIT)) }
+    }
+}
+
+/**
+ * Fires when the auto-dismiss warning runs out, or for the second try ([DismissRetry]). Checks the alarm is still the one the warning was
  * about, then opens [DismissAlarmActivity]. Starting an activity from the background is allowed
  * because the user granted "Display over other apps"; if they took it back since, they're asked
  * with the normal prompt instead.
@@ -79,8 +99,9 @@ class AutoDismissReceiver : BroadcastReceiver() {
             AwakeNotifier.post(context, alarmAt)
             return
         }
-        Log.i(TAG, "Auto-dismissing the alarm at $alarmAt")
-        context.startActivity(DismissAlarmActivity.intent(context, alarmAt))
+        val retry = intent.getBooleanExtra(AwakeNotifier.EXTRA_RETRY, false)
+        Log.i(TAG, "Auto-dismissing the alarm at $alarmAt${if (retry) " (second try)" else ""}")
+        context.startActivity(DismissAlarmActivity.intent(context, alarmAt, retry))
     }
 
     private companion object {

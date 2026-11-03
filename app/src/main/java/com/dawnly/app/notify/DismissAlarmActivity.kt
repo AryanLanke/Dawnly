@@ -31,11 +31,12 @@ class DismissAlarmActivity : Activity() {
     private fun dismissIfStillNext() {
         val promptAlarmAt = intent.getLongExtra(AwakeNotifier.EXTRA_ALARM_AT, 0L)
             .takeIf { it > 0L }?.let(Instant::ofEpochMilli)
+        val isRetry = intent.getBooleanExtra(AwakeNotifier.EXTRA_RETRY, false)
         val next = dawnly.nextAlarms.current()
         val check = DismissGuard.check(promptAlarmAt, next?.triggerAt, Instant.now())
         Log.i(TAG, "Prompt for $promptAlarmAt, next alarm ${next?.triggerAt}: $check")
         when (check) {
-            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false)) {
+            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false, isRetry = isRetry)) {
                 // The Clock app dismisses it, then the user goes back to the app they were in.
                 is DismissResult.Requested -> Unit
                 is DismissResult.OpenedClock -> toast(R.string.dismiss_opened_clock, result.clock.label)
@@ -54,9 +55,11 @@ class DismissAlarmActivity : Activity() {
     companion object {
         private const val TAG = "DismissAlarmActivity"
 
-        fun intent(context: Context, alarmAt: Instant): Intent =
+        /** [retry] for the second try after the Clock app left the alarm on ([DismissRetry]). */
+        fun intent(context: Context, alarmAt: Instant, retry: Boolean = false): Intent =
             Intent(context, DismissAlarmActivity::class.java)
                 .putExtra(AwakeNotifier.EXTRA_ALARM_AT, alarmAt.toEpochMilli())
+                .putExtra(AwakeNotifier.EXTRA_RETRY, retry)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }

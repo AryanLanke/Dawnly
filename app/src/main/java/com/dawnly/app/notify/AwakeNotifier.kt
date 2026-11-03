@@ -55,6 +55,9 @@ object AwakeNotifier {
     /** The alarm the prompt is about, in epoch millis. On the intents and in the notification extras. */
     internal const val EXTRA_ALARM_AT = "com.dawnly.app.extra.PROMPT_ALARM_AT"
 
+    /** On the auto-dismiss intents: this is the second try ([DismissRetry]), so there's no third. */
+    internal const val EXTRA_RETRY = "com.dawnly.app.extra.RETRY"
+
     fun onUserAwake(context: Context, alarmAt: Instant) {
         val check = DismissGuard.check(alarmAt, context.dawnly.nextAlarms.current()?.triggerAt, Instant.now())
         if (check != DismissCheck.Ok) {
@@ -168,6 +171,23 @@ object AwakeNotifier {
         notify(context, builder, "Auto-dismissing the alarm at $alarmAt at $dismissAt unless stopped")
     }
 
+    /**
+     * Tries the dismiss again at [at], through [AutoDismissReceiver] like the warning. False when
+     * exact alarms are off, so the user isn't promised a try that won't come.
+     */
+    fun scheduleRetry(context: Context, alarmAt: Instant, at: Instant): Boolean = try {
+        context.getSystemService(AlarmManager::class.java).setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            at.toEpochMilli(),
+            autoDismissIntent(context, alarmAt, PendingIntent.FLAG_UPDATE_CURRENT, retry = true)!!,
+        )
+        Log.i(TAG, "Trying the dismiss again at $at")
+        true
+    } catch (e: SecurityException) {
+        Log.w(TAG, "Exact alarms are off; no second try", e)
+        false
+    }
+
     /** What the ask prompt and the auto-dismiss warning share. */
     private fun prompt(context: Context, alarmAt: Instant, text: String): NotificationCompat.Builder =
         NotificationCompat.Builder(context, currentChannel(context))
@@ -254,12 +274,13 @@ object AwakeNotifier {
     )
 
     /** One pending auto-dismiss at most. Extras don't count when matching, so null finds it to cancel. */
-    private fun autoDismissIntent(context: Context, alarmAt: Instant?, flags: Int): PendingIntent? =
+    private fun autoDismissIntent(context: Context, alarmAt: Instant?, flags: Int, retry: Boolean = false): PendingIntent? =
         PendingIntent.getBroadcast(
             context,
             0,
             Intent(context, AutoDismissReceiver::class.java).apply {
                 if (alarmAt != null) putExtra(EXTRA_ALARM_AT, alarmAt.toEpochMilli())
+                if (retry) putExtra(EXTRA_RETRY, true)
             },
             PendingIntent.FLAG_IMMUTABLE or flags,
         )

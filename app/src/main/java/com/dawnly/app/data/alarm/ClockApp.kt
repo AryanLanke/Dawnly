@@ -1,5 +1,6 @@
 package com.dawnly.app.data.alarm
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -8,13 +9,18 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.AlarmClock
 import android.util.Log
+import java.time.Instant
+import java.time.ZoneId
 
 /** An installed app, named the way the user sees it. */
 data class AppRef(val packageName: String, val label: String)
 
 sealed interface DismissResult {
-    /** The request went to [handler]. Whether the alarm is really gone shows up as a next-alarm change. */
-    data class Requested(val handler: AppRef) : DismissResult
+    /**
+     * [request] went to [handler]. Whether the alarm is really gone shows up as a next-alarm change;
+     * if it doesn't, `QuietDismiss` tries the other forms.
+     */
+    data class Requested(val handler: AppRef, val request: DismissRequest) : DismissResult
 
     /** No app can dismiss alarms, so [clock] was opened for the user to dismiss it by hand. */
     data class OpenedClock(val clock: AppRef) : DismissResult
@@ -30,21 +36,34 @@ class ClockApp(context: Context) {
     private val packageManager = context.applicationContext.packageManager
 
     /** The app that would receive a dismiss request, or null if none can handle it. */
-    fun dismissHandler(): AppRef? = resolve(dismissNextAlarmIntent())
+    fun dismissHandler(): AppRef? = resolve(dismissIntent(DismissRequest.Next, null))
 
     /**
      * Asks the Clock app to dismiss the next alarm, falling back to opening the Clock app.
      * [launcher] must be an Activity context, because this starts another app's activity.
+     * [request] is the form to send first; [alarmAt] is needed for the by-time forms.
      */
-    fun dismissNextAlarm(launcher: Context, ownerPackage: String?): DismissResult {
+    fun dismissNextAlarm(
+        launcher: Context,
+        ownerPackage: String?,
+        request: DismissRequest = DismissRequest.Next,
+        alarmAt: Instant? = null,
+    ): DismissResult {
         val handler = dismissHandler()
-        if (handler != null && launcher.tryStart(dismissNextAlarmIntent())) {
-            Log.i(TAG, "Dismiss requested from ${handler.packageName}")
-            return DismissResult.Requested(handler)
+        if (handler != null && send(launcher, request, alarmAt)) {
+            Log.i(TAG, "Dismiss requested from ${handler.packageName} ($request)")
+            return DismissResult.Requested(handler, request)
         }
         Log.i(TAG, "No dismiss handler; opening the Clock app instead")
         return openClock(launcher, ownerPackage)?.let(DismissResult::OpenedClock)
             ?: DismissResult.NoClockApp
+    }
+
+    /** Sends one form of the dismiss request. True if it reached the Clock app. */
+    fun send(launcher: Context, request: DismissRequest, alarmAt: Instant?): Boolean {
+        val intent = dismissIntent(request, alarmAt)
+        if (launcher !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return launcher.tryStart(intent)
     }
 
     /** Opens the alarm list, or else the app that owns the alarm. Returns the app opened. */
@@ -97,9 +116,23 @@ class ClockApp(context: Context) {
         /**
          * `EXTRA_SKIP_UI` is documented only for setting alarms, and Google Clock shows its alarm
          * list anyway, but a Clock app that honours it can dismiss without showing its screen.
+         * [alarmAt] is needed for the by-time forms; without it they fall back to [DismissRequest.Next].
          */
-        fun dismissNextAlarmIntent(): Intent = Intent(AlarmClock.ACTION_DISMISS_ALARM)
-            .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT)
-            .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        fun dismissIntent(request: DismissRequest, alarmAt: Instant?): Intent {
+            val intent = Intent(AlarmClock.ACTION_DISMISS_ALARM)
+            if (request == DismissRequest.Next || alarmAt == null) {
+                return intent
+                    .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT)
+                    .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+            }
+            val time = TimeSearch.of(alarmAt.atZone(ZoneId.systemDefault()).toLocalTime())
+            intent
+                .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_TIME)
+                .putExtra(AlarmClock.EXTRA_HOUR, time.hour)
+                .putExtra(AlarmClock.EXTRA_MINUTES, time.minutes)
+                .putExtra(AlarmClock.EXTRA_IS_PM, time.isPm)
+            if (request == DismissRequest.ByTime) intent.putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+            return intent
+        }
     }
 }
