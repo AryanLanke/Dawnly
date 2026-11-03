@@ -39,7 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.graphics.withTranslation
 import com.dawnly.app.ui.theme.DawnlyColors
-import com.dawnly.app.ui.theme.DawnlyTheme
+import com.dawnly.app.ui.theme.DarkColors
+import com.dawnly.app.ui.theme.LightColors
+import com.dawnly.app.ui.theme.LocalNight
 import com.dawnly.app.ui.theme.LocalReduceMotion
 import kotlin.math.PI
 import kotlin.math.cos
@@ -117,17 +119,32 @@ private const val TWINKLE_MILLIS = 3_500
  */
 @Composable
 fun FlowingBackground(modifier: Modifier = Modifier) {
-    val colors = DawnlyTheme.colors
+    // How far into night, read only while drawing: switching light and dark crossfades the two
+    // skies without rebuilding their clouds, stars and moon on every frame of the fade.
+    val night = LocalNight.current
     val time = skyClock()
-    Box(
-        modifier
-            .fillMaxSize()
-            .then(if (colors.isDark && SoftNight) Modifier.graphicsLayer { renderEffect = nightBlur() } else Modifier)
-            .drawWithCache {
-                val sky = if (colors.isDark) nightSky(colors) else morningSky(colors)
-                onDrawBehind { sky(time.longValue) }
-            },
-    )
+    Box(modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithCache {
+                    val sky = morningSky(LightColors)
+                    onDrawBehind { if (night.value < 1f) sky(time.longValue) }
+                },
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    alpha = night.value
+                    renderEffect = if (SoftNight && night.value > 0f) nightBlur() else null
+                }
+                .drawWithCache {
+                    val sky = nightSky(DarkColors)
+                    onDrawBehind { if (night.value > 0f) sky(time.longValue) }
+                },
+        )
+    }
 }
 
 /**

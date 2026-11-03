@@ -136,7 +136,8 @@ private class GlassRimNode(private var shape: Shape, private var colors: DawnlyC
     private var cache: Rim? = null
 
     fun update(shape: Shape, colors: DawnlyColors) {
-        if (shape == this.shape && colors == this.colors) return
+        // Only the edge's own colours matter; the rest change every frame while the theme fades.
+        if (shape == this.shape && colors.sameRim(this.colors)) return
         this.shape = shape
         this.colors = colors
         cache = null
@@ -252,3 +253,6 @@ private class OuterShadowNode(private var spec: OuterShadowElement) : Modifier.N
         drawContent()
     }
 }
+
+private fun DawnlyColors.sameRim(other: DawnlyColors) =
+    edge == other.edge && highlight == other.highlight && rimStrength == other.rimStrength && sheen == other.sheen

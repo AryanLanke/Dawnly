@@ -82,6 +82,9 @@
     <string name="reminder_until">Until</string>
     <string name="reminder_save">Save</string>
     <string name="reminder_delete">Delete reminder</string>
+    <string name="reminder_done">Done</string>
+    <string name="time_am">am</string>
+    <string name="time_pm">pm</string>
     <string name="settings_feedback">Feedback</string>
     <string name="settings_feedback_detail">Tell me what to fix or add</string>
     <string name="feedback_subject">Dawnly feedback</string>

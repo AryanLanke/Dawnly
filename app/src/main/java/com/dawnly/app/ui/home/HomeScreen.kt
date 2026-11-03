@@ -20,9 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,38 +48,26 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     permissions: PermissionState,
     onRequestPermission: (AppPermission) -> Unit,
+    onEditReminder: (Reminder?) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val dismissResult by viewModel.dismissResult.collectAsStateWithLifecycle()
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
-    // The reminder being changed, or Adding for a new one; null when the editor is closed.
-    var editing by remember { mutableStateOf<ReminderEdit?>(null) }
     val activity = LocalActivity.current
     HomeContent(
         state = state,
         permissions = permissions,
         dismissResult = dismissResult,
         reminders = reminders,
-        onEditReminder = { editing = ReminderEdit(it) },
+        onEditReminder = onEditReminder,
         onToggleReminder = { reminder, on -> viewModel.saveReminder(reminder.copy(on = on)) },
         onDismissAlarm = { activity?.let(viewModel::dismissAlarm) },
         onClearDismissResult = viewModel::clearDismissResult,
         onRequestPermission = onRequestPermission,
         contentPadding = contentPadding,
     )
-    editing?.let { edit ->
-        ReminderEditor(
-            initial = edit.reminder,
-            onSave = { viewModel.saveReminder(it); editing = null },
-            onDelete = { viewModel.deleteReminder(it); editing = null },
-            onClose = { editing = null },
-        )
-    }
 }
-
-/** The editor's subject: an existing reminder, or null for a new one. */
-private class ReminderEdit(val reminder: Reminder?)
 
 @Composable
 private fun HomeContent(

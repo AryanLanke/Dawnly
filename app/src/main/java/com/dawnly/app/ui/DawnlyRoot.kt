@@ -31,6 +31,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.style.TextAlign
@@ -53,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -68,7 +71,9 @@ import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.ui.glass.FlowingBackground
 import com.dawnly.app.ui.glass.GlassTabBar
+import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.ui.home.HomeScreen
+import com.dawnly.app.ui.home.ReminderEditor
 import com.dawnly.app.ui.home.HomeViewModel
 import com.dawnly.app.ui.onboarding.OnboardingScreen
 import com.dawnly.app.ui.onboarding.onboardingSteps
@@ -172,52 +177,77 @@ private fun MainTabs(
     }
     // Room for the funny line and the floating tab bar, so the last card can scroll clear of them.
     val padding = screenPadding(bottomExtra = NAV_FADE_SOLID + NAV_FADE_EDGE)
+    // The reminder being added or changed (Today's Reminders card); null when the editor is closed.
+    var editing by remember { mutableStateOf<ReminderEdit?>(null) }
 
+    // Frosted behind the reminder editor (Android 12+), like glass over the screen. Without the
+    // frost, a stronger veil keeps the card readable.
+    val canFrost = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val frosted = if (editing != null && canFrost) {
+        Modifier.graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Clamp) }
+    } else {
+        Modifier
+    }
     Box(Modifier.fillMaxSize()) {
-        // Today and Settings side by side: the pages follow the finger, and the other one stays
-        // composed so a swipe starts without a hitch.
-        HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
-            when (page) {
-                TODAY -> HomeScreen(
-                    viewModel = home,
-                    permissions = permissions.state,
-                    onRequestPermission = { permissions.request(it) },
-                    contentPadding = padding,
+        Box(Modifier.fillMaxSize().then(frosted)) {
+            // Today and Settings side by side: the pages follow the finger, and the other one stays
+            // composed so a swipe starts without a hitch.
+            HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
+                when (page) {
+                    TODAY -> HomeScreen(
+                        viewModel = home,
+                        permissions = permissions.state,
+                        onRequestPermission = { permissions.request(it) },
+                        onEditReminder = { editing = ReminderEdit(it) },
+                        contentPadding = padding,
+                    )
+                    else -> SettingsScreen(
+                        viewModel = settings,
+                        permissions = permissions.state,
+                        oemBattery = oemBattery,
+                        onRequestPermission = permissions::request,
+                        onOpenOemBattery = { oemBattery?.let(permissions::openBatterySettings) },
+                        contentPadding = padding,
+                    )
+                }
+            }
+            StatusBarFade(Modifier.align(Alignment.TopCenter))
+            NavBarFade(Modifier.align(Alignment.BottomCenter))
+            Column(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Only on Today: it fades out as Settings slides in, following the finger.
+                FunnyLine(
+                    shown = { 1f - (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, 1f) },
+                    tappable = pager.targetPage == TODAY,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
-                else -> SettingsScreen(
-                    viewModel = settings,
-                    permissions = permissions.state,
-                    oemBattery = oemBattery,
-                    onRequestPermission = permissions::request,
-                    onOpenOemBattery = { oemBattery?.let(permissions::openBatterySettings) },
-                    contentPadding = padding,
+                GlassTabBar(
+                    tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
+                    selected = pager.targetPage,
+                    position = { pager.currentPage + pager.currentPageOffsetFraction },
+                    onSelect = ::goTo,
                 )
             }
         }
-        StatusBarFade(Modifier.align(Alignment.TopCenter))
-        NavBarFade(Modifier.align(Alignment.BottomCenter))
-        Column(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Only on Today: it fades out as Settings slides in, following the finger.
-            FunnyLine(
-                shown = { 1f - (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, 1f) },
-                tappable = pager.targetPage == TODAY,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-            GlassTabBar(
-                tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
-                selected = pager.targetPage,
-                position = { pager.currentPage + pager.currentPageOffsetFraction },
-                onSelect = ::goTo,
+        editing?.let { edit ->
+            Box(Modifier.fillMaxSize().background(DawnlyTheme.colors.wall.copy(alpha = if (canFrost) 0.25f else 0.7f)))
+            ReminderEditor(
+                initial = edit.reminder,
+                onSave = { home.saveReminder(it); editing = null },
+                onDelete = { home.deleteReminder(it); editing = null },
+                onClose = { editing = null },
             )
         }
     }
 }
+
+/** What the reminder editor is open for: an existing reminder, or null for a new one. */
+private class ReminderEdit(val reminder: Reminder?)
 
 /**
  * A light line above the tabs, a different one each time Dawnly opens. Tap it for another.
