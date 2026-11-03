@@ -37,9 +37,10 @@ fun DawnlyTheme(
             LocalDawnlyColors provides colors,
             LocalReduceMotion provides reduceMotion,
             LocalContentColor provides colors.text,
-            // Pressing fades a light tint over the whole row or button, not a ripple.
+            // Pressing fades a tint over the whole row or button, not a ripple: a soft navy on the
+            // pale morning glass (white barely showed there), a soft white at night.
             LocalIndication provides remember(colors.isDark) {
-                GlassPress(Color.White.copy(alpha = if (colors.isDark) 0.12f else 0.45f))
+                GlassPress(if (colors.isDark) Color.White.copy(alpha = 0.14f) else Color(0xFF0E1E45).copy(alpha = 0.08f))
             },
             content = content,
         )

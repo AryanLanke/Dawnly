@@ -207,6 +207,8 @@ private fun SettingsContent(
                 PermissionsSection(permissions, state.dismissMode, state.signals, oemBattery, onRequestPermission, onOpenOemBattery)
             }
         }
+        Gap()
+        SpringIn(order = 5) { FeedbackRow() }
         Spacer(Modifier.height(12.dp))
     }
 }

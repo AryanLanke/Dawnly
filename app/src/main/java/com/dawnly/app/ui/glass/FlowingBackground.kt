@@ -1,6 +1,7 @@
 package com.dawnly.app.ui.glass
 
 import android.graphics.BlurMaskFilter
+import android.os.Build
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +18,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidPath
@@ -27,9 +30,12 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.graphics.withTranslation
 import com.dawnly.app.ui.theme.DawnlyColors
@@ -116,12 +122,22 @@ fun FlowingBackground(modifier: Modifier = Modifier) {
     Box(
         modifier
             .fillMaxSize()
+            .then(if (colors.isDark && SoftNight) Modifier.graphicsLayer { renderEffect = nightBlur() } else Modifier)
             .drawWithCache {
                 val sky = if (colors.isDark) nightSky(colors) else morningSky(colors)
                 onDrawBehind { sky(time.longValue) }
             },
     )
 }
+
+/**
+ * The night sky is blurred as one layer, so it's soft like the morning's clouds and sun rather than
+ * sharp (the user's ask, 2026-11-03). One GPU blur of one layer (Android 12+), not a blur behind
+ * every panel, which made Settings stutter. Older phones get a softer moon instead.
+ */
+private val SoftNight = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+private fun GraphicsLayerScope.nightBlur() = BlurEffect(5.dp.toPx(), 5.dp.toPx(), TileMode.Clamp)
 
 /** Milliseconds the sky has been moving. Read only while drawing, so it redraws without recomposing. */
 @Composable
@@ -309,9 +325,15 @@ private class Moon(scope: CacheDrawScope, private val u: Float) {
         }
         val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 2.2f)
         val s = 1.2f * u
-        // Drawn at a quarter of its size and scaled up, so it looks gently out of focus like the
-        // morning's clouds rather than sharp.
-        disc = Sprite.draw(scope, scope.layoutDirection, Size(100 * s, 100 * s), margin = 4 * u, scale = 0.25f) {
+        // Where the night isn't blurred as a whole (before Android 12), drawn at a quarter of its
+        // size and scaled up, so it still looks gently out of focus.
+        disc = Sprite.draw(
+            scope,
+            scope.layoutDirection,
+            Size(100 * s, 100 * s),
+            margin = 4 * u,
+            scale = if (SoftNight) 1f else 0.25f,
+        ) {
             scale(s, s, pivot = Offset.Zero) {
                 drawCircle(body, radius = 48f, center = Center)
                 drawIntoCanvas { it.nativeCanvas.drawPath(seas, seaPaint) }

@@ -21,9 +21,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -32,17 +30,12 @@ import com.dawnly.app.ui.theme.DawnlyMotion
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
 import java.time.Instant
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.sin
 
 /**
- * A glass circle with a ring showing how much of the watch window has passed, drawn as a stream of
- * water: translucent blue with a glossy line along it and a soft glow, with a gentle wave that
- * flows forward like a snake. It works out its own progress from the clock every frame, so it
- * fills smoothly instead of stepping, and fills from empty when it first appears.
+ * A glass circle with a ring showing how much of the watch window has passed, drawn as light blue
+ * water flowing round it: translucent, with a soft glow, a glossy line along it, and brighter
+ * ripples drifting forward. It works out its own progress from the clock every frame, so it fills
+ * smoothly instead of stepping, and fills from empty when it first appears.
  *
  * @param startedAt when the watch window opened, or null to show only the empty track.
  * @param endsAt when it closes (the alarm).
@@ -98,59 +91,64 @@ private fun windowProgress(start: Long, end: Long, now: Long): Float {
     return ((now - start).toFloat() / total).coerceIn(0f, 1f)
 }
 
-/** The water's colours: its body from tail to head, the glossy line on top, and the glow. */
-private class Water(val body: List<Color>, val shine: Color, val glow: Color)
+/** The water's colours: its body from tail to head, the glossy line, the glow and the ripples. */
+private class Water(val body: List<Color>, val shine: Color, val glow: Color, val ripple: Color)
 
 private val LightWater = Water(
-    body = listOf(Color(0xFF7CC8FF).copy(alpha = 0.55f), Color(0xFF2F7BFF).copy(alpha = 0.75f)),
-    shine = Color.White.copy(alpha = 0.6f),
-    glow = Color(0xFF4F9BFF).copy(alpha = 0.16f),
+    body = listOf(Color(0xFFBFE6FF).copy(alpha = 0.6f), Color(0xFF8CCBFF).copy(alpha = 0.8f)),
+    shine = Color.White.copy(alpha = 0.65f),
+    glow = Color(0xFF9CD3FF).copy(alpha = 0.22f),
+    ripple = Color.White.copy(alpha = 0.55f),
 )
 
 private val DarkWater = Water(
-    body = listOf(Color(0xFF5FD1FF).copy(alpha = 0.45f), Color(0xFF8FB8FF).copy(alpha = 0.8f)),
+    body = listOf(Color(0xFFB8E8FF).copy(alpha = 0.4f), Color(0xFF9EDBFF).copy(alpha = 0.7f)),
     shine = Color.White.copy(alpha = 0.5f),
-    glow = Color(0xFF6FC6FF).copy(alpha = 0.18f),
+    glow = Color(0xFF9EDBFF).copy(alpha = 0.16f),
+    ripple = Color.White.copy(alpha = 0.4f),
 )
 
-/** Wave crests around the whole ring, and how long one takes to flow a crest forward. */
-private const val WAVES = 14
-private const val FLOW_MILLIS = 1_800L
+/** Bright ripples round the whole circle, and how long the water takes to flow once round. */
+private const val RIPPLES = 5
+private const val FLOW_MILLIS = 9_000L
 
 /**
- * The filled part of the ring, from the top clockwise over [progress] of the circle: a path that
- * weaves a little either side of the circle, the wave moving forward as [time] passes. The wave
- * grows in from the tail, so the stream starts flat on the track.
+ * The filled part of the ring, from the top clockwise over [progress] of the circle. On top of the
+ * water, soft brighter ripples drift forward as [time] passes, so it looks like it's flowing.
  */
 private fun DrawScope.drawWater(progress: Float, radius: Float, stroke: Float, water: Water, time: Long) {
-    val sweep = progress * 2 * PI.toFloat()
-    val amplitude = 2.2.dp.toPx()
-    val phase = (time % FLOW_MILLIS) / FLOW_MILLIS.toFloat() * 2 * PI.toFloat()
-    val steps = max(2, (progress * 240).toInt())
-    val path = Path()
-    var head = Offset.Zero
-    for (i in 0..steps) {
-        val angle = sweep * i / steps
-        val growIn = min(1f, angle / 0.35f)
-        val r = radius + amplitude * growIn * sin(WAVES * angle - phase)
-        val point = Offset(center.x + r * cos(angle), center.y + r * sin(angle))
-        if (i == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
-        head = point
-    }
-    // Angles above run from 3 o'clock; turn the whole stream so it starts at the top.
+    val sweep = progress * 360f
+    val topLeft = Offset(center.x - radius, center.y - radius)
+    val arc = Size(radius * 2, radius * 2)
+    // Angles from 3 o'clock; turn everything so the water starts at the top.
     rotate(-90f, pivot = center) {
-        drawPath(path, water.glow, style = Stroke(stroke * 2.4f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-        val body = Brush.sweepGradient(
-            0f to water.body[0],
-            progress to water.body[1],
-            1f to water.body[1],
-            center = center,
-        )
-        drawPath(path, body, style = Stroke(stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
-        drawPath(path, water.shine, style = Stroke(stroke * 0.28f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-        // A droplet at the head.
-        drawCircle(water.body[1], radius = stroke * 0.75f, center = head)
-        drawCircle(water.shine, radius = stroke * 0.25f, center = head - Offset(stroke * 0.2f, stroke * 0.2f))
+        drawArc(water.glow, 0f, sweep, false, topLeft, arc, style = Stroke(stroke * 2.6f, cap = StrokeCap.Round))
+        val body = Brush.sweepGradient(0f to water.body[0], progress to water.body[1], 1f to water.body[1], center = center)
+        drawArc(body, 0f, sweep, false, topLeft, arc, style = Stroke(stroke, cap = StrokeCap.Round))
+        // The ripples: a ring of soft bright bands, turned a little further each frame. The arc is
+        // drawn turned back by the same amount, so only the bands move.
+        val turn = (time % FLOW_MILLIS) / FLOW_MILLIS.toFloat() * 360f
+        rotate(turn, pivot = center) {
+            val stops = buildList {
+                for (i in 0 until RIPPLES) {
+                    val at = i / RIPPLES.toFloat()
+                    val width = 1f / RIPPLES
+                    add(at to Color.Transparent)
+                    add(at + width * 0.5f to water.ripple)
+                    add(at + width to Color.Transparent)
+                }
+            }.toTypedArray()
+            drawArc(
+                Brush.sweepGradient(*stops, center = center),
+                -turn,
+                sweep,
+                false,
+                topLeft,
+                arc,
+                style = Stroke(stroke * 0.8f, cap = StrokeCap.Round),
+            )
+        }
+        drawArc(water.shine, 0f, sweep, false, topLeft, arc, style = Stroke(stroke * 0.25f, cap = StrokeCap.Round))
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.invalidateDraw
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -32,15 +33,23 @@ class GlassPress(private val tint: Color) : IndicationNodeFactory {
         override fun onAttach() {
             coroutineScope.launch {
                 var pressed = 0
+                var fadingIn: Job? = null
                 source.interactions.collect { interaction ->
                     when (interaction) {
-                        is PressInteraction.Press -> pressed++
-                        is PressInteraction.Release, is PressInteraction.Cancel -> pressed = maxOf(0, pressed - 1)
-                        else -> return@collect
-                    }
-                    val target = if (pressed > 0) 1f else 0f
-                    launch {
-                        shown.animateTo(target, tween(if (target > 0f) FADE_IN_MS else FADE_OUT_MS)) { invalidateDraw() }
+                        is PressInteraction.Press -> {
+                            pressed++
+                            fadingIn = launch { shown.animateTo(1f, tween(FADE_IN_MS)) { invalidateDraw() } }
+                        }
+                        is PressInteraction.Release, is PressInteraction.Cancel -> {
+                            pressed = maxOf(0, pressed - 1)
+                            // A quick tap reports press and release together: let the tint show
+                            // fully first, or it would never be seen.
+                            val shownFirst = fadingIn
+                            launch {
+                                shownFirst?.join()
+                                if (pressed == 0) shown.animateTo(0f, tween(FADE_OUT_MS)) { invalidateDraw() }
+                            }
+                        }
                     }
                 }
             }
@@ -53,7 +62,7 @@ class GlassPress(private val tint: Color) : IndicationNodeFactory {
     }
 
     private companion object {
-        const val FADE_IN_MS = 90
+        const val FADE_IN_MS = 110
         const val FADE_OUT_MS = 320
     }
 }
