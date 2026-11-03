@@ -506,7 +506,7 @@ Google's "hobbyist account" is now the **limited distribution account** in the A
 - **What's enforced now:** since 2026-09-30, unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand only. Everywhere else a sideloaded APK installs as before until the global rollout in 2027. adb installs are never affected.
 - **So, today:** testers can install `app-release.apk` directly (e.g. from a Google Drive link, with "Install unknown apps" allowed for the browser or Files app).
 - **For 2027:** the app is registered with the release key's SHA-256 (`DC:6D:70:…:0E:BE`). If the key is lost, updates can't be signed or registered: keep `keystore.properties` and the keystore backed up.
-- [x] Account created (limited distribution, 2026-11-03) · [ ] `com.aryanlanke.dawnly` registered (name accepted as a draft; the key is next. `com.dawnly.app` was refused: already seen on Android) · [ ] phones approved · [ ] build sent to testers
+- [x] Account created (limited distribution, 2026-11-03) · [x] `com.aryanlanke.dawnly` registered and key verified on 2026-11-03 (`com.dawnly.app` was refused: already seen on Android) · [ ] phones approved · [ ] build sent to testers
 
 **Before the Play Store (later)**
 - [ ] Play policy reasons for `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `SYSTEM_ALERT_WINDOW`, `PACKAGE_USAGE_STATS`, and the `specialUse` foreground service.
