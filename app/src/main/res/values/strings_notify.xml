@@ -21,6 +21,8 @@
     <string name="dismissed_title">Alarm\'s off</string>
     <string name="channel_dismissed">Alarm dismissed</string>
     <string name="channel_dismissed_description">Says when Dawnly has dismissed your alarm, playing your sound backwards so you know without looking.</string>
+    <string name="channel_dismissed_now">Alarm dismissed right away</string>
+    <string name="channel_dismissed_now_description">With Right away on, says Dawnly has dismissed your alarm, playing your sound so you know without looking.</string>
 
     <!-- When the Clock app left the alarm on, even after every form of the request. -->
     <string name="dismiss_failed_title">Your alarm is still on</string>

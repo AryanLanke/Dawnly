@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -34,6 +35,9 @@ import androidx.core.graphics.withTranslation
 import com.dawnly.app.ui.theme.DawnlyColors
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /*
  * Sizes and timings are the mockup's CSS (a 280 x 610 screen). Lengths are mockup px scaled by the
@@ -80,7 +84,14 @@ private val ShootingStars = listOf(
     ShootingStar(0.75f, 0.38f, 15_400, 900, 120f),
 )
 private const val STAR_ANGLE = 145f
-private const val STAR_TRAVEL = 420f
+
+/**
+ * How far a shooting star glides, and the share of its period it's seen for. Half the mockup's
+ * speed (420px over 35%): the user found them too quick.
+ */
+private const val STAR_TRAVEL = 300f
+private const val STAR_SHOWN = 0.45f
+private const val STAR_FADE_IN = 0.05f
 
 /** A still star that twinkles: where it is, and how far into its twinkle it starts. */
 private class Twinkle(val x: Float, val y: Float, val aheadMillis: Int)
@@ -183,6 +194,11 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
     )
     val trail = Brush.horizontalGradient(0f to Color.Transparent, 1f to colors.star)
     val moon = Moon(this, u)
+    // Soft like the morning's clouds: stars as small blurred glows rather than sharp dots.
+    val starDot = Sprite.draw(this, layoutDirection, Size(2 * u, 2 * u), margin = 3 * u) {
+        drawIntoCanvas { it.nativeCanvas.drawCircle(u, u, 1.1f * u, blurPaint(Color.White, 1.4f * u)) }
+    }
+    val sparkle = sparklePath(outer = 4.2f * u, inner = 1.1f * u)
     return { time ->
         drawRect(colors.wall)
         for (glow in glows) {
@@ -199,16 +215,18 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
         for (star in Twinkles) {
             val q = ((time + star.aheadMillis) % (2 * TWINKLE_MILLIS)) / TWINKLE_MILLIS.toFloat()
             val alpha = lerp(0.5f, 0.15f, EaseInOut.transform(if (q > 1f) 2f - q else q))
-            drawCircle(Color.White, radius = u, center = Offset(star.x * size.width, star.y * size.height), alpha = alpha)
+            drawSprite(starDot, Offset(star.x * size.width - u, star.y * size.height - u), alpha = alpha)
         }
-        for (star in ShootingStars) drawShootingStar(star, time, u, trail, colors.star, colors.starHead)
+        for (star in ShootingStars) drawShootingStar(star, time, u, trail, colors.star, colors.starHead, sparkle)
         moon.draw(this, time)
     }
 }
 
 /**
- * The mockup's `shoot` keyframes: fades in over the first 4% of its period, then glides 420px along
- * its 145° line while fading out, gone by 35%. Hidden for the rest, and until its first wait ends.
+ * After the mockup's `shoot` keyframes, slowed down: fades in over the first 5% of its period, then
+ * glides [STAR_TRAVEL] along its 145° line while fading out, gone by [STAR_SHOWN]. Hidden for the
+ * rest, and until its first wait ends. A soft glow runs along the trail, and the head is a little
+ * four-point star kept upright, not a dot.
  */
 private fun DrawScope.drawShootingStar(
     star: ShootingStar,
@@ -217,35 +235,54 @@ private fun DrawScope.drawShootingStar(
     trail: Brush,
     glow: Color,
     head: Color,
+    sparkle: Path,
 ) {
     if (time < star.waitMillis) return
     val p = ((time - star.waitMillis) % star.periodMillis) / star.periodMillis.toFloat()
-    if (p >= 0.35f) return
-    val alpha = if (p < 0.04f) p / 0.04f else 1f - (p - 0.04f) / 0.31f
+    if (p >= STAR_SHOWN) return
+    val alpha = if (p < STAR_FADE_IN) p / STAR_FADE_IN else 1f - (p - STAR_FADE_IN) / (STAR_SHOWN - STAR_FADE_IN)
     val length = star.length * u
     withTransform({
         translate(star.x * size.width, star.y * size.height)
         rotate(STAR_ANGLE, pivot = Offset.Zero)
-        translate(STAR_TRAVEL * u * p / 0.35f, 0f)
+        translate(STAR_TRAVEL * u * p / STAR_SHOWN, 0f)
     }) {
-        drawLine(trail, Offset.Zero, Offset(length, 0f), strokeWidth = 2 * u, cap = StrokeCap.Round, alpha = alpha)
+        drawLine(trail, Offset.Zero, Offset(length, 0f), strokeWidth = 5 * u, cap = StrokeCap.Round, alpha = alpha * 0.22f)
+        drawLine(trail, Offset.Zero, Offset(length, 0f), strokeWidth = 1.6f * u, cap = StrokeCap.Round, alpha = alpha)
         // The CSS box-shadow glow, as a gradient: cheap to draw every frame, unlike a blur.
         val tip = Offset(length, 0f)
         drawCircle(
-            Brush.radialGradient(0f to glow, 0.45f to glow.copy(alpha = 0.5f), 1f to glow.copy(alpha = 0f), center = tip, radius = 6 * u),
-            radius = 6 * u,
+            Brush.radialGradient(0f to glow, 0.45f to glow.copy(alpha = 0.5f), 1f to glow.copy(alpha = 0f), center = tip, radius = 7 * u),
+            radius = 7 * u,
             center = tip,
             alpha = alpha,
         )
-        drawCircle(head, radius = 2.5f * u, center = tip, alpha = alpha)
+        withTransform({
+            translate(tip.x, tip.y)
+            rotate(-STAR_ANGLE, pivot = Offset.Zero)
+        }) {
+            drawPath(sparkle, head, alpha = alpha)
+        }
     }
+}
+
+/** A four-point star centred on (0, 0): long points [outer] out, pinched to [inner] between them. */
+private fun sparklePath(outer: Float, inner: Float) = Path().apply {
+    for (i in 0 until 8) {
+        val angle = i * PI.toFloat() / 4 - PI.toFloat() / 2
+        val r = if (i % 2 == 0) outer else inner
+        val x = r * cos(angle)
+        val y = r * sin(angle)
+        if (i == 0) moveTo(x, y) else lineTo(x, y)
+    }
+    close()
 }
 
 /**
  * The soft moon in the top corner, from the mockup's SVG (a 100-unit drawing shown 120px wide): a
  * cream disc, three blurred seas, craters with a lit rim, and shade on its far side, with a warm
- * glow around it, all at half strength. Drawn once into a sprite; each frame only floats it up a
- * little and turns it 2° and back.
+ * glow around it, all at half strength. Drawn once into a soft, low-resolution sprite; each frame
+ * only floats it up a little and turns it 2° and back.
  */
 private class Moon(scope: CacheDrawScope, private val u: Float) {
     private val glow = Brush.radialGradient(
@@ -272,7 +309,9 @@ private class Moon(scope: CacheDrawScope, private val u: Float) {
         }
         val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 2.2f)
         val s = 1.2f * u
-        disc = Sprite.draw(scope, scope.layoutDirection, Size(100 * s, 100 * s), margin = 2 * u) {
+        // Drawn at a quarter of its size and scaled up, so it looks gently out of focus like the
+        // morning's clouds rather than sharp.
+        disc = Sprite.draw(scope, scope.layoutDirection, Size(100 * s, 100 * s), margin = 4 * u, scale = 0.25f) {
             scale(s, s, pivot = Offset.Zero) {
                 drawCircle(body, radius = 48f, center = Center)
                 drawIntoCanvas { it.nativeCanvas.drawPath(seas, seaPaint) }

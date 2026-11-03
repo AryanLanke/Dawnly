@@ -14,6 +14,7 @@ import com.dawnly.app.data.alarm.DismissMemory
 import com.dawnly.app.data.alarm.DismissRequest
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.data.alarm.NextAlarm
+import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.service.WakeWatcher
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * The request carries `EXTRA_SKIP_UI`, which is documented only for setting alarms; Google Clock
  * opens its alarm list for every dismiss anyway, locked or not. So once the next alarm moves on
  * (the dismiss worked), the user goes back to where they were ([ReturnPlan]) over the Clock app,
- * and [DismissedNotice] says so with the sound played backwards.
+ * and [DismissedNotice] says so with the sound played backwards (forwards with Right away).
  *
  * Not every Clock app acts on the same form of the request (Xiaomi's opened and left the alarm on),
  * so if the alarm doesn't move, the other forms ([DismissRequest]) are sent in turn, and the one
@@ -116,11 +117,13 @@ object QuietDismiss {
         } else {
             withContext(Dispatchers.IO) { whereTheUserWas(context, attempt.requestedAt) }
         }
+        // Right away played no sound before, so its notice plays the sound forwards, not backwards.
+        val forward = context.dawnly.settings.dismissMode.first() == DismissMode.Instant
         delay(SETTLE_MS)
         withContext(Dispatchers.Main) {
             goBack(context, target)
             DismissFailedNotice.cancel(context)
-            DismissedNotice.post(context, attempt.alarmAt)
+            DismissedNotice.post(context, attempt.alarmAt, forward)
         }
     }
 

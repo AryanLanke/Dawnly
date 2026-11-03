@@ -26,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -121,7 +120,7 @@ fun SoundRow(selected: AlertSound, onClick: () -> Unit) {
     GlassList {
         GlassRow(
             title = stringResource(R.string.settings_sound_label),
-            modifier = Modifier.clip(MaterialTheme.shapes.small).clickable(role = Role.Button, onClick = onClick),
+            modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
         ) {
             Text(
                 stringResource(selected.label),

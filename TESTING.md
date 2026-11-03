@@ -166,6 +166,17 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 
 ---
 
+## UI polish (branch ui-polish, 2026-11-03)
+
+- [ ] **8.1 Press:** hold a sound in Dawnly's sound, a row in More options, and the sound row itself. **Expect:** a soft light fades over the whole row, edge to edge, words included; it fades away on release. No ripple circle.
+- [ ] **8.2 Funny line:** swipe from Today to Settings slowly. **Expect:** the line above the tabs fades out with the swipe and is gone on Settings; tapping where it was does nothing there.
+- [ ] **8.3 Night sky:** Appearance Dark. **Expect:** the moon and stars look soft, like the morning clouds; shooting stars glide about half as fast, with a little four-point star at the head.
+- [ ] **8.4 Watch ring:** while watching. **Expect:** the ring fills smoothly (no steps every few seconds), looks like translucent blue water with a shine, and a gentle wave flows along it.
+- [ ] **8.5 Custom window:** Custom, then minus/plus. **Expect:** it moves 1 minute at a time down to 1 min; under 5 min a note says it's very short; the slider still jumps in 5s.
+- [ ] **8.6 Clock appearance by default:** clear Dawnly's data. **Expect:** Appearance shows Clock selected.
+- [ ] **8.7 Opening sound:** open Dawnly from the launcher with the phone's sound on. **Expect:** the flute plays once; not again when the screen turns; silent in silent mode.
+- [ ] **8.8 Right away sound:** Right away, get detected awake. **Expect:** "Alarm's off" plays the sound forwards. With Ask me or Warn first it still plays backwards.
+
 ## Found while writing this plan (to fix)
 
 - The Android notification setting for "Up before your alarm" still says "…only dismisses it on its own if you turn on Dismiss automatically", the old switch's name. It should name **When you're up**.

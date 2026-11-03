@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.style.TextAlign
 import com.dawnly.app.ui.glass.GlassShapes
@@ -91,8 +92,9 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
     val dark = when (appearance) {
         Appearance.Light -> false
         Appearance.Dark -> true
-        Appearance.System, null -> isSystemInDarkTheme()
-        Appearance.Clock -> clockSaysNight()
+        Appearance.System -> isSystemInDarkTheme()
+        // Clock is the default, so it also covers the moment before settings load.
+        Appearance.Clock, null -> clockSaysNight()
     }
     SystemBarsFollow(dark)
 
@@ -201,7 +203,12 @@ private fun MainTabs(
                 .padding(bottom = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            FunnyLine(Modifier.padding(bottom = 8.dp))
+            // Only on Today: it fades out as Settings slides in, following the finger.
+            FunnyLine(
+                shown = { 1f - (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, 1f) },
+                tappable = pager.targetPage == TODAY,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
             GlassTabBar(
                 tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
                 selected = pager.targetPage,
@@ -212,9 +219,12 @@ private fun MainTabs(
     }
 }
 
-/** A light line above the tabs, a different one each time Dawnly opens. Tap it for another. */
+/**
+ * A light line above the tabs, a different one each time Dawnly opens. Tap it for another.
+ * [shown] is how visible it is, read only while drawing so a swipe doesn't recompose it.
+ */
 @Composable
-private fun FunnyLine(modifier: Modifier = Modifier) {
+private fun FunnyLine(shown: () -> Float, tappable: Boolean, modifier: Modifier = Modifier) {
     val lines = stringArrayResource(R.array.funny_lines)
     var index by rememberSaveable { mutableIntStateOf(Random.nextInt(lines.size)) }
     val haptic = rememberHaptics()
@@ -222,16 +232,16 @@ private fun FunnyLine(modifier: Modifier = Modifier) {
         targetState = index,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
         label = "funnyLine",
-        modifier = modifier,
-    ) { shown ->
+        modifier = modifier.graphicsLayer { alpha = shown() },
+    ) { line ->
         Text(
-            lines[shown % lines.size],
+            lines[line % lines.size],
             style = MaterialTheme.typography.bodySmall,
             color = DawnlyTheme.colors.textSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .clip(GlassShapes.Pill)
-                .clickable(onClickLabel = stringResource(R.string.funny_line_next)) {
+                .clickable(enabled = tappable, onClickLabel = stringResource(R.string.funny_line_next)) {
                     haptic.tick()
                     // Any other line, never the same one twice in a row.
                     index = (index + 1 + Random.nextInt(lines.size - 1)) % lines.size

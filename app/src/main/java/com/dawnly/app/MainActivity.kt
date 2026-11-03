@@ -6,10 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.ui.DawnlyRoot
 import com.dawnly.app.ui.MainViewModel
 import com.dawnly.app.ui.home.HomeViewModel
 import com.dawnly.app.ui.settings.SettingsViewModel
+import com.dawnly.app.ui.settings.SoundPreview
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -17,10 +19,18 @@ class MainActivity : ComponentActivity() {
     private val home: HomeViewModel by viewModels { HomeViewModel.factory(dawnly) }
     private val settings: SettingsViewModel by viewModels { SettingsViewModel.factory(dawnly) }
 
+    /**
+     * Dawnly's opening sound, like a computer's start-up chime: the flute, whatever sound the
+     * prompt uses. On the notification stream, so silent mode keeps it quiet.
+     */
+    private val chime by lazy { SoundPreview(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         preferFastestRefreshRate()
+        // Once per opening, not again when the screen turns.
+        if (savedInstanceState == null) chime.play(AlertSound.Flute)
         setContent {
             DawnlyRoot(main, home, settings)
         }
@@ -39,6 +49,11 @@ class MainActivity : ComponentActivity() {
             .filter { it.physicalWidth == mode.physicalWidth && it.physicalHeight == mode.physicalHeight }
             .maxByOrNull { it.refreshRate } ?: return
         window.attributes = window.attributes.apply { preferredDisplayModeId = fastest.modeId }
+    }
+
+    override fun onDestroy() {
+        chime.stop()
+        super.onDestroy()
     }
 
     override fun onResume() {

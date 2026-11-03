@@ -421,13 +421,19 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** A glass card of rows with thin dividers between them. */
+/**
+ * A glass card of rows with thin dividers between them. Rows reach the card's edges, so a pressed
+ * row lights up edge to edge; anything else put in here brings its own [ROW_INSET].
+ */
 @Composable
 fun GlassList(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     GlassSurface(modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(horizontal = 18.dp, vertical = 4.dp), content = content)
+        Column(Modifier.clip(GlassShapes.Card), content = content)
     }
 }
+
+/** How far a [GlassList]'s rows keep their words and dividers in from the card's edges. */
+val ROW_INSET = 18.dp
 
 /** One row of a [GlassList]: a title, an optional soft subtitle, and something on the end. */
 @Composable
@@ -439,9 +445,11 @@ fun GlassRow(
     end: @Composable RowScope.() -> Unit = {},
 ) {
     Column(modifier) {
-        if (divider) Box(Modifier.fillMaxWidth().height(1.dp).background(DawnlyTheme.colors.line))
+        if (divider) {
+            Box(Modifier.padding(horizontal = ROW_INSET).fillMaxWidth().height(1.dp).background(DawnlyTheme.colors.line))
+        }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = ROW_INSET, vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f).padding(end = 12.dp)) {

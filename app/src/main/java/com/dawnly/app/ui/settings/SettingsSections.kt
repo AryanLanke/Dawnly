@@ -78,39 +78,52 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
 }
 
 /**
- * The custom window: drag the slider for big jumps (5 min to 3 hr in one swipe), tap or hold
- * minus and plus for fine ones. While dragging, the time follows the finger and is saved on
- * letting go, so a swipe is one settings change rather than dozens.
+ * The custom window: drag the slider for big jumps (5 min to 3 hr in one swipe, in 5-minute
+ * steps), tap or hold minus and plus to move a minute at a time, down to 1 minute. Under
+ * [WatchWindow.RECOMMENDED_MIN] a note says it's very short. While dragging, the time follows the
+ * finger and is saved on letting go, so a swipe is one settings change rather than dozens.
  */
 @Composable
 private fun CustomWindow(window: Duration, onChange: (Duration) -> Unit) {
+    val first = WatchWindow.RECOMMENDED_MIN
     val stepMinutes = WatchWindow.STEP.toMinutes()
-    val steps = ((WatchWindow.MAX - WatchWindow.MIN).toMinutes() / stepMinutes).toInt()
-    fun toStep(d: Duration) = ((d - WatchWindow.MIN).toMinutes() / stepMinutes).toInt()
-    fun toWindow(step: Int): Duration = WatchWindow.MIN + WatchWindow.STEP.multipliedBy(step.toLong())
+    val steps = ((WatchWindow.MAX - first).toMinutes() / stepMinutes).toInt()
+    // Windows under 5 minutes sit at the slider's start; nearest step otherwise.
+    fun toStep(d: Duration) = (((d - first).toMinutes() + stepMinutes / 2) / stepMinutes).toInt().coerceIn(0, steps)
+    fun toWindow(step: Int): Duration = first + WatchWindow.STEP.multipliedBy(step.toLong())
     var dragging by remember { mutableStateOf<Int?>(null) }
     val shown = dragging?.let(::toWindow) ?: window
-    GlassSurface(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-        Column(Modifier.padding(10.dp)) {
-            GlassStepper(
-                value = formatDuration(shown),
-                onDecrease = { onChange(WatchWindow.clamp(window - WatchWindow.STEP)) },
-                onIncrease = { onChange(WatchWindow.clamp(window + WatchWindow.STEP)) },
-                decreaseEnabled = window > WatchWindow.MIN,
-                increaseEnabled = window < WatchWindow.MAX,
-                decreaseLabel = stringResource(R.string.settings_shorter),
-                increaseLabel = stringResource(R.string.settings_longer),
-            )
-            GlassSlider(
-                value = dragging ?: toStep(window),
-                max = steps,
-                onValueChange = { dragging = it },
-                onValueChangeFinished = {
-                    dragging?.let { onChange(toWindow(it)) }
-                    dragging = null
-                },
-                label = stringResource(R.string.settings_window_slider),
-                modifier = Modifier.padding(horizontal = 6.dp),
+    Column {
+        GlassSurface(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+            Column(Modifier.padding(10.dp)) {
+                GlassStepper(
+                    value = formatDuration(shown),
+                    onDecrease = { onChange(WatchWindow.clamp(window - WatchWindow.FINE_STEP)) },
+                    onIncrease = { onChange(WatchWindow.clamp(window + WatchWindow.FINE_STEP)) },
+                    decreaseEnabled = window > WatchWindow.MIN,
+                    increaseEnabled = window < WatchWindow.MAX,
+                    decreaseLabel = stringResource(R.string.settings_shorter),
+                    increaseLabel = stringResource(R.string.settings_longer),
+                )
+                GlassSlider(
+                    value = dragging ?: toStep(window),
+                    max = steps,
+                    onValueChange = { dragging = it },
+                    onValueChangeFinished = {
+                        dragging?.let { onChange(toWindow(it)) }
+                        dragging = null
+                    },
+                    label = stringResource(R.string.settings_window_slider),
+                    modifier = Modifier.padding(horizontal = 6.dp),
+                )
+            }
+        }
+        AnimatedVisibility(visible = shown < WatchWindow.RECOMMENDED_MIN) {
+            Text(
+                stringResource(R.string.settings_window_short),
+                style = MaterialTheme.typography.bodySmall,
+                color = DawnlyTheme.colors.textSoft,
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
             )
         }
     }
@@ -341,9 +354,7 @@ internal fun MoreOptionsRow(open: Boolean, needsYou: Int, onToggle: () -> Unit) 
         GlassRow(
             title = stringResource(R.string.settings_more),
             subtitle = if (needsYou > 0) null else stringResource(R.string.settings_more_detail),
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable(role = Role.Button, onClick = onToggle),
+            modifier = Modifier.clickable(role = Role.Button, onClick = onToggle),
         ) {
             if (needsYou > 0) {
                 Text(

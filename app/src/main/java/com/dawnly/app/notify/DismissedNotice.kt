@@ -18,15 +18,20 @@ import java.time.Instant
 import java.util.Date
 
 /**
- * "Your 5:30 alarm is dismissed", with the chosen sound played backwards, after every dismiss
- * (auto or tapped). With the phone locked in a pocket, the sound is how the user knows; the
- * notification waits on the lock screen for when they look.
+ * "Your 5:30 alarm is dismissed" after every dismiss (auto or tapped). With the phone locked in a
+ * pocket, the sound is how the user knows; the notification waits on the lock screen for when they
+ * look. With Ask me and Warn first it plays the chosen sound backwards, the undo of the forward
+ * sound that asked or started the countdown. Right away has no earlier sound, so it plays the
+ * sound forwards (the user's choice, 2026-11-03).
  */
 object DismissedNotice {
     private const val TAG = "DismissedNotice"
 
     /** Like the prompt's channels (see [AwakeNotifier.useSound]): one per sound, `dismissed_<sound>`. */
     private const val CHANNEL_PREFIX = "dismissed_"
+
+    /** The same notice with the sound played forwards, for Right away: `done_now_<sound>`. */
+    private const val FORWARD_PREFIX = "done_now_"
 
     /** 1 is the watching notification and 2 the prompt. */
     private const val NOTICE_ID = 3
@@ -36,10 +41,11 @@ object DismissedNotice {
 
     fun timeout(locked: Boolean): Duration? = SEEN_TIMEOUT.takeUnless { locked }
 
-    fun post(context: Context, alarmAt: Instant) {
+    /** [forward] plays the sound forwards (Right away) rather than backwards. */
+    fun post(context: Context, alarmAt: Instant, forward: Boolean = false) {
         val locked = context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
         val time = DateFormat.getTimeFormat(context).format(Date.from(alarmAt))
-        val builder = NotificationCompat.Builder(context, currentChannel(context))
+        val builder = NotificationCompat.Builder(context, currentChannel(context, if (forward) FORWARD_PREFIX else CHANNEL_PREFIX))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.dismissed_title))
             .setContentText(context.getString(R.string.dismiss_done, time))
@@ -51,40 +57,44 @@ object DismissedNotice {
         timeout(locked)?.let { builder.setTimeoutAfter(it.toMillis()) }
         try {
             NotificationManagerCompat.from(context).notify(NOTICE_ID, builder.build())
-            Log.i(TAG, "Told the user the alarm at $alarmAt is dismissed (locked: $locked)")
+            Log.i(TAG, "Told the user the alarm at $alarmAt is dismissed (locked: $locked, forward: $forward)")
         } catch (e: SecurityException) {
             Log.w(TAG, "Notifications are off, so the user wasn't told", e)
         }
     }
 
-    /** Keeps the channel's reversed sound in step with the prompt's. [AwakeNotifier.useSound] calls it. */
+    /** Keeps both channels' sounds in step with the prompt's. [AwakeNotifier.useSound] calls it. */
     fun useSound(context: Context, sound: AlertSound) {
         val manager = NotificationManagerCompat.from(context)
-        val wanted = CHANNEL_PREFIX + sound.name.lowercase()
-        manager.notificationChannelsCompat
-            .filter { it.id.startsWith(CHANNEL_PREFIX) && it.id != wanted }
-            .forEach { manager.deleteNotificationChannel(it.id) }
-        if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound)
+        for (prefix in listOf(CHANNEL_PREFIX, FORWARD_PREFIX)) {
+            val wanted = prefix + sound.name.lowercase()
+            manager.notificationChannelsCompat
+                .filter { it.id.startsWith(prefix) && it.id != wanted }
+                .forEach { manager.deleteNotificationChannel(it.id) }
+            if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound, prefix == FORWARD_PREFIX)
+        }
     }
 
-    private fun currentChannel(context: Context): String {
+    private fun currentChannel(context: Context, prefix: String): String {
         val existing = NotificationManagerCompat.from(context).notificationChannelsCompat
-            .firstOrNull { it.id.startsWith(CHANNEL_PREFIX) }
+            .firstOrNull { it.id.startsWith(prefix) }
         if (existing != null) return existing.id
         useSound(context, AlertSound.DEFAULT)
-        return CHANNEL_PREFIX + AlertSound.DEFAULT.name.lowercase()
+        return prefix + AlertSound.DEFAULT.name.lowercase()
     }
 
     /** Heads-up and no vibration, like the prompt. */
-    private fun createChannel(context: Context, id: String, sound: AlertSound) {
+    private fun createChannel(context: Context, id: String, sound: AlertSound, forward: Boolean) {
         val audio = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         val channel = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_HIGH)
-            .setName(context.getString(R.string.channel_dismissed))
-            .setDescription(context.getString(R.string.channel_dismissed_description))
-            .setSound(sound.reversedUri(context), audio)
+            .setName(context.getString(if (forward) R.string.channel_dismissed_now else R.string.channel_dismissed))
+            .setDescription(
+                context.getString(if (forward) R.string.channel_dismissed_now_description else R.string.channel_dismissed_description),
+            )
+            .setSound(if (forward) sound.uri(context) else sound.reversedUri(context), audio)
             .setVibrationEnabled(false)
             .setShowBadge(false)
             .build()

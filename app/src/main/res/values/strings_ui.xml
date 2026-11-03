@@ -63,6 +63,7 @@
     <string name="settings_shorter">Shorter</string>
     <string name="settings_longer">Longer</string>
     <string name="settings_window_slider">How early to start watching</string>
+    <string name="settings_window_short">That\'s very short: Dawnly may not have time to notice you\'re up. 5 minutes or more works best.</string>
     <string name="settings_signals_label">What counts as being up</string>
     <string name="settings_screen">Screen use</string>
     <plurals name="settings_screen_goal">

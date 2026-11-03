@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.settingsStore by preferencesDataStore(name = "settings")
 
-/** Light, dark, follow the phone, or follow the clock (night from 7 pm to 6 am, see `NightClock`). */
+/** Light, dark, follow the phone, or follow the clock (night from 7 pm to 6 am, see `NightClock`). Clock is the default. */
 enum class Appearance { Light, Dark, System, Clock }
 
 /**
@@ -113,7 +113,7 @@ class SettingsRepository(context: Context) {
     val appearance: Flow<Appearance> = store.safeData
         .map { prefs ->
             prefs[APPEARANCE]?.let { name -> Appearance.entries.firstOrNull { it.name == name } }
-                ?: Appearance.System
+                ?: Appearance.Clock
         }
         .distinctUntilChanged()
 

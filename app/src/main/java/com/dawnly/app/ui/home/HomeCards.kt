@@ -41,6 +41,7 @@ import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.PrimaryButton
 import com.dawnly.app.ui.glass.ProgressBar
 import com.dawnly.app.ui.glass.ProgressRing
+import com.dawnly.app.ui.glass.ROW_INSET
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -53,8 +54,10 @@ internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Mo
     val description = progress?.let {
         stringResource(R.string.home_progress_description, (it * 100).roundToInt())
     }
+    val watching = status as? HomeStatus.Watching
     ProgressRing(
-        progress = progress,
+        startedAt = watching?.startedAt,
+        endsAt = watching?.alarmAt,
         modifier = modifier.then(
             if (description != null) Modifier.semantics { contentDescription = description } else Modifier,
         ),
@@ -158,7 +161,7 @@ internal fun SignalCard(rows: List<SignalRow>, wakeProgress: Float?) {
                     title = stringResource(R.string.home_wake_title),
                     subtitle = stringResource(R.string.home_wake_hint),
                 ) { Soft(stringResource(R.string.home_wake_percent, percent)) }
-                ProgressBar(wakeProgress, Modifier.padding(bottom = 14.dp))
+                ProgressBar(wakeProgress, Modifier.padding(start = ROW_INSET, end = ROW_INSET, bottom = 18.dp))
             }
         }
         rows.forEachIndexed { index, row ->
