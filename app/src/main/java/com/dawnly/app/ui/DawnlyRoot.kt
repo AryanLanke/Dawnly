@@ -62,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -88,6 +89,7 @@ import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
 import com.dawnly.app.ui.theme.clockSaysNight
+import com.dawnly.app.ui.theme.prefersReducedMotion
 
 /** The whole app: theme, the flowing background, then onboarding or the two tabs. */
 @Composable
@@ -103,25 +105,30 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
     }
     SystemBarsFollow(dark)
 
-    DawnlyTheme(darkTheme = dark) {
-        Box(Modifier.fillMaxSize()) {
-            FlowingBackground()
-            val done = onboardingDone ?: return@Box
-            val permissions = rememberPermissionsController()
-            val oemBattery = remember { OemBattery.detect(Build.MANUFACTURER) }
-            AnimatedContent(
-                targetState = done,
-                transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.96f)) togetherWith fadeOut() },
-                label = "root",
-            ) { isDone ->
-                if (isDone) {
-                    MainTabs(home, settings, permissions, oemBattery)
-                } else {
-                    Onboarding(main, permissions, oemBattery)
+    // Switching light and dark sweeps the new look in from the top-right corner.
+    val context = LocalContext.current
+    val still = remember(context) { context.prefersReducedMotion() }
+    ThemeSweep(dark = dark, still = still) { shownDark ->
+        DawnlyTheme(darkTheme = shownDark) {
+            Box(Modifier.fillMaxSize()) {
+                FlowingBackground()
+                val done = onboardingDone ?: return@Box
+                val permissions = rememberPermissionsController()
+                val oemBattery = remember { OemBattery.detect(Build.MANUFACTURER) }
+                AnimatedContent(
+                    targetState = done,
+                    transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.96f)) togetherWith fadeOut() },
+                    label = "root",
+                ) { isDone ->
+                    if (isDone) {
+                        MainTabs(home, settings, permissions, oemBattery)
+                    } else {
+                        Onboarding(main, permissions, oemBattery)
+                    }
                 }
-            }
-            permissions.restrictedHelp?.let { locked ->
-                RestrictedSettingsHelp(locked, onOpenAppInfo = permissions::openAppInfo, onClose = permissions::closeRestrictedHelp)
+                permissions.restrictedHelp?.let { locked ->
+                    RestrictedSettingsHelp(locked, onOpenAppInfo = permissions::openAppInfo, onClose = permissions::closeRestrictedHelp)
+                }
             }
         }
     }

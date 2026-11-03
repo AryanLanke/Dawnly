@@ -1,5 +1,8 @@
 package com.dawnly.app.domain.wake
 
+import com.dawnly.app.domain.learn.SignShares
+import com.dawnly.app.domain.learn.SignWeights
+
 /**
  * How close the user is to counting as awake, sign by sign. Each progress value runs from 0 to 1
  * (1 = that sign's goal reached), and is null when the sign doesn't count: switched off in
@@ -25,6 +28,9 @@ data class WakeScore(
     /** The sum of the counted signs' progress. 1 or more means awake. */
     val total: Float get() = listOfNotNull(screenTime, phoneUse, steps, movement, musicShare).sum()
 
+    /** Each sign's part, for learning which signs show on the user's real mornings. */
+    val shares: SignShares get() = SignShares(screenTime, phoneUse, steps, movement)
+
     /** How close to awake, from 0 to 1. */
     val value: Float get() = total.coerceIn(0f, 1f)
 
@@ -45,18 +51,22 @@ data class WakeScore(
         /** How long music has to play to count fully (still capped by movement). */
         private const val MUSIC_GOAL_MILLIS = 60_000L
 
-        fun of(signals: WakeSignals, settings: WakeSignalSettings): WakeScore = WakeScore(
+        /**
+         * [weights] is how much each sign is trusted, learned from the user's answers
+         * (`Learning`); evenly by default. A trusted sign's progress counts for a little more.
+         */
+        fun of(signals: WakeSignals, settings: WakeSignalSettings, weights: SignWeights = SignWeights.Even): WakeScore = WakeScore(
             screenTime = settings.useScreenTime.then {
-                progress(signals.screenOnTime.toMillis(), settings.screenTimeGoal.toMillis())
+                weights.screen * progress(signals.screenOnTime.toMillis(), settings.screenTimeGoal.toMillis())
             },
             phoneUse = (settings.usePhoneUse && signals.appsAvailable).then {
-                progress(signals.appsOpened.toLong(), settings.appsOpenedGoal.toLong())
+                weights.apps * progress(signals.appsOpened.toLong(), settings.appsOpenedGoal.toLong())
             },
             steps = (settings.useSteps && signals.stepsAvailable).then {
-                progress(signals.steps.toLong(), settings.stepsGoal.toLong())
+                weights.steps * progress(signals.steps.toLong(), settings.stepsGoal.toLong())
             },
             movement = (settings.useMovement && signals.movementAvailable).then {
-                progress(signals.movingTime.toMillis(), settings.movementGoal.toMillis())
+                weights.movement * progress(signals.movingTime.toMillis(), settings.movementGoal.toMillis())
             },
             music = settings.useMusic.then { progress(signals.musicTime.toMillis(), MUSIC_GOAL_MILLIS) },
         )

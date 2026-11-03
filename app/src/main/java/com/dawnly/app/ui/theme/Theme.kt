@@ -1,8 +1,5 @@
 package com.dawnly.app.ui.theme
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalContentColor
@@ -33,17 +30,10 @@ fun DawnlyTheme(
     val inPreview = LocalInspectionMode.current
     // Read when the theme enters composition; the setting rarely changes while the app is open.
     val reduceMotion = remember(context) { !inPreview && context.prefersReducedMotion() }
-    // Switching between light and dark fades over most of a second instead of popping.
-    val night = animateFloatAsState(
-        targetValue = if (darkTheme) 1f else 0f,
-        animationSpec = if (reduceMotion) snap() else tween(THEME_FADE_MS),
-        label = "night",
-    )
-    val colors = when (val amount = night.value) {
-        0f -> LightColors
-        1f -> DarkColors
-        else -> blend(LightColors, DarkColors, amount)
-    }
+    // Switches at once; the sweep across the screen is drawn on top by `ThemeSweep`.
+    val night = remember { mutableFloatStateOf(if (darkTheme) 1f else 0f) }
+    night.floatValue = if (darkTheme) 1f else 0f
+    val colors = if (darkTheme) DarkColors else LightColors
     MaterialTheme(
         colorScheme = colors.toMaterial(),
         typography = DawnlyTypography,
@@ -60,11 +50,9 @@ fun DawnlyTheme(
     }
 }
 
-private const val THEME_FADE_MS = 700
-
 /**
- * How far into night the app is, 0 (light) to 1 (dark): in between while the theme fades. A
- * [State], so the sky reads it only while drawing and isn't rebuilt every frame of the fade.
+ * How far into night the app is: 0 (light) or 1 (dark). A [State], so the sky reads it only while
+ * drawing, and switching doesn't rebuild its clouds, stars and moon.
  */
 val LocalNight = staticCompositionLocalOf<State<Float>> { mutableFloatStateOf(0f) }
 

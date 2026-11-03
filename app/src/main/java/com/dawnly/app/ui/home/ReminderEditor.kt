@@ -62,7 +62,6 @@ import com.dawnly.app.ui.glass.GlassButton
 import com.dawnly.app.ui.glass.GlassSegmented
 import com.dawnly.app.ui.glass.GlassShapes
 import com.dawnly.app.ui.glass.GlassSurface
-import com.dawnly.app.ui.glass.PrimaryButton
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
 import com.dawnly.app.ui.glass.rememberHaptics
@@ -181,7 +180,8 @@ internal fun ReminderEditor(
                         }
                     }
                     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        PrimaryButton(
+                        // Save and Cancel are the same glass button, side by side.
+                        GlassButton(
                             stringResource(R.string.reminder_save),
                             {
                                 if (name.isBlank()) {
@@ -314,7 +314,7 @@ private fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Uni
                 }
             }
         }
-        PrimaryButton(stringResource(R.string.reminder_done), { onDone(LocalTime.of(hour, minute)) }, Modifier.width(200.dp))
+        GlassButton(stringResource(R.string.reminder_done), { onDone(LocalTime.of(hour, minute)) }, Modifier.width(200.dp))
     }
 }
 

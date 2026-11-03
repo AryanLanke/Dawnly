@@ -29,6 +29,7 @@ import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.wake.WakeTracker
 import com.dawnly.app.notify.AwakeNotifier
 import java.time.Instant
+import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -103,6 +104,10 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         if (saved != null) Log.i(TAG, "Carrying on from $saved")
 
         val settings = app.settings.wakeSignals.stateIn(this)
+        // What Dawnly has learned from the user's answers: how cautious to be, their usual time,
+        // which signs to trust. Read once per window; it only changes when they answer.
+        val learned = app.learning.current(app.settings)
+        if (learned.mornings > 0) Log.i(TAG, "Learned from ${learned.mornings} mornings: $learned")
         val canCountSteps = ticks(PERMISSION_CHECK_PERIOD_MILLIS).map { canCountSteps() }.distinctUntilChanged()
         val countSteps = combine(settings, canCountSteps) { s, can -> s.useSteps && can }.distinctUntilChanged()
 
@@ -145,7 +150,8 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 val signals = tracker.signals(now)
                 WatchSession.publish(signals)
 
-                val score = WakeScore.of(signals, settings.value)
+                val goals = settings.value.scaledBy(learned.goalFactor(LocalDateTime.now()))
+                val score = WakeScore.of(signals, goals, learned.weights)
                 val awakeNow = !notified && score.isAwake
                 if (awakeNow) notified = true
                 val progress = WakeProgress(alarmAt, signals, notified)
@@ -155,7 +161,10 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                     lastSaved = progress
                     lastSavedAt = now
                 }
-                if (awakeNow) onAwake(signals, score.musicTippedIt)
+                if (awakeNow) {
+                    app.learning.asked(Instant.now(), score.shares)
+                    onAwake(signals, score.musicTippedIt)
+                }
             }
         } finally {
             withContext(NonCancellable) {

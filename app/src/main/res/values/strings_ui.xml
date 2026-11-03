@@ -85,6 +85,23 @@
     <string name="reminder_done">Done</string>
     <string name="time_am">am</string>
     <string name="time_pm">pm</string>
+    <string name="learning_label">Learning from you</string>
+    <string name="learning_switch">Learn from my mornings</string>
+    <string name="learning_nothing">Each time you answer Up already?, Dawnly learns a little</string>
+    <plurals name="learning_mornings">
+        <item quantity="one">Learned from %d morning</item>
+        <item quantity="other">Learned from %d mornings</item>
+    </plurals>
+    <string name="learning_later">Waits for a little more than at first</string>
+    <string name="learning_sooner">Asks a little sooner than at first</string>
+    <string name="learning_weekday">You\'re usually up around %1$s on weekdays</string>
+    <string name="learning_weekend">You\'re usually up around %1$s at weekends</string>
+    <string name="learning_trusts">Trusts %1$s most</string>
+    <string name="learning_sign_screen">your screen use</string>
+    <string name="learning_sign_apps">the apps you open</string>
+    <string name="learning_sign_steps">your steps</string>
+    <string name="learning_sign_movement">your movement</string>
+    <string name="learning_reset">Start over</string>
     <string name="settings_feedback">Feedback</string>
     <string name="settings_feedback_detail">Tell me what to fix or add</string>
     <string name="feedback_subject">Dawnly feedback</string>

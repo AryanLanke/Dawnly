@@ -1,10 +1,13 @@
 package com.dawnly.app.ui.home
 
+import com.dawnly.app.domain.learn.Learned
 import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.watch.WatchState
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** Everything the Home screen shows. Built by [HomeUiState.from], a pure function. */
 data class HomeUiState(
@@ -15,11 +18,24 @@ data class HomeUiState(
     companion object {
         val Loading = HomeUiState(HomeStatus.Loading)
 
+        /**
+         * [learned] scales the goals and weighs the signs exactly as the watch does, so the "Are
+         * you up?" bar fills as the real decision would.
+         */
         fun from(
+            state: WatchState,
+            live: WakeSignals?,
+            mySettings: WakeSignalSettings,
+            now: Instant,
+            learned: Learned = Learned.Nothing,
+        ): HomeUiState = withLearning(state, live, mySettings.scaledBy(learned.goalFactor(LocalDateTime.ofInstant(now, ZoneId.systemDefault()))), now, learned)
+
+        private fun withLearning(
             state: WatchState,
             live: WakeSignals?,
             settings: WakeSignalSettings,
             now: Instant,
+            learned: Learned,
         ): HomeUiState = when (state) {
             WatchState.Idle -> HomeUiState(HomeStatus.NoAlarm)
             is WatchState.Skipped -> HomeUiState(HomeStatus.Skipped(state.alarmAt))
@@ -30,7 +46,7 @@ data class HomeUiState(
             is WatchState.Watching -> {
                 // The service publishes as soon as it starts; until then nothing has been seen yet.
                 val signals = live ?: WakeSignals()
-                val score = WakeScore.of(signals, settings)
+                val score = WakeScore.of(signals, settings, learned.weights)
                 HomeUiState(
                     status = HomeStatus.Watching(
                         alarmAt = state.alarmAt,

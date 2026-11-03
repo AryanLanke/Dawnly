@@ -110,6 +110,15 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    /** Learning from the user's answers (see `Learning`). On until they turn it off. */
+    val learn: Flow<Boolean> = store.safeData
+        .map { it[LEARN] ?: true }
+        .distinctUntilChanged()
+
+    suspend fun setLearn(on: Boolean) {
+        store.edit { it[LEARN] = on }
+    }
+
     val appearance: Flow<Appearance> = store.safeData
         .map { prefs ->
             prefs[APPEARANCE]?.let { name -> Appearance.entries.firstOrNull { it.name == name } }
@@ -136,5 +145,6 @@ class SettingsRepository(context: Context) {
         val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
         val APPEARANCE = stringPreferencesKey("appearance")
+        val LEARN = booleanPreferencesKey("learn")
     }
 }

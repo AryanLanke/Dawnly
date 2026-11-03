@@ -1,6 +1,7 @@
 package com.dawnly.app.domain.wake
 
 import java.time.Duration
+import kotlin.math.roundToInt
 
 /**
  * Live readings from the wake signals during one watch window, counted from the window start.
@@ -43,4 +44,15 @@ data class WakeSignalSettings(
 ) {
     /** At least one sign that can count on its own: music only adds to movement. */
     val canNotice: Boolean get() = useScreenTime || usePhoneUse || useSteps || useMovement
+
+    /**
+     * The same settings with every goal multiplied by [factor]: above 1 Dawnly waits for more,
+     * below 1 it asks sooner. From what it has learned (`Learned.goalFactor`).
+     */
+    fun scaledBy(factor: Float): WakeSignalSettings = if (factor == 1f) this else copy(
+        screenTimeGoal = Duration.ofMillis((screenTimeGoal.toMillis() * factor).toLong()),
+        appsOpenedGoal = (appsOpenedGoal * factor).roundToInt().coerceAtLeast(1),
+        stepsGoal = (stepsGoal * factor).roundToInt().coerceAtLeast(1),
+        movementGoal = Duration.ofMillis((movementGoal.toMillis() * factor).toLong()),
+    )
 }

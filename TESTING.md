@@ -183,6 +183,11 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **8.12 Reminders:** Today, Add a reminder: "Drink water", Every 15 min, from now until an hour later. **Expect:** a notification every 15 minutes with the name and why; none outside the times; the switch stops them; editing and deleting work; they come back after a reboot.
 - [ ] **8.13 Daily reminder:** At a time, 2 minutes from now. **Expect:** it comes once at that time, and again the next day.
 
+- [ ] **8.14 Theme sweep:** switch Light and Dark. **Expect:** the new look sweeps in from the top-right corner to the bottom-left in under a second; nothing else jumps; smooth.
+- [ ] **8.15 Learning, answers:** answer Not yet twice on two mornings. **Expect:** More options, Learning from you: "Waits for a little more than at first" and "Learned from 2 mornings".
+- [ ] **8.16 Learning, usual time:** three weekday mornings answered Dismiss alarm. **Expect:** "You're usually up around ..." with about that time.
+- [ ] **8.17 Learning, off and Start over:** the switch off makes Dawnly behave as it ships; Start over clears the list.
+
 ## Found while writing this plan (to fix)
 
 - The Android notification setting for "Up before your alarm" still says "…only dismisses it on its own if you turn on Dismiss automatically", the old switch's name. It should name **When you're up**.

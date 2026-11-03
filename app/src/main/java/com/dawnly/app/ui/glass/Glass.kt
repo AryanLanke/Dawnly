@@ -136,7 +136,7 @@ private class GlassRimNode(private var shape: Shape, private var colors: DawnlyC
     private var cache: Rim? = null
 
     fun update(shape: Shape, colors: DawnlyColors) {
-        // Only the edge's own colours matter; the rest change every frame while the theme fades.
+        // Only the edge's own colours matter.
         if (shape == this.shape && colors.sameRim(this.colors)) return
         this.shape = shape
         this.colors = colors

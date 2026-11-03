@@ -9,9 +9,12 @@ import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.data.sound.SoundStore
+import com.dawnly.app.domain.learn.Learned
+import com.dawnly.app.domain.learn.Learning
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.notify.AwakeNotifier
 import java.time.Duration
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,13 @@ data class SettingsUiState(
     val dismissMode: DismissMode = DismissMode.Ask,
 )
 
+/** Whether Dawnly learns from the user's answers, and what it has learned so far. */
+data class LearningUi(val on: Boolean, val learned: Learned) {
+    companion object {
+        val Start = LearningUi(on = true, learned = Learned.Nothing)
+    }
+}
+
 class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
     private val sounds = SoundStore(app)
 
@@ -40,6 +50,19 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
         app.settings.dismissMode,
         ::SettingsUiState,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val learning: StateFlow<LearningUi> = combine(app.settings.learn, app.learning.mornings) { on, mornings ->
+        LearningUi(on, Learning.learn(mornings, ZoneId.systemDefault()))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LearningUi.Start)
+
+    fun setLearn(on: Boolean) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setLearn(on) }
+    }
+
+    /** Forgets everything learned; Dawnly starts again as it ships. */
+    fun resetLearning() {
+        app.scope.launch(Dispatchers.Main.immediate) { app.learning.clear() }
+    }
 
     // Writes run in the app scope so they finish even if the user leaves the screen. They start on
     // the main thread, so quick taps reach DataStore in the order they were made.

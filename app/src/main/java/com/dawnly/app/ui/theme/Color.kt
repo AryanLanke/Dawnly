@@ -100,37 +100,3 @@ val DarkColors = DawnlyColors(
 )
 
 val LocalDawnlyColors = staticCompositionLocalOf { LightColors }
-
-/**
- * Part way from [from] to [to] ([amount] 0 to 1), for fading between light and dark. The glass
- * edge's colours ([DawnlyColors.edge], highlight, rim strength, sheen, shadows) and [isDark] switch
- * once at halfway rather than blending: the rims are drawn into bitmaps, and redrawing them every
- * frame of the fade would make it stutter.
- */
-fun blend(from: DawnlyColors, to: DawnlyColors, amount: Float): DawnlyColors {
-    fun mix(a: Color, b: Color) = androidx.compose.ui.graphics.lerp(a, b, amount)
-    val edgeSide = if (amount < 0.5f) from else to
-    return to.copy(
-        isDark = edgeSide.isDark,
-        wall = mix(from.wall, to.wall),
-        sky = if (from.sky.size == to.sky.size) from.sky.zip(to.sky, ::mix) else edgeSide.sky,
-        glow = mix(from.glow, to.glow),
-        star = mix(from.star, to.star),
-        starHead = mix(from.starHead, to.starHead),
-        text = mix(from.text, to.text),
-        textSoft = mix(from.textSoft, to.textSoft),
-        glass = mix(from.glass, to.glass),
-        glassStrong = mix(from.glassStrong, to.glassStrong),
-        edge = edgeSide.edge,
-        highlight = edgeSide.highlight,
-        rimStrength = edgeSide.rimStrength,
-        sheen = edgeSide.sheen,
-        lift = edgeSide.lift,
-        selectedShadow = edgeSide.selectedShadow,
-        line = mix(from.line, to.line),
-        track = mix(from.track, to.track),
-        accent = mix(from.accent, to.accent),
-        onAccent = mix(from.onAccent, to.onAccent),
-        tick = mix(from.tick, to.tick),
-    )
-}

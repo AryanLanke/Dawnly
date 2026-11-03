@@ -15,6 +15,7 @@ import com.dawnly.app.data.alarm.DismissRequest
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.data.alarm.NextAlarm
 import com.dawnly.app.data.settings.DismissMode
+import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.service.WakeWatcher
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +91,8 @@ object QuietDismiss {
                 if (moved(context, attempt.alarmAt)) {
                     Log.i(TAG, "${attempt.clock.packageName} dismissed the alarm at ${attempt.alarmAt} ($sent)")
                     DismissMemory(context).remember(attempt.clock.packageName, sent)
+                    // They were up: Dawnly learns from it (if it had asked).
+                    context.dawnly.learning.answer(Answer.Up, Instant.now())
                     returnToUser(context, attempt)
                     return@launch
                 }

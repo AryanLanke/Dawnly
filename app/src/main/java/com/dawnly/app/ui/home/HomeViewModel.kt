@@ -28,8 +28,9 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
         WatchSession.signals,
         app.settings.wakeSignals,
         ticker(),
-    ) { state, live, settings, now ->
-        HomeUiState.from(state, live, settings, now)
+        app.learning.learned(app.settings),
+    ) { state, live, settings, now, learned ->
+        HomeUiState.from(state, live, settings, now, learned)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 
     /** The user's reminders, shown on Today under the alarm. */

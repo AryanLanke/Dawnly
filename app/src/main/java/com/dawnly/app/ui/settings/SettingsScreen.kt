@@ -58,6 +58,7 @@ fun SettingsScreen(
     contentPadding: PaddingValues,
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
+    val learning by viewModel.learning.collectAsStateWithLifecycle()
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
@@ -119,6 +120,9 @@ fun SettingsScreen(
                 moreOpen = moreOpen,
                 onToggleMore = { moreOpen = !moreOpen },
                 contentPadding = contentPadding,
+                learning = learning,
+                onLearnChange = viewModel::setLearn,
+                onResetLearning = viewModel::resetLearning,
             )
         }
     }
@@ -142,6 +146,9 @@ private fun SettingsContent(
     moreOpen: Boolean,
     onToggleMore: () -> Unit,
     contentPadding: PaddingValues,
+    learning: LearningUi = LearningUi.Start,
+    onLearnChange: (Boolean) -> Unit = {},
+    onResetLearning: () -> Unit = {},
 ) {
     Column(
         Modifier
@@ -203,6 +210,8 @@ private fun SettingsContent(
                         onSelect = { onSignalsChange(levels[it].applyTo(state.signals)) },
                     )
                 }
+                Gap()
+                LearningSection(learning, onLearnChange, onResetLearning)
                 Gap()
                 PermissionsSection(permissions, state.dismissMode, state.signals, oemBattery, onRequestPermission, onOpenOemBattery)
             }
