@@ -9,7 +9,7 @@
 
 ---
 
-## ▶ Friends' phones (2026-11-03)
+## ▶ Friends' phones (2026-11-03) — released as 0.2.0 (versionCode 2)
 
 The user's friends tried the APK on a Motorola and a Redmi. All four problems are fixed in code and on the TESTING.md list (7.5–7.10); none tested yet.
 - **Motorola, Usage access blocked by "Restricted setting":** Android 13+ locks Usage access and Display over other apps for apps installed from a file. No app can lift it. `PermissionsController` now shows `RestrictedSettingsHelp`: App info, then ⋮, then Allow restricted settings. It appears after the second failed try, or the first if the `access_restricted_settings` app op says locked. The real fix is installing from Play: see `docs/play-internal-testing.md` (internal testing, $25 account). `tools/setup-phone.bat` installs over adb and grants everything, for testers with a PC.
