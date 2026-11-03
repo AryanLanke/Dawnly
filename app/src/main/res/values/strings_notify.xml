@@ -25,7 +25,7 @@
     <string name="channel_dismissed_now_description">With Right away on, says Dawnly has dismissed your alarm, playing your sound so you know without looking.</string>
 
     <!-- The user's own reminders from Today. -->
-    <string name="channel_reminders">Your reminders</string>
+    <string name="channel_reminders_sound">Your reminders: %1$s</string>
     <string name="channel_reminders_description">The reminders you set on Today, like drinking water.</string>
 
     <!-- When the Clock app left the alarm on, even after every form of the request. -->

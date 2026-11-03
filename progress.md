@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.3.0 (2026-11-04): reminder sounds
+
+Reminders rang with the phone's own sound (their channel had none). Now each reminder has a sound from Dawnly's list (Bubble by default, so it never sounds like the prompt's Flute), picked in the editor's Sound row; one channel per sound (`reminder_<sound>`), the old `reminders` channel is deleted. The user chose to call it 1.3.0.
+
+---
+
 ## ▶ 0.3.0 (2026-11-04): UI polish, Reminders, learning
 
 Built on the ui-polish branch, merged into main. Installed on the user's phone; the APK was shared with friends.

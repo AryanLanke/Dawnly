@@ -6,7 +6,8 @@ import java.time.LocalTime
 
 /**
  * A reminder the user set on Today, like "Drink water, every 20 minutes": a [name], an optional
- * [why] shown under it in the notification, and when it comes ([schedule]). Kept on the phone.
+ * [why] shown under it in the notification, when it comes ([schedule]), and its sound by name
+ * ([sound], one of Dawnly's sounds; null for the reminders' default). Kept on the phone.
  */
 data class Reminder(
     val id: Long,
@@ -14,6 +15,7 @@ data class Reminder(
     val why: String = "",
     val schedule: ReminderSchedule,
     val on: Boolean = true,
+    val sound: String? = null,
 )
 
 sealed interface ReminderSchedule {

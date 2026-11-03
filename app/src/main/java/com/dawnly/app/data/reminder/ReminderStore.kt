@@ -52,6 +52,7 @@ class ReminderStore(context: Context) {
                         .put("name", r.name)
                         .put("why", r.why)
                         .put("on", r.on)
+                        .apply { r.sound?.let { put("sound", it) } }
                         .apply {
                             when (val s = r.schedule) {
                                 is ReminderSchedule.Daily -> put("kind", "daily").put("at", s.at.toString())
@@ -77,7 +78,14 @@ class ReminderStore(context: Context) {
                             LocalTime.parse(o.getString("until")),
                         )
                     }
-                    Reminder(o.getLong("id"), o.getString("name"), o.optString("why"), schedule, o.optBoolean("on", true))
+                    Reminder(
+                        id = o.getLong("id"),
+                        name = o.getString("name"),
+                        why = o.optString("why"),
+                        schedule = schedule,
+                        on = o.optBoolean("on", true),
+                        sound = o.optString("sound").takeIf { it.isNotEmpty() },
+                    )
                 } catch (e: Exception) {
                     Log.w(TAG, "Skipping a reminder that can't be read", e)
                     null

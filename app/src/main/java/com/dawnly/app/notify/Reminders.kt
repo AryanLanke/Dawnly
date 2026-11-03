@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -12,6 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.dawnly.app.MainActivity
 import com.dawnly.app.R
 import com.dawnly.app.dawnly
+import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderTimes
 import java.time.LocalDateTime
@@ -25,15 +27,45 @@ import kotlinx.coroutines.launch
  */
 object ReminderScheduler {
     private const val TAG = "Reminders"
-    private const val CHANNEL = "reminders"
     internal const val EXTRA_ID = "com.dawnly.app.extra.REMINDER_ID"
 
+    /** Before 1.3.0 every reminder used this one channel, with the phone's own sound. */
+    private const val OLD_CHANNEL = "reminders"
+
+    /** Android fixes a channel's sound, so each reminder sound has its own: `reminder_<sound>`. */
+    private const val CHANNEL_PREFIX = "reminder_"
+
+    /**
+     * Reminders' own sound until the user picks another: Bubble, so a reminder never sounds like
+     * the "Up already?" question or "Alarm's off" (the prompt's Flute by default).
+     */
+    val DEFAULT_SOUND = AlertSound.Bubble
+
+    fun soundOf(reminder: Reminder): AlertSound =
+        reminder.sound?.let { key -> AlertSound.entries.firstOrNull { it.name == key } } ?: DEFAULT_SOUND
+
+    /** Removes the old channel that used the phone's own sound; the new ones are made as needed. */
     fun createChannel(context: Context) {
-        val channel = NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_DEFAULT)
-            .setName(context.getString(R.string.channel_reminders))
-            .setDescription(context.getString(R.string.channel_reminders_description))
-            .build()
-        NotificationManagerCompat.from(context).createNotificationChannel(channel)
+        NotificationManagerCompat.from(context).deleteNotificationChannel(OLD_CHANNEL)
+    }
+
+    /** The channel for [sound], made the first time a reminder uses it. */
+    private fun channelFor(context: Context, sound: AlertSound): String {
+        val id = CHANNEL_PREFIX + sound.name.lowercase()
+        val manager = NotificationManagerCompat.from(context)
+        if (manager.getNotificationChannelCompat(id) == null) {
+            val audio = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            val channel = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+                .setName(context.getString(R.string.channel_reminders_sound, context.getString(sound.label)))
+                .setDescription(context.getString(R.string.channel_reminders_description))
+                .setSound(sound.uri(context), audio)
+                .build()
+            manager.createNotificationChannel(channel)
+        }
+        return id
     }
 
     /** Cancels every reminder's alarm and sets the ones that are on for their next time. */
@@ -83,7 +115,7 @@ object ReminderScheduler {
             Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE,
         )
-        val builder = NotificationCompat.Builder(context, CHANNEL)
+        val builder = NotificationCompat.Builder(context, channelFor(context, soundOf(reminder)))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(reminder.name)
             .setContentIntent(open)

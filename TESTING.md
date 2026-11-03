@@ -188,6 +188,8 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **8.16 Learning, usual time:** three weekday mornings answered Dismiss alarm. **Expect:** "You're usually up around ..." with about that time.
 - [ ] **8.17 Learning, off and Start over:** the switch off makes Dawnly behave as it ships; Start over clears the list.
 
+- [ ] **8.18 Reminder sound:** a reminder left on its default sound. **Expect:** it rings with Bubble, not the phone's own sound. Change it to another sound in the editor (Sound row): tapping a sound plays it; the next reminder rings with that one.
+
 ## Found while writing this plan (to fix)
 
 - The Android notification setting for "Up before your alarm" still says "…only dismisses it on its own if you turn on Dismiss automatically", the old switch's name. It should name **When you're up**.

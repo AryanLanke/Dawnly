@@ -84,6 +84,7 @@
     <string name="reminder_save">Save</string>
     <string name="reminder_delete">Delete reminder</string>
     <string name="reminder_done">Done</string>
+    <string name="reminder_sound">Sound</string>
     <string name="time_am">am</string>
     <string name="time_pm">pm</string>
     <string name="learning_label">Learning from you</string>

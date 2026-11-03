@@ -55,6 +55,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dawnly.app.R
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
+import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.notify.ReminderScheduler
+import com.dawnly.app.ui.glass.CheckBadge
+import com.dawnly.app.ui.glass.GlassList
+import com.dawnly.app.ui.glass.GlassRow
+import com.dawnly.app.ui.settings.rememberSoundPreview
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderSchedule
 import com.dawnly.app.ui.format.formatDuration
@@ -70,8 +80,8 @@ import java.time.Duration
 import java.time.LocalTime
 import kotlin.math.abs
 
-/** Which time the wheel is setting. */
-private enum class TimeField { At, From, Until }
+/** The card's other pages: a time on the wheels, or the reminder's sound. */
+private enum class EditorPage { At, From, Until, Sound }
 
 /**
  * Adding or changing a reminder, drawn over Today (in the app's own window, so it keeps the
@@ -95,7 +105,8 @@ internal fun ReminderEditor(
     var minutes by remember { mutableStateOf((start as? ReminderSchedule.Every)?.minutes ?: 20) }
     var from by remember { mutableStateOf((start as? ReminderSchedule.Every)?.from ?: ReminderSchedule.DAY_START) }
     var until by remember { mutableStateOf((start as? ReminderSchedule.Every)?.until ?: ReminderSchedule.DAY_END) }
-    var picking by remember { mutableStateOf<TimeField?>(null) }
+    var sound by remember { mutableStateOf(initial?.let(ReminderScheduler::soundOf) ?: ReminderScheduler.DEFAULT_SOUND) }
+    var picking by remember { mutableStateOf<EditorPage?>(null) }
 
     BackHandler { if (picking != null) picking = null else onClose() }
     Box(
@@ -114,25 +125,29 @@ internal fun ReminderEditor(
             label = "reminderPage",
             // Taps on the card stay on the card.
             modifier = Modifier.clickable(remember { MutableInteractionSource() }, indication = null) {},
-        ) { field ->
-            if (field != null) {
+        ) { page ->
+            if (page == EditorPage.Sound) {
+                SoundChoice(sound, onPick = { sound = it }, onDone = { picking = null })
+                return@AnimatedContent
+            }
+            if (page != null) {
                 val label = stringResource(
-                    when (field) {
-                        TimeField.At -> R.string.reminder_time
-                        TimeField.From -> R.string.reminder_from
-                        TimeField.Until -> R.string.reminder_until
+                    when (page) {
+                        EditorPage.At -> R.string.reminder_time
+                        EditorPage.From -> R.string.reminder_from
+                        else -> R.string.reminder_until
                     },
                 )
-                val time = when (field) {
-                    TimeField.At -> at
-                    TimeField.From -> from
-                    TimeField.Until -> until
+                val time = when (page) {
+                    EditorPage.At -> at
+                    EditorPage.From -> from
+                    else -> until
                 }
                 TimeWheel(label, time, onDone = { picked ->
-                    when (field) {
-                        TimeField.At -> at = picked
-                        TimeField.From -> from = picked
-                        TimeField.Until -> until = picked
+                    when (page) {
+                        EditorPage.At -> at = picked
+                        EditorPage.From -> from = picked
+                        else -> until = picked
                     }
                     picking = null
                 })
@@ -166,7 +181,7 @@ internal fun ReminderEditor(
                         onSelect = { every = it == 1 },
                     )
                     if (!every) {
-                        TimeButton(stringResource(R.string.reminder_time), at, Modifier.fillMaxWidth()) { picking = TimeField.At }
+                        TimeButton(stringResource(R.string.reminder_time), at, Modifier.fillMaxWidth()) { picking = EditorPage.At }
                     } else {
                         val repeats = ReminderSchedule.REPEATS
                         GlassSegmented(
@@ -175,9 +190,13 @@ internal fun ReminderEditor(
                             onSelect = { minutes = repeats[it] },
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TimeButton(stringResource(R.string.reminder_from), from, Modifier.weight(1f)) { picking = TimeField.From }
-                            TimeButton(stringResource(R.string.reminder_until), until, Modifier.weight(1f)) { picking = TimeField.Until }
+                            TimeButton(stringResource(R.string.reminder_from), from, Modifier.weight(1f)) { picking = EditorPage.From }
+                            TimeButton(stringResource(R.string.reminder_until), until, Modifier.weight(1f)) { picking = EditorPage.Until }
                         }
+                    }
+                    // Its own sound, so a reminder is never mistaken for the alarm's question.
+                    ValueButton(stringResource(R.string.reminder_sound), stringResource(sound.label), Modifier.fillMaxWidth()) {
+                        picking = EditorPage.Sound
                     }
                     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         // Save and Cancel are the same glass button, side by side.
@@ -195,6 +214,7 @@ internal fun ReminderEditor(
                                             why = why.trim(),
                                             schedule = schedule,
                                             on = initial?.on ?: true,
+                                            sound = sound.name,
                                         ),
                                     )
                                 }
@@ -255,14 +275,57 @@ private fun GlassField(
 
 /** A glass button showing "[label]  9:00 pm", for opening the time wheel. */
 @Composable
-private fun TimeButton(label: String, time: LocalTime, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun TimeButton(label: String, time: LocalTime, modifier: Modifier = Modifier, onClick: () -> Unit) =
+    ValueButton(label, clock(time), modifier, onClick)
+
+/** A glass button with a soft [label] and its [value] on the right, like "Sound  Bubble". */
+@Composable
+private fun ValueButton(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     GlassSurface(modifier = modifier, shape = GlassShapes.Button, onClick = onClick) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(label, style = MaterialTheme.typography.bodySmall, color = DawnlyTheme.colors.textSoft, modifier = Modifier.weight(1f))
-            Text(clock(time), style = MaterialTheme.typography.bodyLarge)
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+/**
+ * Choosing the reminder's sound: Dawnly's sounds in a glass list. Tapping one picks it and plays
+ * it, so the user hears what their reminder will sound like.
+ */
+@Composable
+private fun SoundChoice(selected: AlertSound, onPick: (AlertSound) -> Unit, onDone: () -> Unit) {
+    val preview = rememberSoundPreview()
+    GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(stringResource(R.string.reminder_sound), style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
+                GlassList(Modifier.selectableGroup()) {
+                    AlertSound.entries.forEachIndexed { index, sound ->
+                        GlassRow(
+                            title = stringResource(sound.label),
+                            divider = index > 0,
+                            modifier = Modifier.selectable(selected = sound == selected, role = Role.RadioButton) {
+                                onPick(sound)
+                                preview.play(sound)
+                            },
+                        ) {
+                            if (sound == selected) CheckBadge()
+                        }
+                    }
+                }
+            }
+            GlassButton(
+                stringResource(R.string.reminder_done),
+                {
+                    preview.stop()
+                    onDone()
+                },
+                Modifier.fillMaxWidth(),
+            )
         }
     }
 }
