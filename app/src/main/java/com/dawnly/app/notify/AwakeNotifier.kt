@@ -57,7 +57,8 @@ object AwakeNotifier {
     /** On the auto-dismiss intents: this is the second try ([DismissRetry]), so there's no third. */
     internal const val EXTRA_RETRY = "com.dawnly.app.extra.RETRY"
 
-    fun onUserAwake(context: Context, alarmAt: Instant) {
+    /** [musicTippedIt]: music made the difference, so the user is asked whatever the mode. */
+    fun onUserAwake(context: Context, alarmAt: Instant, musicTippedIt: Boolean = false) {
         val check = DismissGuard.check(alarmAt, context.dawnly.nextAlarms.current()?.triggerAt, Instant.now())
         if (check != DismissCheck.Ok) {
             Log.i(TAG, "Not asking about the alarm at $alarmAt: $check")
@@ -73,6 +74,7 @@ object AwakeNotifier {
                 reach = ClockReach.of(context),
                 canTimeExactly = app.watchScheduler.canScheduleExactAlarms(),
                 canNotify = canNotify(context),
+                musicTippedIt = musicTippedIt,
             )
             if (mode != DismissMode.Ask) Log.i(TAG, "Dismiss mode $mode for the alarm at $alarmAt: $action")
             when (action) {

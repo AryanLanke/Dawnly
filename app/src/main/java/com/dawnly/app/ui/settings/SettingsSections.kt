@@ -78,19 +78,19 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
 }
 
 /**
- * The custom window: drag the slider for big jumps (5 min to 3 hr in one swipe, in 5-minute
- * steps), tap or hold minus and plus to move a minute at a time, down to 1 minute. Under
- * [WatchWindow.RECOMMENDED_MIN] a note says it's very short. While dragging, the time follows the
- * finger and is saved on letting go, so a swipe is one settings change rather than dozens.
+ * The custom window. The slider moves a minute at a time up to half an hour, where people want
+ * exact times like 6 or 8 minutes, then 5 minutes at a time up to 3 hours; minus and plus always
+ * move a minute. Under [WatchWindow.RECOMMENDED_MIN] a note says it's very short. While dragging,
+ * the time follows the finger and is saved on letting go, so a swipe is one settings change rather
+ * than dozens.
  */
 @Composable
 private fun CustomWindow(window: Duration, onChange: (Duration) -> Unit) {
-    val first = WatchWindow.RECOMMENDED_MIN
-    val stepMinutes = WatchWindow.STEP.toMinutes()
-    val steps = ((WatchWindow.MAX - first).toMinutes() / stepMinutes).toInt()
-    // Windows under 5 minutes sit at the slider's start; nearest step otherwise.
-    fun toStep(d: Duration) = (((d - first).toMinutes() + stepMinutes / 2) / stepMinutes).toInt().coerceIn(0, steps)
-    fun toWindow(step: Int): Duration = first + WatchWindow.STEP.multipliedBy(step.toLong())
+    val stops = WatchWindow.SLIDER_STOPS
+    val steps = stops.lastIndex
+    // The nearest stop to a saved window.
+    fun toStep(d: Duration) = stops.indices.minBy { (stops[it] - d).abs() }
+    fun toWindow(step: Int): Duration = stops[step.coerceIn(0, steps)]
     var dragging by remember { mutableStateOf<Int?>(null) }
     val shown = dragging?.let(::toWindow) ?: window
     Column {

@@ -41,7 +41,8 @@ class AutoDismissPlanTest {
         reach: ClockReach = ClockReach.Anytime,
         canTimeExactly: Boolean = true,
         canNotify: Boolean = true,
-    ) = AutoDismissPlan.decide(mode, now, alarmAt, reach, canTimeExactly, canNotify)
+        musicTippedIt: Boolean = false,
+    ) = AutoDismissPlan.decide(mode, now, alarmAt, reach, canTimeExactly, canNotify, musicTippedIt)
 
     @Test
     fun `each choice does its own thing when everything is allowed`() {
@@ -80,5 +81,11 @@ class AutoDismissPlanTest {
             AwakeAction.DismissNow,
             decide(DismissMode.Instant, alarmAt = now.plusSeconds(30), canTimeExactly = false, canNotify = false),
         )
+    }
+
+    @Test
+    fun `always asks when music made the difference`() {
+        assertEquals(AwakeAction.Ask, decide(DismissMode.Warn, musicTippedIt = true))
+        assertEquals(AwakeAction.Ask, decide(DismissMode.Instant, musicTippedIt = true))
     }
 }

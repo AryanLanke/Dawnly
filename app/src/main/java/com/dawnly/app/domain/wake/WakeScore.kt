@@ -31,6 +31,13 @@ data class WakeScore(
     /** Never true when no sign counts: then Dawnly has nothing to go on. */
     val isAwake: Boolean get() = total >= 1f - EPSILON
 
+    /**
+     * Awake only thanks to music: without it the other signs fall short. People fall asleep to
+     * music, so then Dawnly always asks, even with Warn first or Right away, and an unanswered
+     * question lets the alarm ring.
+     */
+    val musicTippedIt: Boolean get() = isAwake && total - (musicShare ?: 0f) < 1f - EPSILON
+
     companion object {
         /** So 0.6 + 0.4 counts as 1 despite float rounding. */
         private const val EPSILON = 1e-4f

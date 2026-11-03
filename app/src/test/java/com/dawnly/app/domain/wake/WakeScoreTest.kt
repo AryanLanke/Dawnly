@@ -112,4 +112,20 @@ class WakeScoreTest {
         assertFalse(WakeScore.of(signals(screen = minutes(60), steps = 500), noneOn).isAwake)
         assertFalse(noneOn.canNotice)
     }
+
+    @Test
+    fun `music tipping it over is flagged, so Dawnly asks`() {
+        // Half the movement goal plus music: awake only because of the music.
+        val tipped = WakeScore.of(signals(moving = minutes(1), music = minutes(5)), defaults)
+        assertTrue(tipped.isAwake)
+        assertTrue(tipped.musicTippedIt)
+    }
+
+    @Test
+    fun `music doesn't flag a wake the other signs reach alone`() {
+        val screen = WakeScore.of(signals(screen = minutes(5), music = minutes(5)), defaults)
+        assertTrue(screen.isAwake)
+        assertFalse(screen.musicTippedIt)
+        assertFalse(WakeScore.of(signals(moving = minutes(1), music = minutes(5)), defaults.copy(useMusic = false)).musicTippedIt)
+    }
 }

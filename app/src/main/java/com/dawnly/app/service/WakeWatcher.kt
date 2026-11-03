@@ -145,7 +145,8 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 val signals = tracker.signals(now)
                 WatchSession.publish(signals)
 
-                val awakeNow = !notified && WakeScore.of(signals, settings.value).isAwake
+                val score = WakeScore.of(signals, settings.value)
+                val awakeNow = !notified && score.isAwake
                 if (awakeNow) notified = true
                 val progress = WakeProgress(alarmAt, signals, notified)
                 // Saved before asking, so a restart can never ask twice.
@@ -154,7 +155,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                     lastSaved = progress
                     lastSavedAt = now
                 }
-                if (awakeNow) onAwake(signals)
+                if (awakeNow) onAwake(signals, score.musicTippedIt)
             }
         } finally {
             withContext(NonCancellable) {
@@ -163,9 +164,9 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         }
     }
 
-    private fun onAwake(signals: WakeSignals) {
-        Log.i(TAG, "Awake before the $alarmAt alarm: $signals")
-        AwakeNotifier.onUserAwake(app, alarmAt)
+    private fun onAwake(signals: WakeSignals, musicTippedIt: Boolean) {
+        Log.i(TAG, "Awake before the $alarmAt alarm: $signals (music tipped it: $musicTippedIt)")
+        AwakeNotifier.onUserAwake(app, alarmAt, musicTippedIt)
         // Not in v1: a "Still awake?" nudge, for falling back asleep after dismissing, would start
         // here. The service stops once the alarm is dismissed, so WatchScheduler would also need to
         // keep it running for a while; a fresh WakeTracker could then watch for a long screen-off.
