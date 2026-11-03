@@ -12,7 +12,7 @@ rem
 rem Needs adb: Android Studio's platform-tools, or Google's "SDK Platform Tools" download.
 
 setlocal
-set PKG=com.dawnly.app
+set PKG=com.aryanlanke.dawnly
 
 set ADB=adb
 where adb >nul 2>nul || set ADB="%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"

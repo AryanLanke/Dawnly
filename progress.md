@@ -22,6 +22,19 @@ The user's friends tried the APK on a Motorola and a Redmi. All four problems ar
   - Untested risk: without overlay, going back to the previous app after the dismiss may be blocked (background start), leaving the Clock app open (TESTING.md 7.13).
   - `OemBattery.Oppo` covers OPPO, OnePlus and realme.
   - Stores: `docs/app-stores.md`. Xiaomi GetApps looks possible, but whether individual sign-up is free depends on the country. Samsung Galaxy Store wants commercial seller status (D-U-N-S or business papers), so it's probably blocked for an individual. `docs/privacy-policy.md` is the policy link both stores need (live once pushed).
+  - 9Apps (asked 2026-11-03): skip it. It isn't on the Play Store (it's installed from a file itself), it's known for re-hosting APKs, and no current developer sign-up could be found. GitHub Releases is the free option; F-Droid and IzzyOnDroid would need an open-source licence (the LICENSE is "all rights reserved").
+
+---
+
+## ▶ Smarter detection, without more setup (planned 2026-11-03, not built)
+
+The friends' verdict: setup costs too much for the payoff. The user wants accuracy kept. The plan is to make the cheap setup (screen use, steps, no Usage access) more accurate on its own. Each item needs no new permission.
+- [ ] **Charger unplugged** as a sign (`ACTION_POWER_DISCONNECTED`, no permission). Most people charge overnight; unplugging in the window is a strong "up" sign. Probably part of a goal, not enough alone.
+- [ ] **Learn from the user's answers.** "Not yet" (`NotYetReceiver`) means the goals were too low; a quick "Dismiss alarm" means they could be lower. Adjust that person's goals a little each time, kept on the phone.
+- [ ] **Activity that continues, not one burst.** Ask for activity in two separate stretches (or still going after a short gap) before counting someone as awake, so a 3 AM scroll that stops doesn't count.
+- [ ] **Weigh by how close the alarm is.** Activity 10 minutes before the alarm counts more than the same 2 hours before.
+- Two different "it didn't dismiss" failures, kept apart in the app's wording: not noticing you're up (detection, these items) vs. the Clock app ignoring the request (`DismissFailedNotice`, already built).
+- Already done (052d704): Usage access is no longer in onboarding.
 
 ---
 
@@ -140,7 +153,7 @@ The Compose project builds and runs on the user's Nothing Phone (2a). "Hello fro
 
 | Item | Value |
 |---|---|
-| Package / applicationId | `com.dawnly.app`, confirmed final by the user on 2026-10-31. |
+| Package / applicationId | `com.aryanlanke.dawnly` since 0.2.1 (2026-11-03), registered in the Android Developer Console (free limited distribution account). The Kotlin namespace stays `com.dawnly.app`. Older commands in this file that say `-p com.dawnly.app` or `adb uninstall com.dawnly.app` now need the new ID. |
 | AGP | 9.4.1. 9.5.0 exists but was skipped because its release notes weren't published yet. |
 | Gradle | 9.8.2 (wrapper) |
 | Kotlin | 2.4.21 |
@@ -492,8 +505,8 @@ Everything Phases 0–6 left open, plus PLAN.md section 9: share the app through
 Google's "hobbyist account" is now the **limited distribution account** in the Android Developer Console (`https://android.google.com/developerconsole`). It's free and needs no ID: a Google Account with 2-Step Verification, a Google payments profile (legal name and address) and a contact email. It registers package names and shares an app with **up to 50 devices** (Google's guide says 50; its FAQ still says 20) through a QR code or link that each tester accepts on their phone. Sources: developer.android.com/developer-verification/guides/limited-distribution and …/guides/faq.
 - **What's enforced now:** since 2026-09-30, unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand only. Everywhere else a sideloaded APK installs as before until the global rollout in 2027. adb installs are never affected.
 - **So, today:** testers can install `app-release.apk` directly (e.g. from a Google Drive link, with "Install unknown apps" allowed for the browser or Files app).
-- **For 2027:** register `com.dawnly.app` with the release key's SHA-256 in the console's **Package names** tab. If the key is lost, the package can't be registered.
-- [ ] Account created · [ ] `com.dawnly.app` registered · [ ] build sent to testers
+- **For 2027:** the app is registered with the release key's SHA-256 (`DC:6D:70:…:0E:BE`). If the key is lost, updates can't be signed or registered: keep `keystore.properties` and the keystore backed up.
+- [x] Account created (limited distribution, 2026-11-03) · [ ] `com.aryanlanke.dawnly` registered (name accepted as a draft; the key is next. `com.dawnly.app` was refused: already seen on Android) · [ ] phones approved · [ ] build sent to testers
 
 **Before the Play Store (later)**
 - [ ] Play policy reasons for `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `SYSTEM_ALERT_WINDOW`, `PACKAGE_USAGE_STATS`, and the `specialUse` foreground service.

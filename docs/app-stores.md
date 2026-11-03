@@ -14,7 +14,7 @@
 1. Make a Xiaomi account at https://account.xiaomi.com (or sign in).
 2. Go to https://global.developer.mi.com → **Console** → apply to become a developer. Choose **Individual** if it's offered. Expect to give your real name, an ID number and a phone number; you can skip payout details, because Dawnly is free.
 3. Wait for review (a few days).
-4. Console → **Create app**. Package name: `com.dawnly.app`. Upload `app-release.apk`. Fill in the details above and submit for review.
+4. Console → **Create app**. Package name: `com.aryanlanke.dawnly`. Upload `app-release.apk`. Fill in the details above and submit for review.
 5. Each new version: raise `versionCode` (the developer does it), build, then upload under **Update**.
 
 ## Samsung Galaxy Store (Samsung phones)

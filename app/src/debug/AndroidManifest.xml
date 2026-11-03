@@ -5,7 +5,7 @@
     <application>
         <!-- Phase 4 test trigger: shows the "Up already?" prompt from adb, without wake detection.
              Guarded by DUMP, which adb's shell has and other apps can't get.
-             adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app [-ez stale true] -->
+             adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.aryanlanke.dawnly [-ez stale true] -->
         <receiver
             android:name=".notify.DebugAwakeReceiver"
             android:exported="true"

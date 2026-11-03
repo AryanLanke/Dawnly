@@ -109,7 +109,7 @@ Then open Dawnly on the phone and walk through the permission steps (each one ca
 Debug builds add a **Dawnly debug** launcher icon. It shows live sign readings and lets you change the goals, so you can test detection quickly. To show the prompt without waiting for detection:
 
 ```bash
-adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.dawnly.app
+adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.aryanlanke.dawnly
 ```
 
 ## Status

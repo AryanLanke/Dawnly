@@ -110,7 +110,7 @@ Build the glass design system from `design/mockups.html`, all screens, animation
 README with screenshots and a demo GIF, a "Challenges I solved" section (background limits, battery, OEM differences, exact alarms), GitHub Actions CI that builds and runs tests, and an app icon.
 
 ## 9. Distribution (later)
-First share via Google's free **limited distribution account** in the Android Developer Console (no ID or fee; up to 50 devices that each accept the app by QR code or link, per Google's guide in Nov 2026). Unregistered sideloaded apps are blocked only in Brazil, Indonesia, Singapore and Thailand until the global rollout in 2027, so testers elsewhere can install the signed APK directly for now; register `com.dawnly.app` with the release key before 2027. Possibly the Play Store later (one-time $25 fee).
+First share via Google's free **limited distribution account** in the Android Developer Console (no ID or fee; up to 50 devices that each accept the app by QR code or link, per Google's guide in Nov 2026). Unregistered sideloaded apps are blocked only in Brazil, Indonesia, Singapore and Thailand until the global rollout in 2027, so testers elsewhere can install the signed APK directly for now; registered on 2026-11-03 as `com.aryanlanke.dawnly` (the app ID since 0.2.1; `com.dawnly.app` had already been seen on Android, which a free account can't register). Possibly the Play Store later (one-time $25 fee).
 
 ## Appendix A — UI mockups (`design/mockups.html`)
 Approved design reference. Save exactly as-is to `design/mockups.html`. Open it in a browser to view; it has a Light/Dark toggle and the animated sky. Replaced on 2026-11-02 by the sky version (from a friend of the user's).
