@@ -9,7 +9,7 @@
 - **Category:** Tools (or Lifestyle). **Price:** free. **Ads:** none. **In-app purchases:** none.
 
 ## Xiaomi GetApps (Xiaomi, Redmi and POCO phones)
-Couldn't be confirmed in advance: whether individual sign-up is free, and whether it's open in your country. Xiaomi's pages say both depend on the country, and the sign-up page shows which options you get.
+**Checked on 2026-11-03: companies only.** The developer sign-up form requires a company name, the company region, a business licence number and an uploaded company registration certificate. The certificate must show the business may offer internet services, and personal ID isn't accepted. An individual can't register until there's a registered business. The steps below are for then.
 
 1. Make a Xiaomi account at https://account.xiaomi.com (or sign in).
 2. Go to https://global.developer.mi.com → **Console** → apply to become a developer. Choose **Individual** if it's offered. Expect to give your real name, an ID number and a phone number; you can skip payout details, because Dawnly is free.
