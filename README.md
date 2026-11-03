@@ -1,7 +1,5 @@
 # Dawnly
 
-[![CI](https://github.com/AryanLanke/Dawnly/actions/workflows/ci.yml/badge.svg)](https://github.com/AryanLanke/Dawnly/actions/workflows/ci.yml)
-
 **An Android app that notices you're already up and offers to switch off your alarm before it rings.**
 
 I set an alarm for 5:30, wake up at 5:00 on my own, pick up my phone and start my day, and at 5:30 the alarm goes off anyway. Dawnly fixes that. It works with the alarms you already have in your Clock app. It quietly watches for signs you're awake in a short window before the alarm, then asks: *"Up already? Looks like you're awake. Dismiss your 5:30 alarm?"* One tap, and the Clock app dismisses it.
