@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.core.app.NotificationChannelCompat
@@ -71,7 +70,7 @@ object AwakeNotifier {
                 mode = mode,
                 now = Instant.now(),
                 alarmAt = alarmAt,
-                canOpenClock = Settings.canDrawOverlays(context),
+                reach = ClockReach.of(context),
                 canTimeExactly = app.watchScheduler.canScheduleExactAlarms(),
                 canNotify = canNotify(context),
             )
@@ -85,13 +84,45 @@ object AwakeNotifier {
     }
 
     /** No warning: straight to [DismissAlarmActivity], as [AutoDismissReceiver] does after the minute. */
-    private fun dismissNow(context: Context, alarmAt: Instant) {
-        try {
-            context.startActivity(DismissAlarmActivity.intent(context, alarmAt))
-        } catch (e: RuntimeException) {
-            Log.w(TAG, "Couldn't dismiss straight away; asking instead", e)
-            post(context, alarmAt)
+    private fun dismissNow(context: Context, alarmAt: Instant) = openDismiss(context, alarmAt, retry = false)
+
+    /**
+     * Opens [DismissAlarmActivity] with nobody tapping: directly with Display over other apps, else
+     * through a full-screen notification ([ClockReach]), else by asking.
+     */
+    fun openDismiss(context: Context, alarmAt: Instant, retry: Boolean) {
+        when (ClockReach.of(context)) {
+            ClockReach.Anytime -> try {
+                context.startActivity(DismissAlarmActivity.intent(context, alarmAt, retry))
+            } catch (e: RuntimeException) {
+                Log.w(TAG, "Couldn't open the dismiss; asking instead", e)
+                post(context, alarmAt)
+            }
+            ClockReach.WhenLocked -> dismissFullScreen(context, alarmAt, retry)
+            ClockReach.None -> {
+                Log.w(TAG, "Can't reach the Clock app from the background any more; asking instead")
+                post(context, alarmAt)
+            }
         }
+    }
+
+    /**
+     * A full-screen notification that opens [DismissAlarmActivity]: Android opens it straight away
+     * with the phone locked, which is when auto-dismiss matters most (phone in a pocket). While the
+     * phone is in use, Android shows it as a pop-up instead, and one tap dismisses.
+     */
+    private fun dismissFullScreen(context: Context, alarmAt: Instant, retry: Boolean) {
+        if (!canNotify(context)) {
+            Log.w(TAG, "Notifications are off, so the alarm can't be dismissed without Display over other apps")
+            return
+        }
+        val text = context.getString(R.string.auto_dismiss_tap_text, formatTime(context, alarmAt))
+        val builder = prompt(context, alarmAt, text, retry)
+            .setFullScreenIntent(dismissAlarm(context, alarmAt, retry), true)
+            .setAutoCancel(true)
+        val untilAlarm = Duration.between(Instant.now(), alarmAt)
+        if (!untilAlarm.isNegative) builder.setTimeoutAfter(untilAlarm.toMillis())
+        notify(context, builder, "Dismissing the alarm at $alarmAt through a full-screen notification")
     }
 
     /** Shows the prompt for [alarmAt] without checking it's the next alarm. Debug builds use it directly. */
@@ -189,7 +220,7 @@ object AwakeNotifier {
     }
 
     /** What the ask prompt and the auto-dismiss warning share. */
-    private fun prompt(context: Context, alarmAt: Instant, text: String): NotificationCompat.Builder =
+    private fun prompt(context: Context, alarmAt: Instant, text: String, retry: Boolean = false): NotificationCompat.Builder =
         NotificationCompat.Builder(context, currentChannel(context))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.awake_title))
@@ -197,7 +228,7 @@ object AwakeNotifier {
             // The whole question when expanded; one line cuts it off on most phones.
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(openApp(context))
-            .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt))
+            .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt, retry))
             .addAction(0, context.getString(R.string.action_not_yet), notYet(context))
             .addExtras(Bundle().apply { putLong(EXTRA_ALARM_AT, alarmAt.toEpochMilli()) })
             .setOnlyAlertOnce(true)
@@ -259,10 +290,10 @@ object AwakeNotifier {
     )
 
     /** Straight to an activity, not through a receiver: Android 12+ blocks notification trampolines. */
-    private fun dismissAlarm(context: Context, alarmAt: Instant): PendingIntent = PendingIntent.getActivity(
+    private fun dismissAlarm(context: Context, alarmAt: Instant, retry: Boolean = false): PendingIntent = PendingIntent.getActivity(
         context,
         0,
-        DismissAlarmActivity.intent(context, alarmAt),
+        DismissAlarmActivity.intent(context, alarmAt, retry),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

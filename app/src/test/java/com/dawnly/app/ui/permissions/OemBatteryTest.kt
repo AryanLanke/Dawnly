@@ -11,6 +11,9 @@ class OemBatteryTest {
         assertEquals(OemBattery.Xiaomi, OemBattery.detect("Xiaomi"))
         assertEquals(OemBattery.Xiaomi, OemBattery.detect("Redmi"))
         assertEquals(OemBattery.Xiaomi, OemBattery.detect(" POCO "))
+        assertEquals(OemBattery.Oppo, OemBattery.detect("OPPO"))
+        assertEquals(OemBattery.Oppo, OemBattery.detect("OnePlus"))
+        assertEquals(OemBattery.Oppo, OemBattery.detect("realme"))
     }
 
     @Test

@@ -196,6 +196,7 @@ private fun Sign.subtitle(signals: WakeSignalSettings): String = when (this) {
 internal fun DismissModeSection(
     mode: DismissMode,
     overlayAllowed: Boolean,
+    fullScreenAllowed: Boolean,
     onChange: (DismissMode) -> Unit,
     onAllowOverlay: (DismissMode) -> Unit,
 ) {
@@ -210,7 +211,8 @@ internal fun DismissModeSection(
             selected = modes.indexOf(shown),
             onSelect = { index ->
                 val picked = modes[index]
-                if (picked == DismissMode.Ask || overlayAllowed) {
+                // Full-screen notifications are enough to dismiss by itself; overlay only skips a tap.
+                if (picked == DismissMode.Ask || overlayAllowed || fullScreenAllowed) {
                     waiting = null
                     onChange(picked)
                 } else {
@@ -224,6 +226,17 @@ internal fun DismissModeSection(
             color = DawnlyTheme.colors.textSoft,
             modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
         )
+        // Works already; Display over other apps would only save the tap while the phone is in use.
+        AnimatedVisibility(visible = waiting == null && mode != DismissMode.Ask && !overlayAllowed) {
+            Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp)) {
+                Text(
+                    stringResource(R.string.settings_auto_dismiss_tap_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DawnlyTheme.colors.textSoft,
+                )
+                AccentPill(stringResource(R.string.common_allow), { onAllowOverlay(mode) }, Modifier.padding(top = 10.dp))
+            }
+        }
         AnimatedVisibility(visible = waiting != null) {
             Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp)) {
                 // Android 11+ ignores the package Uri and opens the list of all apps.
@@ -258,11 +271,12 @@ private val DismissMode.detail
 internal fun PermissionsSection(
     permissions: PermissionState,
     dismissMode: DismissMode,
+    signals: WakeSignalSettings,
     oemBattery: OemBattery?,
     onRequest: (AppPermission) -> Unit,
     onOpenOemBattery: () -> Unit,
 ) {
-    val shown = shownPermissions(dismissMode)
+    val shown = shownPermissions(dismissMode, signals)
     Column {
         SectionLabel(stringResource(R.string.settings_permissions_label))
         GlassList {
@@ -293,12 +307,27 @@ internal fun PermissionsSection(
 }
 
 /**
- * The permissions Settings lists. Display over other apps only matters when Dawnly dismisses by
- * itself, e.g. if it was taken back since.
+ * The permissions Settings lists. Usage access only matters with the apps-opened sign on, and
+ * Display over other apps only when Dawnly dismisses by itself, e.g. if either was taken back since.
  */
-internal fun shownPermissions(dismissMode: DismissMode): List<AppPermission> =
+internal fun shownPermissions(dismissMode: DismissMode, signals: WakeSignalSettings): List<AppPermission> =
     AppPermission.entries.filter {
-        it.isApplicable && (it.askedUpFront || (it == AppPermission.Overlay && dismissMode != DismissMode.Ask))
+        it.isApplicable && when (it) {
+            AppPermission.UsageAccess -> signals.usePhoneUse
+            AppPermission.Overlay, AppPermission.FullScreen -> dismissMode != DismissMode.Ask
+            else -> it.askedUpFront
+        }
+    }
+
+/**
+ * The shown permissions that still need the user. Display over other apps is optional while
+ * full-screen notifications are allowed: auto-dismiss works without it, with one tap while the
+ * phone is in use.
+ */
+internal fun waitingPermissions(permissions: PermissionState, dismissMode: DismissMode, signals: WakeSignalSettings): Int =
+    shownPermissions(dismissMode, signals).count { permission ->
+        permission !in permissions &&
+            !(permission == AppPermission.Overlay && AppPermission.FullScreen in permissions)
     }
 
 /**
@@ -341,4 +370,5 @@ internal val AppPermission.label
         AppPermission.UsageAccess -> R.string.perm_usage
         AppPermission.Battery -> R.string.perm_battery
         AppPermission.Overlay -> R.string.perm_overlay
+        AppPermission.FullScreen -> R.string.perm_full_screen
     }

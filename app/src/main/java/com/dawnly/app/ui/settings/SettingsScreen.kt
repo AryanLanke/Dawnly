@@ -161,6 +161,7 @@ private fun SettingsContent(
             DismissModeSection(
                 mode = state.dismissMode,
                 overlayAllowed = AppPermission.Overlay in permissions,
+                fullScreenAllowed = AppPermission.FullScreen in permissions,
                 onChange = onDismissModeChange,
                 onAllowOverlay = onAllowOverlay,
             )
@@ -181,7 +182,7 @@ private fun SettingsContent(
         }
         Gap()
         SpringIn(order = 4) {
-            val waiting = shownPermissions(state.dismissMode).count { it !in permissions }
+            val waiting = waitingPermissions(permissions, state.dismissMode, state.signals)
             MoreOptionsRow(open = moreOpen, needsYou = waiting, onToggle = onToggleMore)
         }
         AnimatedVisibility(
@@ -203,7 +204,7 @@ private fun SettingsContent(
                     )
                 }
                 Gap()
-                PermissionsSection(permissions, state.dismissMode, oemBattery, onRequestPermission, onOpenOemBattery)
+                PermissionsSection(permissions, state.dismissMode, state.signals, oemBattery, onRequestPermission, onOpenOemBattery)
             }
         }
         Spacer(Modifier.height(12.dp))

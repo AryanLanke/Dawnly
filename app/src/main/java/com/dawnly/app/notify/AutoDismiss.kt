@@ -7,6 +7,7 @@ import android.provider.Settings
 import android.util.Log
 import com.dawnly.app.dawnly
 import com.dawnly.app.data.settings.DismissMode
+import com.dawnly.app.ui.permissions.AppPermission
 import java.time.Duration
 import java.time.Instant
 
@@ -22,22 +23,51 @@ sealed interface AwakeAction {
     data object DismissNow : AwakeAction
 }
 
+/**
+ * How Dawnly can open the Clock app when nobody tapped anything. Android blocks starting apps from
+ * the background, with a few exceptions.
+ */
+enum class ClockReach {
+    /** "Display over other apps": any time, locked or not. Android locks it for apps installed from a file. */
+    Anytime,
+
+    /**
+     * A full-screen notification ([AppPermission.FullScreen]): Android opens it straight away with the
+     * phone locked, and shows it for one tap while the phone is in use.
+     */
+    WhenLocked,
+
+    /** Neither: the user is asked. */
+    None,
+    ;
+
+    companion object {
+        fun of(context: Context): ClockReach = when {
+            Settings.canDrawOverlays(context) -> Anytime
+            AppPermission.FullScreen.isGranted(context) -> WhenLocked
+            else -> None
+        }
+    }
+}
+
 /** When an opted-in auto-dismiss goes ahead. Pure, so it's unit tested. */
 object AutoDismissPlan {
     /**
      * Turns the user's [mode] into what happens now. Every automatic choice fails safe to asking:
-     * without "Display over other apps" ([canOpenClock]) Dawnly can't reach the Clock app from the
-     * background, and a warning needs time, an exact alarm, and notifications to be seen and stopped.
+     * Dawnly has to be able to reach the Clock app from the background ([reach]), a full-screen
+     * notification needs notifications, and a warning needs time, an exact alarm, and notifications
+     * to be seen and stopped.
      */
     fun decide(
         mode: DismissMode,
         now: Instant,
         alarmAt: Instant,
-        canOpenClock: Boolean,
+        reach: ClockReach,
         canTimeExactly: Boolean,
         canNotify: Boolean,
     ): AwakeAction {
-        if (mode == DismissMode.Ask || !canOpenClock) return AwakeAction.Ask
+        if (mode == DismissMode.Ask || reach == ClockReach.None) return AwakeAction.Ask
+        if (reach == ClockReach.WhenLocked && !canNotify) return AwakeAction.Ask
         if (mode == DismissMode.Instant) return AwakeAction.DismissNow
         val dismissAt = dismissAt(now, alarmAt)
         return if (dismissAt != null && canTimeExactly && canNotify) AwakeAction.Warn(dismissAt) else AwakeAction.Ask
@@ -78,10 +108,10 @@ object DismissRetry {
 }
 
 /**
- * Fires when the auto-dismiss warning runs out, or for the second try ([DismissRetry]). Checks the alarm is still the one the warning was
- * about, then opens [DismissAlarmActivity]. Starting an activity from the background is allowed
- * because the user granted "Display over other apps"; if they took it back since, they're asked
- * with the normal prompt instead.
+ * Fires when the auto-dismiss warning runs out, or for the second try ([DismissRetry]). Checks the
+ * alarm is still the one the warning was about, then opens [DismissAlarmActivity]: straight away
+ * with "Display over other apps", else through a full-screen notification ([ClockReach]). If both
+ * were taken back since, the user is asked with the normal prompt instead.
  */
 class AutoDismissReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -94,14 +124,9 @@ class AutoDismissReceiver : BroadcastReceiver() {
             AwakeNotifier.cancel(context)
             return
         }
-        if (!Settings.canDrawOverlays(context)) {
-            Log.w(TAG, "Display over other apps was turned off; asking instead")
-            AwakeNotifier.post(context, alarmAt)
-            return
-        }
         val retry = intent.getBooleanExtra(AwakeNotifier.EXTRA_RETRY, false)
         Log.i(TAG, "Auto-dismissing the alarm at $alarmAt${if (retry) " (second try)" else ""}")
-        context.startActivity(DismissAlarmActivity.intent(context, alarmAt, retry))
+        AwakeNotifier.openDismiss(context, alarmAt, retry)
     }
 
     private companion object {

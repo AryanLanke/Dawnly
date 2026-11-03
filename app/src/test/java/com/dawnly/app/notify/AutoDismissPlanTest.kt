@@ -38,10 +38,10 @@ class AutoDismissPlanTest {
     private fun decide(
         mode: DismissMode,
         alarmAt: Instant = this.alarmAt,
-        canOpenClock: Boolean = true,
+        reach: ClockReach = ClockReach.Anytime,
         canTimeExactly: Boolean = true,
         canNotify: Boolean = true,
-    ) = AutoDismissPlan.decide(mode, now, alarmAt, canOpenClock, canTimeExactly, canNotify)
+    ) = AutoDismissPlan.decide(mode, now, alarmAt, reach, canTimeExactly, canNotify)
 
     @Test
     fun `each choice does its own thing when everything is allowed`() {
@@ -51,9 +51,20 @@ class AutoDismissPlanTest {
     }
 
     @Test
-    fun `both automatic choices ask without Display over other apps`() {
-        assertEquals(AwakeAction.Ask, decide(DismissMode.Warn, canOpenClock = false))
-        assertEquals(AwakeAction.Ask, decide(DismissMode.Instant, canOpenClock = false))
+    fun `both automatic choices ask when the Clock app can't be reached`() {
+        assertEquals(AwakeAction.Ask, decide(DismissMode.Warn, reach = ClockReach.None))
+        assertEquals(AwakeAction.Ask, decide(DismissMode.Instant, reach = ClockReach.None))
+    }
+
+    @Test
+    fun `a full-screen notification is enough without Display over other apps`() {
+        assertEquals(AwakeAction.Warn(now.plusSeconds(60)), decide(DismissMode.Warn, reach = ClockReach.WhenLocked))
+        assertEquals(AwakeAction.DismissNow, decide(DismissMode.Instant, reach = ClockReach.WhenLocked))
+    }
+
+    @Test
+    fun `a full-screen notification needs notifications`() {
+        assertEquals(AwakeAction.Ask, decide(DismissMode.Instant, reach = ClockReach.WhenLocked, canNotify = false))
     }
 
     @Test

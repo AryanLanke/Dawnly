@@ -6,6 +6,8 @@
     <string name="awake_text">Looks like you\'re awake. Dismiss your %1$s alarm?</string>
     <!-- Opt-in auto-dismiss: the warning shown for a minute before dismissing. -->
     <string name="auto_dismiss_text">Dismissing your %1$s alarm in 1 minute.</string>
+    <!-- Auto-dismiss through a full-screen notification: opens by itself when locked, asks for a tap when in use. -->
+    <string name="auto_dismiss_tap_text">You\'re up, so your %1$s alarm can go. Tap Dismiss alarm.</string>
     <string name="action_dismiss_alarm">Dismiss alarm</string>
     <string name="action_not_yet">Not yet</string>
 

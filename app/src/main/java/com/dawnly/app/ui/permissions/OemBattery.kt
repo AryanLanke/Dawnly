@@ -15,6 +15,9 @@ import com.dawnly.app.R
 enum class OemBattery(@StringRes val label: Int, @StringRes val hint: Int) {
     Samsung(R.string.oem_samsung, R.string.oem_samsung_hint),
     Xiaomi(R.string.oem_xiaomi, R.string.oem_xiaomi_hint),
+
+    /** OPPO, OnePlus and realme share ColorOS (OnePlus calls it OxygenOS), and its app stopping. */
+    Oppo(R.string.oem_oppo, R.string.oem_oppo_hint),
     ;
 
     /** Settings screens to try, best first. */
@@ -30,6 +33,14 @@ enum class OemBattery(@StringRes val label: Int, @StringRes val hint: Int) {
                 component("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
                 batterySaverScreen(context),
             )
+            // Auto-launch; it moved between ColorOS versions. "Allow background activity" is under
+            // App info > Battery usage, the last fallback.
+            Oppo -> listOf(
+                component("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
+                component("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"),
+                component("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"),
+                component("com.oneplus.security", "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"),
+            )
         }
         return brandScreens.filterNotNull() + AppPermission.appDetails("package:${context.packageName}".toUri())
     }
@@ -39,7 +50,7 @@ enum class OemBattery(@StringRes val label: Int, @StringRes val hint: Int) {
      * dialog doesn't show. Xiaomi phones often swallow that dialog without an error.
      */
     fun batterySaverScreen(context: Context): Intent? = when (this) {
-        Samsung -> null
+        Samsung, Oppo -> null
         Xiaomi -> component("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
             .putExtra("package_name", context.packageName)
             .putExtra("package_label", context.getString(R.string.app_name))
@@ -51,6 +62,7 @@ enum class OemBattery(@StringRes val label: Int, @StringRes val hint: Int) {
             "samsung" -> Samsung
             // Redmi and POCO phones report "Xiaomi", but some ROMs report the sub-brand.
             "xiaomi", "redmi", "poco" -> Xiaomi
+            "oppo", "oneplus", "realme" -> Oppo
             else -> null
         }
 

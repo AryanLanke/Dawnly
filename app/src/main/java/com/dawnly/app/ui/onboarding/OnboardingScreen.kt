@@ -265,7 +265,7 @@ private val AppPermission.copy: StepCopy
             GlassIcons.Battery, R.string.perm_battery, R.string.perm_battery_why,
             R.string.onboarding_battery_title, R.string.onboarding_battery_lead, R.string.onboarding_allow_battery,
         )
-        AppPermission.Overlay -> error("Overlay is asked from Settings only")
+        AppPermission.Overlay, AppPermission.FullScreen -> error("$this is asked from Settings only")
     }
 
 @Composable

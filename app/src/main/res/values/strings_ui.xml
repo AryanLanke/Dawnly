@@ -101,6 +101,7 @@
     <string name="dismiss_mode_warn_detail">Dawnly dismisses the alarm after a 1-minute warning you can stop. Works with the phone locked.</string>
     <string name="dismiss_mode_instant_detail">Dawnly dismisses the alarm straight away, with no warning. Works with the phone locked; you\'ll hear your sound played backwards.</string>
     <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
+    <string name="settings_auto_dismiss_tap_note">With the phone locked, Dawnly does it all by itself. While you\'re using the phone, it asks for one tap. To skip that tap too, allow Display over other apps.</string>
     <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>
     <string name="settings_permissions_label">Permissions</string>
     <string name="settings_appearance_label">Appearance</string>
@@ -116,6 +117,7 @@
     <string name="perm_usage">Usage access</string>
     <string name="perm_battery">Background use</string>
     <string name="perm_overlay">Display over other apps</string>
+    <string name="perm_full_screen">Full-screen notifications</string>
     <string name="perm_notifications_why">So we can ask before dismissing your alarm. We never dismiss it on our own.</string>
     <string name="perm_exact_alarms_why">Lets Dawnly start watching the moment your window opens. It never sets alarms of its own.</string>
     <string name="perm_activity_why">Used only during the watch window to count steps. Nothing leaves your phone.</string>
@@ -123,6 +125,8 @@
     <string name="perm_battery_why">So your phone doesn\'t stop Dawnly halfway through the window.</string>
     <string name="oem_samsung">Samsung battery settings</string>
     <string name="oem_xiaomi">Xiaomi battery settings</string>
+    <string name="oem_oppo">OPPO and OnePlus battery settings</string>
+    <string name="oem_oppo_hint">On OPPO, OnePlus and realme phones, also turn on Auto-launch, and in App info › Battery usage, allow background activity.</string>
     <string name="oem_samsung_hint">On Samsung phones, also add Dawnly to Never sleeping apps in Battery settings.</string>
     <string name="oem_xiaomi_hint">On Xiaomi phones, also turn on Autostart and set Battery saver to No restrictions.</string>
 

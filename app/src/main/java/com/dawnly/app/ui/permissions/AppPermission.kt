@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.AppOpsManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -26,7 +27,11 @@ enum class AppPermission {
     /** The steps signal (Android 10+). */
     ActivityRecognition,
 
-    /** "Usage access", for the apps-opened signal: which app is in front, during the window only. */
+    /**
+     * "Usage access", for the apps-opened signal: which app is in front, during the window only.
+     * Asked only when the user turns that sign on, never in onboarding: Android locks it for apps
+     * installed from a file (see [canBeLocked]), and Dawnly works without it.
+     */
     UsageAccess,
 
     /** Unrestricted battery, so the phone doesn't stop the watch service. */
@@ -37,11 +42,22 @@ enum class AppPermission {
      * from the background (Android 10+). Asked when that switch is turned on, never in onboarding.
      */
     Overlay,
+
+    /**
+     * Full-screen notifications (Android 14+ lists it; granted at install unless taken back), the
+     * kind alarm apps use. Without [Overlay], auto-dismiss goes through one: Android opens it
+     * straight away with the phone locked, and shows it for a tap while the phone is in use.
+     * Android doesn't lock this one for apps installed from a file.
+     */
+    FullScreen,
     ;
 
-    /** Asked in onboarding and listed in Settings. [Overlay] only matters with auto-dismiss on. */
+    /**
+     * Asked in onboarding and always listed in Settings. The two Android can lock aren't:
+     * [UsageAccess] only matters with the apps-opened sign on, [Overlay] only with auto-dismiss on.
+     */
     val askedUpFront: Boolean
-        get() = this != Overlay
+        get() = this != Overlay && this != UsageAccess && this != FullScreen
 
     /** False on Android versions where this permission doesn't exist (it's granted already). */
     val isApplicable: Boolean
@@ -50,6 +66,8 @@ enum class AppPermission {
             ExactAlarms -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             ActivityRecognition -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
             UsageAccess, Battery, Overlay -> true
+            // Before Android 14 the manifest entry is enough.
+            FullScreen -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
         }
 
     /** The runtime permission behind a system dialog, or null when it's granted in system settings. */
@@ -58,7 +76,7 @@ enum class AppPermission {
         get() = when (this) {
             Notifications -> if (isApplicable) Manifest.permission.POST_NOTIFICATIONS else null
             ActivityRecognition -> if (isApplicable) Manifest.permission.ACTIVITY_RECOGNITION else null
-            ExactAlarms, UsageAccess, Battery, Overlay -> null
+            ExactAlarms, UsageAccess, Battery, Overlay, FullScreen -> null
         }
 
     fun isGranted(context: Context): Boolean {
@@ -73,6 +91,8 @@ enum class AppPermission {
                 .isIgnoringBatteryOptimizations(context.packageName)
             Overlay -> Settings.canDrawOverlays(context)
             UsageAccess -> WakeWatcher.hasUsageAccess(context)
+            FullScreen -> Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+                context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
             Notifications, ActivityRecognition -> true
         }
     }
@@ -107,6 +127,11 @@ enum class AppPermission {
             Overlay -> listOf(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri))
             // The list of apps; a package Uri isn't honoured on every phone.
             UsageAccess -> listOf(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            FullScreen -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                listOf(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, packageUri))
+            } else {
+                emptyList()
+            }
         }
         return screens + appDetails(packageUri)
     }

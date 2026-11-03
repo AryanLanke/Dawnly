@@ -25,6 +25,10 @@
     <!-- Opt-in auto-dismiss only: lets Dawnly open the Clock app from the background, which
          Android 10+ blocks otherwise. Asked when the user turns that switch on. Nothing is drawn. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Auto-dismiss without Display over other apps (Android locks that one for apps installed
+         from a file): a full-screen notification opens the dismiss straight away with the phone
+         locked, and asks for one tap while it's in use. Granted at install. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
          screen apps so opening them doesn't count as opening an app. Launcher apps: after a
