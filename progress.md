@@ -9,6 +9,16 @@
 
 ---
 
+## ▶ Friends' phones (2026-11-03)
+
+The user's friends tried the APK on a Motorola and a Redmi. All four problems are fixed in code and on the TESTING.md list (7.5–7.10); none tested yet.
+- **Motorola, Usage access blocked by "Restricted setting":** Android 13+ locks Usage access and Display over other apps for apps installed from a file. No app can lift it. `PermissionsController` now shows `RestrictedSettingsHelp`: App info, then ⋮, then Allow restricted settings. It appears after the second failed try, or the first if the `access_restricted_settings` app op says locked. The real fix is installing from Play: see `docs/play-internal-testing.md` (internal testing, $25 account). `tools/setup-phone.bat` installs over adb and grants everything, for testers with a PC.
+- **Redmi, Background use "Allow" did nothing:** Xiaomi swallowed the one-tap battery dialog. Each settings permission now has a list of screens (`AppPermission.settingsIntents`). The next is tried when Dawnly isn't covered within 1.5 s or the screen closes within 0.6 s: Xiaomi's battery saver, Android's list, then App info.
+- **Redmi, Warn first left the alarm on:** Xiaomi's Clock opened but didn't dismiss, and Dawnly said nothing. `QuietDismiss` now tries `DismissRequest.Next`, then `ByTime` (hour and minutes), then `ByTimeShown` (no SKIP_UI), 4 s each, and remembers what worked per Clock package (`DismissMemory`). If none works: `DismissFailedNotice` says "Your alarm is still on" (normal sound, not the reversed one) and opens Clock when tapped. If the alarm is more than an hour off, one more try comes 55 min before it (`DismissRetry`), since stock-based Clocks only dismiss once their "upcoming alarm" notice is up. Whether Xiaomi's Clock takes any form is still unknown: needs the friend's phone and a log.
+- **Settings text running through the funny line:** a plain `NavBarFade` gradient behind the line and the tabs (no blur, so still 120 Hz).
+
+---
+
 ## ▶ Auto-dismiss with the phone locked (the user's top priority)
 
 **Result, 2026-11-03: it works.** Step 1 Run A on the Nothing Phone, release 0.1.0: screen off (power button 00:49:24, display OFF at 00:51:25), phone in a pocket, walking with Spotify playing. Watching began 00:50:00; awake at 00:50:28 (Sensitivity High, no screen use); at 00:51:28 `DismissAlarmActivity` started from the background (`BAL_ALLOW_SAW_PERMISSION`) and Google Clock dismissed the 1:05 alarm **without asking to unlock**. Google Clock then opened its alarm list behind the lock screen and Dawnly came forward over it, so after unlocking an app was open instead of Spotify.

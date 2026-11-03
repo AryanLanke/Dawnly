@@ -152,6 +152,14 @@ On a Samsung and a Xiaomi phone, each with its own Clock app:
 - [ ] **7.3** Right away, unlocked and locked (4.11, 4.12): the phone's own Clock app dismisses the alarm.
 - [ ] **7.4** One sign test (3.1 or 3.4).
 
+Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file, the way the friends did, not with adb:
+- [ ] **7.5 Motorola, Usage access:** tap Allow, see Android's "Restricted setting" box, come back. **Expect:** the "Android locked Usage access" card with three steps. Open App info, then ⋮, then Allow restricted settings; tap Allow again and it turns on.
+- [ ] **7.6 Redmi, Background use:** tap Allow in onboarding and in More options. **Expect:** something always opens: Android's dialog, else Xiaomi's battery saver screen, else App info. Log tag `Permissions` says which.
+- [ ] **7.7 Redmi, Warn first:** the countdown runs out. **Expect:** the alarm goes off the list. If not, "Your alarm is still on" appears; tapping it opens Clock. Log tags `QuietDismiss` and `ClockApp` show which form Xiaomi's Clock took (`Next`, `ByTime`, `ByTimeShown`), or that none worked.
+- [ ] **7.8 Redmi, early dismiss:** a 2-hour window, awake early. If the first try fails, the notice says "will try again at …", and 55 minutes before the alarm it tries once more.
+- [ ] **7.9 Settings, long scroll:** open More options and scroll up and down slowly. **Expect:** cards fade out above the funny line and the tabs; no text overlaps.
+- [ ] **7.10 tools/setup-phone.bat** on a friend's PC: installs, and every permission shows Allowed in More options.
+
 ---
 
 ## Found while writing this plan (to fix)
