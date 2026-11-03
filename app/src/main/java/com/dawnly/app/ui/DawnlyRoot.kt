@@ -74,6 +74,7 @@ import com.dawnly.app.ui.onboarding.onboardingSteps
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.OemBattery
 import com.dawnly.app.ui.permissions.PermissionsController
+import com.dawnly.app.ui.permissions.RestrictedSettingsHelp
 import com.dawnly.app.ui.permissions.rememberPermissionsController
 import com.dawnly.app.ui.settings.SettingsScreen
 import com.dawnly.app.ui.settings.SettingsViewModel
@@ -111,6 +112,9 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
                 } else {
                     Onboarding(main, permissions, oemBattery)
                 }
+            }
+            permissions.restrictedHelp?.let { locked ->
+                RestrictedSettingsHelp(locked, onOpenAppInfo = permissions::openAppInfo, onClose = permissions::closeRestrictedHelp)
             }
         }
     }
@@ -165,7 +169,7 @@ private fun MainTabs(
         snapshotFlow { pager.settledPage }.drop(1).collect { haptic.tick() }
     }
     // Room for the funny line and the floating tab bar, so the last card can scroll clear of them.
-    val padding = screenPadding(bottomExtra = 128.dp)
+    val padding = screenPadding(bottomExtra = NAV_FADE_SOLID + NAV_FADE_EDGE)
 
     Box(Modifier.fillMaxSize()) {
         // Today and Settings side by side: the pages follow the finger, and the other one stays
@@ -189,6 +193,7 @@ private fun MainTabs(
             }
         }
         StatusBarFade(Modifier.align(Alignment.TopCenter))
+        NavBarFade(Modifier.align(Alignment.BottomCenter))
         Column(
             Modifier
                 .align(Alignment.BottomCenter)
@@ -256,6 +261,36 @@ private fun StatusBarFade(modifier: Modifier = Modifier) {
             .background(Brush.verticalGradient(listOf(wall.copy(alpha = 0.85f), wall.copy(alpha = 0f)))),
     )
 }
+
+/**
+ * Fades scrolled cards out behind the funny line and the tab bar, so their text never runs
+ * through the line's. A plain gradient: no blur, so scrolling stays smooth.
+ */
+@Composable
+private fun NavBarFade(modifier: Modifier = Modifier) {
+    val bottom = DawnlyTheme.colors.let { it.sky.lastOrNull() ?: it.wall }
+    Column(modifier.fillMaxWidth()) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(NAV_FADE_EDGE)
+                .background(Brush.verticalGradient(listOf(bottom.copy(alpha = 0f), bottom.copy(alpha = 0.92f)))),
+        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(bottom.copy(alpha = 0.92f))
+                .navigationBarsPadding()
+                .height(NAV_FADE_SOLID),
+        )
+    }
+}
+
+/** The solid part of [NavBarFade]: the tab bar, the funny line and the gaps around them. */
+private val NAV_FADE_SOLID = 108.dp
+
+/** How tall the soft edge above the solid part is. */
+private val NAV_FADE_EDGE = 40.dp
 
 /** Keeps clear of the status bar, cutouts and navigation bar, plus [bottomExtra]. */
 @Composable
