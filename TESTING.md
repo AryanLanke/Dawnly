@@ -190,6 +190,8 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 
 - [ ] **8.18 Reminder sound:** a reminder left on its default sound. **Expect:** it rings with Bubble, not the phone's own sound. Change it to another sound in the editor (Sound row): tapping a sound plays it; the next reminder rings with that one.
 
+- [ ] **8.19 Custom repeat:** in the editor, pick Every, then Custom. **Expect:** an hours and minutes wheel; set 0 hr 05 min, Done, and the row reads "Repeats every  5 min"; Today shows "Every 5 min, ...". Try 6 min and 2 hr too; reopening the reminder shows Custom still picked with its value. Picking 15/20/30 min or 1 hr goes back to that choice.
+
 ## Found while writing this plan (to fix)
 
 - The Android notification setting for "Up before your alarm" still says "…only dismisses it on its own if you turn on Dismiss automatically", the old switch's name. It should name **When you're up**.

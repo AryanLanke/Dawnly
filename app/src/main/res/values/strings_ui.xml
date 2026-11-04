@@ -85,6 +85,10 @@
     <string name="reminder_delete">Delete reminder</string>
     <string name="reminder_done">Done</string>
     <string name="reminder_sound">Sound</string>
+    <string name="reminder_custom">Custom</string>
+    <string name="reminder_repeats_every">Repeats every</string>
+    <string name="reminder_unit_hr">hr</string>
+    <string name="reminder_unit_min">min</string>
     <string name="time_am">am</string>
     <string name="time_pm">pm</string>
     <string name="learning_label">Learning from you</string>

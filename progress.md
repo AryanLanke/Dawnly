@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.4.0 (2026-11-04): custom reminder repeats
+
+The editor's repeat row offered only 15 min, 20 min, 30 min and 1 hr. It now has a fifth choice, **Custom**, which opens an hours-and-minutes wheel in the same glass circle as the time picker (0–23 hr, 0–59 min, never less than 1 minute), so people can pick every 5 minutes, 6 minutes, 2 hours, and so on. With Custom picked, a "Repeats every  2 hr" row under it opens the wheel again. Nothing changed in storage or scheduling: `ReminderSchedule.Every` already kept any number of minutes.
+
+---
+
 ## ▶ 1.3.0 (2026-11-04): reminder sounds
 
 Reminders rang with the phone's own sound (their channel had none). Now each reminder has a sound from Dawnly's list (Bubble by default, so it never sounds like the prompt's Flute), picked in the editor's Sound row; one channel per sound (`reminder_<sound>`), the old `reminders` channel is deleted. The user chose to call it 1.3.0.
