@@ -173,17 +173,29 @@ private fun blurPaint(color: Color, radius: Float) =
         if (radius > 0f) maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
     }
 
+/**
+ * The sun (morning) and the moon (night) are the same soft glow in the same place, so they match
+ * when the sky switches (the user's ask, 2026-11-04). Its centre, in mockup px, sits low enough that
+ * only its faint edge passes under the status bar's fade; at 60px a bright moon was cut off there.
+ */
+private const val ORB_X = 230f
+private const val ORB_Y = 80f
+private const val ORB_RADIUS = 141f
+
+/** A soft glow like the mockup's sun: bright in the middle, gone by 72% of [ORB_RADIUS]. */
+private fun orb(core: Color, middle: Color, edge: Color, width: Float) = Brush.radialGradient(
+    0f to core,
+    0.25f to middle,
+    0.72f to edge,
+    center = Offset(ORB_X * width / W, ORB_Y * width / W),
+    radius = ORB_RADIUS * width / W,
+)
+
 private fun CacheDrawScope.morningSky(colors: DawnlyColors): DrawScope.(Long) -> Unit {
     val u = size.width / W
     val sky = Brush.verticalGradient(0f to colors.sky[0], 0.55f to colors.sky[1], 1f to colors.sky[2])
-    val sunCenter = Offset(230 * u, 60 * u)
-    val sun = Brush.radialGradient(
-        0f to Color(0xFFFFF4D6),
-        0.25f to Color(0xFFFFECBE).copy(alpha = 0.75f),
-        0.7f to Color(0xFFFFECBE).copy(alpha = 0f),
-        center = sunCenter,
-        radius = 141 * u,
-    )
+    // A little brighter than the mockup's (0.75 in the middle), to sit level with the moon.
+    val sun = orb(Color(0xFFFFF4D6), Color(0xFFFFECBE).copy(alpha = 0.85f), Color(0x00FFECBE), size.width)
     val cloudPaint = blurPaint(Color.White, 4 * u)
     val shadowPaint = blurPaint(Color(0xFF78A0E6).copy(alpha = 0.25f), 6 * u)
     // Each cloud and its shadow, blurred once. The puffs reach about 19px above the pill.
@@ -199,7 +211,7 @@ private fun CacheDrawScope.morningSky(colors: DawnlyColors): DrawScope.(Long) ->
     }
     return { time ->
         drawRect(sky)
-        drawCircle(sun, radius = 141 * u, center = sunCenter)
+        drawCircle(sun, radius = ORB_RADIUS * u, center = Offset(ORB_X * u, ORB_Y * u))
         Clouds.forEachIndexed { i, cloud ->
             val phase = ((time + cloud.aheadMillis) % cloud.periodMillis) / cloud.periodMillis.toFloat()
             val x = (cloud.left + CLOUD_TRAVEL * phase) * u
@@ -223,7 +235,9 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
         Rect(Offset(0.2f * size.width, 0.95f * size.height), Size(0.6f * size.width, 0.35f * size.height)),
     )
     val trail = Brush.horizontalGradient(0f to Color.Transparent, 1f to colors.star)
-    val moon = Moon(u)
+    // Cool white moonlight, softer than the sun: on a black sky the same strength is blinding,
+    // and white text sits over it.
+    val moon = orb(Color(0xFFF4F7FF).copy(alpha = 0.8f), Color(0xFFE8EEFF).copy(alpha = 0.4f), Color(0x00E8EEFF), size.width)
     // Soft like the morning's clouds: stars as small blurred glows rather than sharp dots.
     val starDot = Sprite.draw(this, layoutDirection, Size(2 * u, 2 * u), margin = 3 * u) {
         drawIntoCanvas { it.nativeCanvas.drawCircle(u, u, 1.1f * u, blurPaint(Color.White, 1.4f * u)) }
@@ -248,7 +262,7 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
             drawSprite(starDot, Offset(star.x * size.width - u, star.y * size.height - u), alpha = alpha)
         }
         for (star in ShootingStars) drawShootingStar(star, time, u, trail, colors.star, colors.starHead, sparkle)
-        moon.draw(this, time)
+        drawCircle(moon, radius = ORB_RADIUS * u, center = Offset(ORB_X * u, ORB_Y * u))
     }
 }
 
@@ -306,59 +320,4 @@ private fun sparklePath(outer: Float, inner: Float) = Path().apply {
         if (i == 0) moveTo(x, y) else lineTo(x, y)
     }
     close()
-}
-
-/**
- * The moon is a 100-unit drawing shown this many mockup px per unit: 150px wide, about the size of
- * the morning's sun glow (the user's ask, 2026-11-04; it was 120px and looked small next to the sun).
- */
-private const val MOON_SCALE = 1.5f
-
-/** The moon's centre in mockup px from the top right, where the morning's sun sits. */
-private const val MOON_FROM_RIGHT = 48f
-private const val MOON_FROM_TOP = 60f
-
-/**
- * The moon in the top corner, drawn like the morning's sun (the user's ask, 2026-11-04): no seas,
- * craters or shade, just a bright white disc whose edge fades into a soft white glow, so it looks
- * out of focus. Two gradients, cheap to draw every frame; each frame only floats it up a little.
- */
-private class Moon(private val u: Float) {
-    private val glow = Brush.radialGradient(
-        0f to Glow.copy(alpha = 0.7f),
-        0.4f to Glow.copy(alpha = 0.5f),
-        0.65f to Glow.copy(alpha = 0.18f),
-        1f to Glow.copy(alpha = 0f),
-        center = Center,
-        radius = 120f,
-    )
-    private val disc = Brush.radialGradient(
-        0f to Color.White,
-        0.6f to Color.White,
-        0.82f to Color.White.copy(alpha = 0.75f),
-        1f to Color.White.copy(alpha = 0f),
-        center = Center,
-        radius = 48f,
-    )
-
-    fun draw(scope: DrawScope, time: Long) = with(scope) {
-        // moonfloat: 16 s each way, eased.
-        val q = (time % 32_000) / 16_000f
-        val t = EaseInOut.transform(if (q > 1f) 2f - q else q)
-        val s = MOON_SCALE * u
-        val half = 50 * s
-        withTransform({
-            translate(size.width - MOON_FROM_RIGHT * u - half, MOON_FROM_TOP * u - half - 4 * u * t)
-            scale(s, s, pivot = Offset.Zero)
-        }) {
-            drawCircle(glow, radius = 120f, center = Center)
-            drawCircle(disc, radius = 48f, center = Center)
-        }
-    }
-
-    private companion object {
-        val Center = Offset(50f, 50f)
-        /** Cool white moonlight. */
-        val Glow = Color(0xFFF2F6FF)
-    }
 }
