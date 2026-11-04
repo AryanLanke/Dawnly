@@ -176,4 +176,61 @@ class WakeTrackerTest {
         tracker.onUnlocked(now = 30 * minute)
         assertTrue(WakeScore.of(tracker.signals(now = 35 * minute), settings).isAwake)
     }
+
+    @Test
+    fun `screen use is one stretch of activity that keeps going`() {
+        val tracker = WakeTracker()
+        tracker.onUnlocked(now = 0)
+        val inUse = tracker.signals(now = 4 * minute)
+        assertEquals(Duration.ofMinutes(4), inUse.stretch)
+        assertEquals(Duration.ZERO, inUse.idle)
+        assertTrue(inUse.keptGoing)
+
+        tracker.onScreenOff(now = 5 * minute)
+        val after = tracker.signals(now = 7 * minute)
+        assertEquals(Duration.ofMinutes(5), after.stretch)
+        assertEquals(Duration.ofMinutes(2), after.idle)
+        assertFalse(after.keptGoing)
+    }
+
+    @Test
+    fun `a burst that stopped doesn't keep going, and activity after a quiet gap starts again`() {
+        val tracker = WakeTracker()
+        // Up for a minute, walking: 60 steps.
+        tracker.onStepCounter(1_000f, now = 0)
+        tracker.onStepCounter(1_030f, now = 30 * second)
+        tracker.onStepCounter(1_060f, now = minute)
+        assertEquals(Duration.ofSeconds(30), tracker.signals(now = minute).stretch)
+        assertFalse(tracker.signals(now = minute).keptGoing)
+
+        // Back to bed; rolling over 20 minutes later starts a new stretch.
+        tracker.onAcceleration(0f, 0f, gravity, 0, now = 2 * minute)
+        tracker.onAcceleration(0f, 0f, gravity + 5f, nanosPerSecond, now = 21 * minute)
+        val rolled = tracker.signals(now = 21 * minute)
+        assertEquals(Duration.ZERO, rolled.stretch)
+        assertFalse(rolled.keptGoing)
+    }
+
+    @Test
+    fun `activity with short pauses is one stretch`() {
+        val tracker = WakeTracker()
+        tracker.onStepCounter(1_000f, now = 0)
+        tracker.onStepCounter(1_010f, now = minute)
+        tracker.onStepCounter(1_020f, now = 3 * minute)
+        tracker.onStepCounter(1_030f, now = 4 * minute)
+        val signals = tracker.signals(now = 4 * minute + 30 * second)
+        // From the first steps counted (a minute in) to the latest.
+        assertEquals(Duration.ofMinutes(3), signals.stretch)
+        assertTrue(signals.keptGoing)
+    }
+
+    @Test
+    fun `unplugging is seen and is activity`() {
+        val tracker = WakeTracker()
+        tracker.onUnplugged(now = minute)
+        val signals = tracker.signals(now = minute)
+        assertTrue(signals.unplugged)
+        assertEquals(Duration.ZERO, signals.idle)
+        assertTrue(WakeTracker(resumeFrom = signals).signals(now = 0).unplugged)
+    }
 }

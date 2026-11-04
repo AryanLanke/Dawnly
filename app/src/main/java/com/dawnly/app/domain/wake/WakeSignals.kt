@@ -26,7 +26,36 @@ data class WakeSignals(
     val movementAvailable: Boolean = true,
     /** Time music (or other media) was playing. Only counts together with movement. */
     val musicTime: Duration = Duration.ZERO,
-)
+    /**
+     * The charger was unplugged during the window. Most people charge overnight, so it's a strong
+     * sign, but it only adds to the others: never enough on its own.
+     */
+    val unplugged: Boolean = false,
+    /**
+     * How long the current stretch of activity has lasted: from its first sign to its latest. A
+     * quiet gap of [QUIET_GAP] or more starts a new stretch. Not kept across a restart.
+     */
+    val stretch: Duration = Duration.ZERO,
+    /** Time since the latest sign of activity, or null before any. */
+    val idle: Duration? = null,
+) {
+    /**
+     * The activity is still going and has lasted a while, not one burst that stopped (a trip to
+     * the bathroom at 4 AM, then back to bed). Dawnly only counts someone as up while this holds.
+     */
+    val keptGoing: Boolean get() = idle != null && idle <= STILL_GOING && stretch >= MIN_STRETCH
+
+    companion object {
+        /** Activity this recent counts as still going. Sensor readings can arrive 10 s late. */
+        val STILL_GOING: Duration = Duration.ofMinutes(1)
+
+        /** How long activity has to keep going before it counts. */
+        val MIN_STRETCH: Duration = Duration.ofMinutes(3)
+
+        /** A quiet gap this long ends a stretch; the next activity starts a new one. */
+        val QUIET_GAP: Duration = Duration.ofMinutes(3)
+    }
+}
 
 /** Which signals count as "awake", and how much of each. Chosen by the user in settings. */
 data class WakeSignalSettings(
@@ -41,8 +70,10 @@ data class WakeSignalSettings(
     val useMovement: Boolean = true,
     val movementGoal: Duration = Duration.ofMinutes(2),
     val useMusic: Boolean = true,
+    /** No permission needed, so it's on by default. */
+    val useCharger: Boolean = true,
 ) {
-    /** At least one sign that can count on its own: music only adds to movement. */
+    /** At least one sign that can count on its own: music and the charger only add to the others. */
     val canNotice: Boolean get() = useScreenTime || usePhoneUse || useSteps || useMovement
 
     /**

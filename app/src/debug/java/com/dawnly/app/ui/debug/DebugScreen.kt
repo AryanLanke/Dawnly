@@ -163,6 +163,16 @@ private fun DebugContent(
                     },
                 )
                 ValueRow(stringResource(R.string.debug_music), durationText(signals.musicTime))
+                ValueRow(stringResource(R.string.debug_charger), yesNo(signals.unplugged))
+                ValueRow(
+                    stringResource(R.string.debug_stretch),
+                    stringResource(
+                        R.string.debug_stretch_value,
+                        durationText(signals.stretch),
+                        signals.idle?.let { durationText(it) } ?: "-",
+                    ),
+                )
+                ValueRow(stringResource(R.string.debug_kept_going), yesNo(signals.keptGoing))
                 ValueRow(
                     stringResource(R.string.debug_score),
                     stringResource(R.string.debug_percent, (score.value * 100).roundToInt()),
@@ -216,6 +226,9 @@ private fun DebugContent(
             )
             SwitchRow(stringResource(R.string.debug_music), settings.useMusic) {
                 onSettingsChange(settings.copy(useMusic = it))
+            }
+            SwitchRow(stringResource(R.string.debug_charger), settings.useCharger) {
+                onSettingsChange(settings.copy(useCharger = it))
             }
         }
 

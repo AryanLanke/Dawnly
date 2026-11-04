@@ -13,7 +13,11 @@ import com.dawnly.app.domain.learn.SignWeights
  * (3 minutes of screen use and 20 steps). A quick time check in the night adds only a sliver.
  *
  * Music never counts on its own, because people fall asleep to music: it adds at most as much as
- * movement has. Music for a while and half the movement goal makes 1.
+ * movement has. Music for a while and half the movement goal makes 1. Unplugging the charger adds
+ * [CHARGER_SHARE], also never enough alone.
+ *
+ * Reaching 1 isn't quite enough: the activity also has to be still going and have lasted a few
+ * minutes ([keptGoing], from [WakeSignals.keptGoing]), so one burst that stopped doesn't count.
  */
 data class WakeScore(
     val screenTime: Float?,
@@ -21,12 +25,14 @@ data class WakeScore(
     val steps: Float?,
     val movement: Float?,
     val music: Float?,
+    val charger: Float? = null,
+    val keptGoing: Boolean = true,
 ) {
     /** What music adds: capped by movement, and nothing without it. */
     val musicShare: Float? get() = music?.let { minOf(it, movement ?: 0f) }
 
     /** The sum of the counted signs' progress. 1 or more means awake. */
-    val total: Float get() = listOfNotNull(screenTime, phoneUse, steps, movement, musicShare).sum()
+    val total: Float get() = listOfNotNull(screenTime, phoneUse, steps, movement, musicShare, charger).sum()
 
     /** Each sign's part, for learning which signs show on the user's real mornings. */
     val shares: SignShares get() = SignShares(screenTime, phoneUse, steps, movement)
@@ -35,7 +41,7 @@ data class WakeScore(
     val value: Float get() = total.coerceIn(0f, 1f)
 
     /** Never true when no sign counts: then Dawnly has nothing to go on. */
-    val isAwake: Boolean get() = total >= 1f - EPSILON
+    val isAwake: Boolean get() = keptGoing && total >= 1f - EPSILON
 
     /**
      * Awake only thanks to music: without it the other signs fall short. People fall asleep to
@@ -47,6 +53,9 @@ data class WakeScore(
     companion object {
         /** So 0.6 + 0.4 counts as 1 despite float rounding. */
         private const val EPSILON = 1e-4f
+
+        /** What unplugging the charger adds: a strong sign, but not enough alone. */
+        const val CHARGER_SHARE = 0.4f
 
         /** How long music has to play to count fully (still capped by movement). */
         private const val MUSIC_GOAL_MILLIS = 60_000L
@@ -69,6 +78,8 @@ data class WakeScore(
                 weights.movement * progress(signals.movingTime.toMillis(), settings.movementGoal.toMillis())
             },
             music = settings.useMusic.then { progress(signals.musicTime.toMillis(), MUSIC_GOAL_MILLIS) },
+            charger = settings.useCharger.then { if (signals.unplugged) CHARGER_SHARE else 0f },
+            keptGoing = signals.keptGoing,
         )
 
         private inline fun Boolean.then(value: () -> Float): Float? = if (this) value() else null

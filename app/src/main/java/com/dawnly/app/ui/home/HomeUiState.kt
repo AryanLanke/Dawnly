@@ -1,10 +1,12 @@
 package com.dawnly.app.ui.home
 
 import com.dawnly.app.domain.learn.Learned
+import com.dawnly.app.domain.wake.Closeness
 import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.watch.WatchState
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,8 +21,8 @@ data class HomeUiState(
         val Loading = HomeUiState(HomeStatus.Loading)
 
         /**
-         * [learned] scales the goals and weighs the signs exactly as the watch does, so the "Are
-         * you up?" bar fills as the real decision would.
+         * [learned] and how close the alarm is scale the goals, and [learned] weighs the signs,
+         * exactly as the watch does, so the "Are you up?" bar fills as the real decision would.
          */
         fun from(
             state: WatchState,
@@ -32,7 +34,11 @@ data class HomeUiState(
         ): HomeUiState = withLearning(
             state,
             live,
-            mySettings.scaledBy(learned.goalFactor(LocalDateTime.ofInstant(now, ZoneId.systemDefault()))),
+            mySettings.scaledBy(
+                learned.goalFactor(LocalDateTime.ofInstant(now, ZoneId.systemDefault())) *
+                    // Only while watching: before the window, Home shows the goals as set.
+                    ((state as? WatchState.Watching)?.let { Closeness.goalFactor(Duration.between(now, it.alarmAt)) } ?: 1f),
+            ),
             now,
             learned,
             notYetAt,
@@ -85,6 +91,10 @@ data class HomeUiState(
                 val minutes = live?.movingTime?.toMinutes()?.toInt()
                 add(SignalRow(SignalKind.Movement, minutes, settings.movementGoal.toMinutes().toInt()))
             }
+            if (settings.useCharger) {
+                // Shown as "Not yet" or "Spotted".
+                add(SignalRow(SignalKind.Charger, live?.unplugged?.let { if (it) 1 else 0 }, goal = 1))
+            }
             if (settings.useMusic) {
                 // Shown as "Not yet" or "Seen": playing for a minute counts.
                 val played = live?.musicTime?.let { if (it.toMinutes() >= 1) 1 else 0 }
@@ -120,11 +130,11 @@ sealed interface HomeStatus {
     data class Skipped(val alarmAt: Instant) : HomeStatus
 }
 
-enum class SignalKind { ScreenTime, PhoneUse, Steps, Movement, Music }
+enum class SignalKind { ScreenTime, PhoneUse, Steps, Movement, Charger, Music }
 
 /**
  * One wake signal on Home. [current] is null before the window opens, when only the goal is shown.
- * Screen time and movement are in whole minutes; music is 0 or 1 out of 1.
+ * Screen time and movement are in whole minutes; the charger and music are 0 or 1 out of 1.
  */
 data class SignalRow(val kind: SignalKind, val current: Int?, val goal: Int) {
     val met: Boolean get() = current != null && current >= goal

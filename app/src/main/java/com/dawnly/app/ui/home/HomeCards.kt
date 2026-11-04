@@ -193,6 +193,7 @@ private fun signalTitle(kind: SignalKind) = stringResource(
         SignalKind.PhoneUse -> R.string.home_signal_apps
         SignalKind.Steps -> R.string.home_signal_steps
         SignalKind.Movement -> R.string.home_signal_movement
+        SignalKind.Charger -> R.string.home_signal_charger
         SignalKind.Music -> R.string.home_signal_music
     },
 )
@@ -210,8 +211,8 @@ private fun signalValue(row: SignalRow): String {
         SignalKind.Steps ->
             if (current == null) pluralStringResource(R.plurals.home_signal_steps_goal, row.goal, row.goal)
             else stringResource(R.string.home_signal_count_of, current, row.goal)
-        // Music only adds to movement, so before the window there's no goal to show.
-        SignalKind.Music -> if (current == null) "" else stringResource(R.string.home_signal_not_yet)
+        // Music and the charger only add to the others, so before the window there's no goal to show.
+        SignalKind.Charger, SignalKind.Music -> if (current == null) "" else stringResource(R.string.home_signal_not_yet)
     }
 }
 

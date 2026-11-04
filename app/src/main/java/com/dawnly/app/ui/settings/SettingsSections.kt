@@ -182,6 +182,7 @@ private fun WakeSignalSettings.uses(sign: Sign) = when (sign) {
     Sign.PhoneUse -> usePhoneUse
     Sign.Steps -> useSteps
     Sign.Movement -> useMovement
+    Sign.Charger -> useCharger
     Sign.Music -> useMusic
 }
 
@@ -194,6 +195,7 @@ private val Sign.title
         Sign.PhoneUse -> R.string.settings_apps
         Sign.Steps -> R.string.settings_steps
         Sign.Movement -> R.string.settings_movement
+        Sign.Charger -> R.string.settings_charger
         Sign.Music -> R.string.settings_music
     }
 
@@ -205,6 +207,7 @@ private fun Sign.subtitle(signals: WakeSignalSettings): String = when (this) {
     Sign.Steps -> pluralStringResource(R.plurals.settings_steps_goal, signals.stepsGoal, signals.stepsGoal)
     Sign.Movement -> signals.movementGoal.toMinutes().toInt()
         .let { pluralStringResource(R.plurals.settings_movement_goal, it, it) }
+    Sign.Charger -> stringResource(R.string.settings_charger_detail)
     Sign.Music -> stringResource(R.string.settings_music_detail)
 }
 

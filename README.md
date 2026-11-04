@@ -30,9 +30,10 @@ Kotlin · Jetpack Compose · fully offline · no account · runs only before you
    | Apps opened | Usage access (`UsageStatsManager`) | 3 apps |
    | Steps | Step counter sensor | 50 steps |
    | Movement | Accelerometer | 2 minutes moving |
+   | Charger unplugged | Power disconnected broadcast | Adds 40%, never enough alone |
    | Music playing | `AudioManager` | Only adds to movement |
 
-   Each sign's progress toward its goal adds up, and you count as awake at 100%: one sign at its goal, or a mix (3 of 5 minutes on screen plus 20 of 50 steps). A quick 3 AM time check adds only a sliver. Music never counts alone, because people fall asleep to music.
+   Each sign's progress toward its goal adds up, and you count as awake at 100%: one sign at its goal, or a mix (3 of 5 minutes on screen plus 20 of 50 steps). A quick 3 AM time check adds only a sliver. Music never counts alone, because people fall asleep to music. The activity also has to keep going for a few minutes, so a trip to the bathroom followed by going back to bed doesn't count. Activity close to the alarm counts for more: goals are 20% lower in the last 10 minutes and up to 40% higher two hours out.
 4. **Asks before it acts.** A notification asks whether to dismiss the alarm. **Dismiss alarm** sends `AlarmClock.ACTION_DISMISS_ALARM` to the Clock app. If the Clock app can't take that request, Dawnly opens it and says why. In Settings, **When you're up** offers three choices: **Ask me** (the default), **Warn first** (a one-minute countdown you can stop, then Dawnly dismisses), or **Right away** (Dawnly dismisses with no warning). Both automatic choices work with the phone locked in a pocket. When the alarm is dismissed, Dawnly plays your notification sound backwards and goes back to the app you were in, so no Clock screen is left open.
 
 ### Architecture

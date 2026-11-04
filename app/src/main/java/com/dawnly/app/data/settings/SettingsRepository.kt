@@ -75,6 +75,7 @@ class SettingsRepository(context: Context) {
                     ?.let { Duration.ofMinutes(it.toLong()) }
                     ?: level.movementGoal,
                 useMusic = prefs[USE_MUSIC] ?: default.useMusic,
+                useCharger = prefs[USE_CHARGER] ?: default.useCharger,
             )
         }
         .distinctUntilChanged()
@@ -90,6 +91,7 @@ class SettingsRepository(context: Context) {
             prefs[USE_MOVEMENT] = settings.useMovement
             prefs[MOVEMENT_GOAL_MINUTES] = settings.movementGoal.toMinutes().toInt()
             prefs[USE_MUSIC] = settings.useMusic
+            prefs[USE_CHARGER] = settings.useCharger
             // "Phone unlocked" was dropped as a sign: the phone can be unlocked while asleep.
             prefs.remove(OLD_USE_UNLOCK)
         }
@@ -142,6 +144,7 @@ class SettingsRepository(context: Context) {
         val USE_MOVEMENT = booleanPreferencesKey("use_movement")
         val MOVEMENT_GOAL_MINUTES = intPreferencesKey("movement_goal_minutes")
         val USE_MUSIC = booleanPreferencesKey("use_music")
+        val USE_CHARGER = booleanPreferencesKey("use_charger")
         val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
         val APPEARANCE = stringPreferencesKey("appearance")

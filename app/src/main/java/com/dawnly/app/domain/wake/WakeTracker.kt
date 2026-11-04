@@ -14,10 +14,13 @@ import kotlin.math.sqrt
  * Screen time only counts while the phone is unlocked: lighting up the lock screen to check the
  * time doesn't count.
  *
+ * It also follows stretches of activity (screen in use, steps, movement, unplugging), so the score
+ * can tell activity that keeps going from one burst that stopped ([WakeSignals.keptGoing]).
+ *
  * Not thread-safe; call it from one thread.
  *
  * @param resumeFrom readings saved before the process was killed, to carry on from. Everything
- *   adds on top of them; an open session or step baseline isn't carried over.
+ *   adds on top of them; an open session, step baseline or stretch of activity isn't carried over.
  * @param ignoredApps apps whose opening doesn't count: launchers, the system UI, and Dawnly.
  */
 class WakeTracker(
@@ -41,6 +44,11 @@ class WakeTracker(
     private var musicMillis = resumeFrom.musicTime.toMillis()
     private var lastMusicCheck: Long? = null
 
+    private var unplugged = resumeFrom.unplugged
+
+    private var stretchStart: Long? = null
+    private var lastActive: Long? = null
+
     /** Whether apps opened can be counted (Usage access). Set by whoever reads usage events. */
     var appsAvailable: Boolean = resumeFrom.appsAvailable
 
@@ -52,13 +60,23 @@ class WakeTracker(
 
     /** The phone is in use: unlocked, or the screen came on with no lock screen in the way. */
     fun onUnlocked(now: Long) {
-        if (inUseSince == null) inUseSince = now
+        if (inUseSince != null) return
+        markActive(now)
+        inUseSince = now
     }
 
     fun onScreenOff(now: Long) {
         val since = inUseSince ?: return
         closedScreenMillis += (now - since).coerceAtLeast(0)
         inUseSince = null
+        // In use the whole time, so the stretch ran on until now without a gap.
+        lastActive = maxOf(lastActive ?: now, now)
+    }
+
+    /** The charger was unplugged. */
+    fun onUnplugged(now: Long) {
+        unplugged = true
+        markActive(now)
     }
 
     /**
@@ -71,13 +89,18 @@ class WakeTracker(
         if (packageName !in ignoredApps) appsOpened++
     }
 
-    /** A reading from the step counter sensor: total steps since the phone booted. */
-    fun onStepCounter(totalSinceBoot: Float) {
+    /**
+     * A reading from the step counter sensor: total steps since the phone booted. [now] is when it
+     * arrived, for the stretch of activity; null leaves the stretch alone.
+     */
+    fun onStepCounter(totalSinceBoot: Float, now: Long? = null) {
         val baseline = stepBaseline
         // The counter resets on reboot; start a new baseline rather than go negative.
         if (baseline == null || totalSinceBoot < baseline) {
             foldSteps()
             stepBaseline = totalSinceBoot
+        } else if (now != null && totalSinceBoot > (stepTotal ?: baseline)) {
+            markActive(now)
         }
         stepTotal = totalSinceBoot
     }
@@ -97,8 +120,11 @@ class WakeTracker(
      * tracked as a slow average of the acceleration's size; a sample that strays from it by more
      * than [MOVING_THRESHOLD] is movement. A phone lying on a table or a pillow stays under it;
      * being picked up or carried goes over. Each second with movement counts once.
+     *
+     * [now] is when the sample arrived, for the stretch of activity (the sensor's own clock isn't
+     * the same on every phone); null leaves the stretch alone.
      */
-    fun onAcceleration(x: Float, y: Float, z: Float, timestampNanos: Long) {
+    fun onAcceleration(x: Float, y: Float, z: Float, timestampNanos: Long, now: Long? = null) {
         val size = sqrt(x * x + y * y + z * z)
         val g = gravity ?: size
         gravity = g + GRAVITY_SMOOTHING * (size - g)
@@ -107,6 +133,7 @@ class WakeTracker(
         if (second != lastMovingSecond) {
             lastMovingSecond = second
             movingSeconds++
+            if (now != null) markActive(now)
         }
     }
 
@@ -128,7 +155,26 @@ class WakeTracker(
             movingTime = Duration.ofSeconds(movingSeconds),
             movementAvailable = movementAvailable,
             musicTime = Duration.ofMillis(musicMillis),
+            unplugged = unplugged,
+            stretch = Duration.ofMillis(stretchMillis(now)),
+            idle = latestActive(now)?.let { Duration.ofMillis((now - it).coerceAtLeast(0)) },
         )
+    }
+
+    /** While the phone is in use, activity runs right up to [now]. */
+    private fun latestActive(now: Long): Long? = if (inUseSince != null) now else lastActive
+
+    private fun stretchMillis(now: Long): Long {
+        val start = stretchStart ?: return 0
+        val latest = latestActive(now) ?: return 0
+        return (latest - start).coerceAtLeast(0)
+    }
+
+    /** Activity at [at]: carries the stretch on, or starts a new one after a quiet gap. */
+    private fun markActive(at: Long) {
+        val latest = latestActive(at)
+        if (latest == null || at - latest >= WakeSignals.QUIET_GAP.toMillis()) stretchStart = at
+        if (latest == null || at > latest) lastActive = at
     }
 
     private fun currentSteps(): Int {

@@ -22,12 +22,14 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.dawnly.app.dawnly
+import com.dawnly.app.domain.wake.Closeness
 import com.dawnly.app.data.wake.WakeProgress
 import com.dawnly.app.data.wake.WakeProgressStore
 import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.wake.WakeTracker
 import com.dawnly.app.notify.AwakeNotifier
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
@@ -55,12 +57,13 @@ import kotlinx.coroutines.withContext
 private sealed interface WakeEvent {
     data class Unlocked(val at: Long) : WakeEvent
     data class ScreenOff(val at: Long) : WakeEvent
-    data class Steps(val totalSinceBoot: Float) : WakeEvent
+    data class Unplugged(val at: Long) : WakeEvent
+    data class Steps(val totalSinceBoot: Float, val at: Long) : WakeEvent
     data object StepsStopped : WakeEvent
     data class StepsAvailable(val available: Boolean) : WakeEvent
     data class AppResumed(val packageName: String) : WakeEvent
     data class AppsAvailable(val available: Boolean) : WakeEvent
-    class Acceleration(val x: Float, val y: Float, val z: Float, val timestampNanos: Long) : WakeEvent
+    class Acceleration(val x: Float, val y: Float, val z: Float, val timestampNanos: Long, val at: Long) : WakeEvent
     /** Nothing happened, but time passed (screen time grows) or the settings changed. */
     data object Tick : WakeEvent
 }
@@ -68,7 +71,7 @@ private sealed interface WakeEvent {
 /**
  * Watches for signs the user is awake before the alarm at [alarmAt]: screen use from system
  * broadcasts, apps opened from Usage access, steps from the step counter, movement from the
- * accelerometer, and whether music is playing. Feeds them into a [WakeTracker], publishes the
+ * accelerometer, the charger being unplugged, and whether music is playing. Feeds them into a [WakeTracker], publishes the
  * readings to [WatchSession], and calls [AwakeNotifier] once the [WakeScore] says the user is up.
  * That happens at most once per window, even if the process is killed and restarted, because the
  * progress is kept in [WakeProgressStore].
@@ -134,14 +137,15 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 when (event) {
                     is WakeEvent.Unlocked -> tracker.onUnlocked(event.at)
                     is WakeEvent.ScreenOff -> tracker.onScreenOff(event.at)
-                    is WakeEvent.Steps -> tracker.onStepCounter(event.totalSinceBoot)
+                    is WakeEvent.Unplugged -> tracker.onUnplugged(event.at)
+                    is WakeEvent.Steps -> tracker.onStepCounter(event.totalSinceBoot, event.at)
                     WakeEvent.StepsStopped -> tracker.onStepCounterStopped()
                     is WakeEvent.StepsAvailable -> tracker.stepsAvailable = event.available
                     is WakeEvent.AppResumed -> tracker.onAppResumed(event.packageName)
                     is WakeEvent.AppsAvailable -> tracker.appsAvailable = event.available
                     is WakeEvent.Acceleration -> {
                         // Several a second: just counted here, published on the next tick.
-                        tracker.onAcceleration(event.x, event.y, event.z, event.timestampNanos)
+                        tracker.onAcceleration(event.x, event.y, event.z, event.timestampNanos, event.at)
                         return@collect
                     }
                     WakeEvent.Tick -> tracker.onMusicCheck(audio.isMusicActive, SystemClock.elapsedRealtime())
@@ -150,7 +154,9 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 val signals = tracker.signals(now)
                 WatchSession.publish(signals)
 
-                val goals = settings.value.scaledBy(learned.goalFactor(LocalDateTime.now()))
+                // What's learned, and how close the alarm is: activity near it counts for more.
+                val untilAlarm = Duration.between(Instant.now(), alarmAt)
+                val goals = settings.value.scaledBy(learned.goalFactor(LocalDateTime.now()) * Closeness.goalFactor(untilAlarm))
                 val score = WakeScore.of(signals, goals, learned.weights)
                 val awakeNow = !notified && score.isAwake
                 if (awakeNow) notified = true
@@ -191,6 +197,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                     // lock delay. Android doesn't send USER_PRESENT then.
                     Intent.ACTION_SCREEN_ON -> if (!keyguard.isKeyguardLocked) trySend(WakeEvent.Unlocked(now))
                     Intent.ACTION_SCREEN_OFF -> trySend(WakeEvent.ScreenOff(now))
+                    Intent.ACTION_POWER_DISCONNECTED -> trySend(WakeEvent.Unplugged(now))
                 }
             }
         }
@@ -198,6 +205,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
             addAction(Intent.ACTION_USER_PRESENT)
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
         // USER_PRESENT and the screen broadcasts can't be declared in the manifest. They're system
         // broadcasts, so they still arrive with RECEIVER_NOT_EXPORTED.
@@ -210,7 +218,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
     private fun stepCounter(sensor: Sensor): Flow<WakeEvent> = callbackFlow {
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
-                trySend(WakeEvent.Steps(event.values[0]))
+                trySend(WakeEvent.Steps(event.values[0], SystemClock.elapsedRealtime()))
             }
 
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit
@@ -230,7 +238,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 val (x, y, z) = event.values
-                trySend(WakeEvent.Acceleration(x, y, z, event.timestamp))
+                trySend(WakeEvent.Acceleration(x, y, z, event.timestamp, SystemClock.elapsedRealtime()))
             }
 
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit

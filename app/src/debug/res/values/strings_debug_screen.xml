@@ -18,6 +18,10 @@
     <string name="debug_steps">Steps</string>
     <string name="debug_movement">Movement</string>
     <string name="debug_music">Music playing</string>
+    <string name="debug_charger">Charger unplugged</string>
+    <string name="debug_stretch">Activity stretch</string>
+    <string name="debug_stretch_value">%1$s, quiet for %2$s</string>
+    <string name="debug_kept_going">Kept going</string>
     <string name="debug_of_goal">%1$s of %2$s</string>
     <string name="debug_not_counted">%1$d, not counted</string>
     <string name="debug_apps_unavailable">No usage access</string>

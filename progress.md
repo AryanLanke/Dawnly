@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.5.0 (2026-11-04): smarter detection, merged with the 1.4.x work
+
+The second session's work, built alongside 1.4.1 to 1.4.3 and now committed with them: **Charger unplugged** as a sign, **activity that keeps going** (a burst that stops doesn't count), and **closeness to the alarm** weighing the goals. Details in "Smarter detection, without more setup" below; device tests are TESTING.md 8.21 to 8.23. The user asked for this to be 1.5.0.
+
+---
+
 ## ▶ 1.4.3 (2026-11-04): any custom watching window up to 3 hr 59 min; clearer restricted-setting help
 
 - **Watching window:** the user wants any time they pick kept as is (3 hr 02 min, 2 hr 03 min, 1 hr 05 min); only under 5 minutes becomes 5. They don't want more than about 3 hours ("that's too much watching"). So the hours wheel still goes 0 to 3, but any minutes are kept: `WatchWindow.MAX` is now 3 hr 59 min (it was 3 hr, which cut 3 hr 02 min down to 3 hr). The 1.4.1 slider leftovers (`SLIDER_STOPS`, `FINE_STEP`) are gone.
@@ -69,13 +75,14 @@ The user's friends tried the APK on a Motorola and a Redmi. All four problems ar
 
 ---
 
-## ▶ Smarter detection, without more setup (planned 2026-11-03, not built)
+## ▶ Smarter detection, without more setup (planned 2026-11-03, built 2026-11-04, in 1.5.0)
 
 The friends' verdict: setup costs too much for the payoff. The user wants accuracy kept. The plan is to make the cheap setup (screen use, steps, no Usage access) more accurate on its own. Each item needs no new permission.
-- [ ] **Charger unplugged** as a sign (`ACTION_POWER_DISCONNECTED`, no permission). Most people charge overnight; unplugging in the window is a strong "up" sign. Probably part of a goal, not enough alone.
-- [ ] **Learn from the user's answers.** "Not yet" (`NotYetReceiver`) means the goals were too low; a quick "Dismiss alarm" means they could be lower. Adjust that person's goals a little each time, kept on the phone.
-- [ ] **Activity that continues, not one burst.** Ask for activity in two separate stretches (or still going after a short gap) before counting someone as awake, so a 3 AM scroll that stops doesn't count.
-- [ ] **Weigh by how close the alarm is.** Activity 10 minutes before the alarm counts more than the same 2 hours before.
+- [x] **Charger unplugged** as a sign (`ACTION_POWER_DISCONNECTED`, no permission), on by default with its own switch in Settings and a row on Today. Adds `WakeScore.CHARGER_SHARE` (0.4), never enough alone; kept across a restart (`WakeProgressStore`).
+- [x] **Learn from the user's answers** (0.3.0, `Learning.kt`).
+- [x] **Activity that continues, not one burst.** `WakeTracker` follows stretches of activity (screen in use, steps, movement, unplugging; a 3-minute quiet gap starts a new stretch). Awake now also needs `WakeSignals.keptGoing`: activity in the last minute, and the stretch at least 3 minutes long. Screen use at Medium (5 min) is never slowed by it; steps or movement alone now take at least 3 minutes (the locked walking test reached awake in 26 s before this).
+- [x] **Weigh by how close the alarm is.** `Closeness.goalFactor` multiplies the goals: 0.8 within 10 min of the alarm, 1 at 30 min, 1.4 at 2 h or more. Applied with what's learned, in `WakeWatcher` and on Today alike.
+- The thresholds (0.4, 3 min, 1 min, 0.8 to 1.4) are first guesses, to tune in the testing phase from the debug screen's new rows (Charger unplugged, Activity stretch, Kept going). TESTING.md 8.21 to 8.23.
 - Two different "it didn't dismiss" failures, kept apart in the app's wording: not noticing you're up (detection, these items) vs. the Clock app ignoring the request (`DismissFailedNotice`, already built).
 - Already done (052d704): Usage access is no longer in onboarding.
 

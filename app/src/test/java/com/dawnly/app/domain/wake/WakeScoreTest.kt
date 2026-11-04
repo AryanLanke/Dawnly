@@ -18,7 +18,20 @@ class WakeScoreTest {
         steps: Int = 0,
         moving: Duration = Duration.ZERO,
         music: Duration = Duration.ZERO,
-    ) = WakeSignals(screenOnTime = screen, appsOpened = apps, steps = steps, movingTime = moving, musicTime = music)
+        unplugged: Boolean = false,
+        // Still going and lasted long enough, unless a test says otherwise.
+        stretch: Duration = WakeSignals.MIN_STRETCH,
+        idle: Duration? = Duration.ZERO,
+    ) = WakeSignals(
+        screenOnTime = screen,
+        appsOpened = apps,
+        steps = steps,
+        movingTime = moving,
+        musicTime = music,
+        unplugged = unplugged,
+        stretch = stretch,
+        idle = idle,
+    )
 
     private fun minutes(n: Long) = Duration.ofMinutes(n)
     private fun seconds(n: Long) = Duration.ofSeconds(n)
@@ -127,5 +140,44 @@ class WakeScoreTest {
         assertTrue(screen.isAwake)
         assertFalse(screen.musicTippedIt)
         assertFalse(WakeScore.of(signals(moving = minutes(1), music = minutes(5)), defaults.copy(useMusic = false)).musicTippedIt)
+    }
+
+    @Test
+    fun `unplugging adds to the other signs but never counts alone`() {
+        val alone = WakeScore.of(signals(unplugged = true), defaults)
+        assertEquals(WakeScore.CHARGER_SHARE, alone.charger)
+        assertFalse(alone.isAwake)
+
+        // Unplugged plus 3 of 5 minutes on screen.
+        assertTrue(WakeScore.of(signals(unplugged = true, screen = minutes(3)), screenOnly).isAwake)
+        assertFalse(WakeScore.of(signals(screen = minutes(3)), screenOnly).isAwake)
+    }
+
+    @Test
+    fun `the charger switched off doesn't count`() {
+        val score = WakeScore.of(signals(unplugged = true, screen = minutes(3)), screenOnly.copy(useCharger = false))
+        assertNull(score.charger)
+        assertFalse(score.isAwake)
+    }
+
+    @Test
+    fun `one burst that stopped is not awake`() {
+        // 50 steps reached, but nothing for 10 minutes since: back to bed.
+        val stopped = WakeScore.of(signals(steps = 50, stretch = minutes(1), idle = minutes(10)), allOn)
+        assertEquals(1f, stopped.value)
+        assertFalse(stopped.isAwake)
+    }
+
+    @Test
+    fun `activity has to last a few minutes before it counts`() {
+        val short = WakeScore.of(signals(steps = 50, stretch = minutes(1), idle = Duration.ZERO), allOn)
+        assertFalse(short.isAwake)
+        val lasted = WakeScore.of(signals(steps = 50, stretch = minutes(3), idle = seconds(20)), allOn)
+        assertTrue(lasted.isAwake)
+    }
+
+    @Test
+    fun `with no activity seen it is never awake`() {
+        assertFalse(WakeScore.of(signals(screen = minutes(9), idle = null), screenOnly).isAwake)
     }
 }

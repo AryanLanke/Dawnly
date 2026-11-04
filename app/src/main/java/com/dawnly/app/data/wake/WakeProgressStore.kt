@@ -42,6 +42,7 @@ class WakeProgressStore(context: Context) {
                 steps = prefs[STEPS] ?: 0,
                 movingTime = Duration.ofSeconds(prefs[MOVING_SECONDS] ?: 0L),
                 musicTime = Duration.ofMillis(prefs[MUSIC_MILLIS] ?: 0L),
+                unplugged = prefs[UNPLUGGED] ?: false,
             ),
             notified = prefs[NOTIFIED] ?: false,
         )
@@ -55,6 +56,7 @@ class WakeProgressStore(context: Context) {
             prefs[STEPS] = progress.signals.steps
             prefs[MOVING_SECONDS] = progress.signals.movingTime.seconds
             prefs[MUSIC_MILLIS] = progress.signals.musicTime.toMillis()
+            prefs[UNPLUGGED] = progress.signals.unplugged
             prefs[NOTIFIED] = progress.notified
         }
     }
@@ -66,6 +68,7 @@ class WakeProgressStore(context: Context) {
         val STEPS = intPreferencesKey("steps")
         val MOVING_SECONDS = longPreferencesKey("moving_seconds")
         val MUSIC_MILLIS = longPreferencesKey("music_millis")
+        val UNPLUGGED = booleanPreferencesKey("unplugged")
         val NOTIFIED = booleanPreferencesKey("notified")
     }
 }
