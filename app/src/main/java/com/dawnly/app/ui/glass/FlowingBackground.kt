@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
@@ -312,19 +313,29 @@ private fun sparklePath(outer: Float, inner: Float) = Path().apply {
 }
 
 /**
- * The soft moon in the top corner, from the mockup's SVG (a 100-unit drawing shown 120px wide): a
- * cream disc, three blurred seas, craters with a lit rim, and shade on its far side, with a warm
- * glow around it, all at half strength. Drawn once into a soft, low-resolution sprite; each frame
- * only floats it up a little and turns it 2° and back.
+ * The moon is a 100-unit drawing shown this many mockup px per unit: 150px wide, about the size of
+ * the morning's sun glow (the user's ask, 2026-11-04; it was 120px and looked small next to the sun).
+ */
+private const val MOON_SCALE = 1.5f
+
+/** The moon's centre in mockup px from the top right, where the morning's sun sits. */
+private const val MOON_FROM_RIGHT = 48f
+private const val MOON_FROM_TOP = 60f
+
+/**
+ * The soft moon in the top corner, from the mockup's SVG: a cream disc, three blurred seas, craters
+ * with a lit rim, and shade on its far side, with a warm glow around it. Bright, and out of focus
+ * like the morning's sun: its edge fades into the glow rather than ending sharp. Drawn once into a
+ * soft, low-resolution sprite; each frame only floats it up a little and turns it 2° and back.
  */
 private class Moon(scope: CacheDrawScope, private val u: Float) {
     private val glow = Brush.radialGradient(
-        0f to Glow.copy(alpha = 0.6f),
-        0.42f to Glow.copy(alpha = 0.55f),
-        0.6f to Glow.copy(alpha = 0.2f),
+        0f to Glow.copy(alpha = 0.75f),
+        0.4f to Glow.copy(alpha = 0.6f),
+        0.65f to Glow.copy(alpha = 0.2f),
         1f to Glow.copy(alpha = 0f),
         center = Center,
-        radius = 115f,
+        radius = 120f,
     )
     private val disc: Sprite
 
@@ -334,28 +345,35 @@ private class Moon(scope: CacheDrawScope, private val u: Float) {
             center = Offset(40.4f, 38.5f), radius = 62.4f,
         )
         val shade = Brush.radialGradient(
-            0.55f to Color(0x000A0B12), 1f to Color(0x8C0A0B12),
+            0.55f to Color(0x000A0B12), 1f to Color(0x590A0B12),
             center = Offset(19.3f, 40.4f), radius = 86.4f,
         )
         val seas = android.graphics.Path().apply {
             for (d in Seas) addPath(PathParser().parsePathString(d).toPath().asAndroidPath())
         }
-        val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 2.2f)
-        val s = 1.2f * u
-        // Where the night isn't blurred as a whole (before Android 12), drawn at a quarter of its
-        // size and scaled up, so it still looks gently out of focus.
+        val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 3f)
+        // Keeps the middle and fades the outer third away, so the disc melts into its glow.
+        val feather = Brush.radialGradient(
+            0f to Color.White, 0.68f to Color.White, 0.85f to Color.White.copy(alpha = 0.55f), 1f to Color.Transparent,
+            center = Center,
+            radius = 48f,
+        )
+        val s = MOON_SCALE * u
+        // Drawn at low resolution and scaled up, so its seas and craters look gently out of focus;
+        // lower still where the night isn't blurred as a whole (before Android 12).
         disc = Sprite.draw(
             scope,
             scope.layoutDirection,
             Size(100 * s, 100 * s),
             margin = 4 * u,
-            scale = if (SoftNight) 1f else 0.25f,
+            scale = if (SoftNight) 0.4f else 0.25f,
         ) {
             scale(s, s, pivot = Offset.Zero) {
                 drawCircle(body, radius = 48f, center = Center)
                 drawIntoCanvas { it.nativeCanvas.drawPath(seas, seaPaint) }
                 for (c in Craters) drawCrater(c)
                 drawCircle(shade, radius = 48f, center = Center)
+                drawRect(feather, size = Size(100f, 100f), blendMode = BlendMode.DstIn)
             }
         }
     }
@@ -364,14 +382,16 @@ private class Moon(scope: CacheDrawScope, private val u: Float) {
         // moonfloat: 16 s each way, eased.
         val q = (time % 32_000) / 16_000f
         val t = EaseInOut.transform(if (q > 1f) 2f - q else q)
+        val s = MOON_SCALE * u
+        val half = 50 * s
         withTransform({
-            translate(size.width - 98 * u, -6 * u - 4 * u * t)
-            rotate(2 * t, pivot = Offset(60 * u, 60 * u))
+            translate(size.width - MOON_FROM_RIGHT * u - half, MOON_FROM_TOP * u - half - 4 * u * t)
+            rotate(2 * t, pivot = Offset(half, half))
         }) {
-            scale(1.2f * u, 1.2f * u, pivot = Offset.Zero) {
-                drawCircle(glow, radius = 115f, center = Center, alpha = 0.5f)
+            scale(s, s, pivot = Offset.Zero) {
+                drawCircle(glow, radius = 120f, center = Center, alpha = 0.6f)
             }
-            drawSprite(disc, alpha = 0.5f)
+            drawSprite(disc, alpha = 0.9f)
         }
     }
 

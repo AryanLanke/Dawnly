@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.5.1 (2026-11-04): a brighter, bigger, softer moon
+
+The user likes light mode's sun (big and faded) and found dark mode's moon small. The moon is now 150px wide (was 120px, `MOON_SCALE`), sits where the sun does (48px in from the right, 60px down), is drawn at 90% instead of 50% with a stronger and wider glow, has lighter shade on its far side, and its outer third fades into the glow (a `DstIn` feather in its sprite), so it looks out of focus like the sun instead of ending in a sharp edge. All in ui/glass/FlowingBackground.kt.
+
+---
+
 ## ▶ 1.5.0 (2026-11-04): smarter detection, merged with the 1.4.x work
 
 The second session's work, built alongside 1.4.1 to 1.4.3 and now committed with them: **Charger unplugged** as a sign, **activity that keeps going** (a burst that stops doesn't count), and **closeness to the alarm** weighing the goals. Details in "Smarter detection, without more setup" below; device tests are TESTING.md 8.21 to 8.23. The user asked for this to be 1.5.0.
