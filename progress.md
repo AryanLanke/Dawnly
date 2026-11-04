@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.5.4 (2026-11-04): no "good morning" at night
+
+The "Alarm's off" notice said "Have a good morning!" even for a 7:45 pm alarm. It now says "Your 7:45 pm alarm is off. You're all set.", with no time of day in it (`dismiss_done`).
+
+---
+
 ## ▶ 1.5.3 (2026-11-04): the sun and moon match
 
 On the phone, 1.5.2's moon was cut off by the status bar's fade (solid wall colour, black at night; in light mode it's the sky's top colour, so it hides over the sun) and was far louder than the sun, with white text hard to read over it. Now the sun and moon are the same soft glow (`orb`, a radial gradient gone by 72% of 141px) in the same place, a little lower (230, 80 instead of 60), so only its faint edge passes under the fade. The sun is a little brighter (0.85 in the middle, was 0.75); the moon is cool white and softer than the sun (0.8 core, 0.4 middle). The `Moon` class is gone.

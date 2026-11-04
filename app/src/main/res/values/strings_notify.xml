@@ -17,7 +17,7 @@
     <string name="dismiss_alarm_changed">That alarm was already dismissed or changed, so nothing was dismissed.</string>
     <string name="dismiss_opened_clock">%1$s can\'t take dismiss requests. Dismiss your alarm here.</string>
     <string name="dismiss_no_clock">No Clock app found. Your alarm will still ring.</string>
-    <string name="dismiss_done">Your %1$s alarm is off. Have a good morning!</string>
+    <string name="dismiss_done">Your %1$s alarm is off. You\'re all set.</string>
     <string name="dismissed_title">Alarm\'s off</string>
     <string name="channel_dismissed">Alarm dismissed</string>
     <string name="channel_dismissed_description">Says when Dawnly has dismissed your alarm, playing your sound backwards so you know without looking.</string>
