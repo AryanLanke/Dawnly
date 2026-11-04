@@ -56,6 +56,7 @@ fun SettingsScreen(
     onRequestPermission: (AppPermission, (Boolean) -> Unit) -> Unit,
     onOpenOemBattery: () -> Unit,
     contentPadding: PaddingValues,
+    onPickWindow: () -> Unit = {},
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val learning by viewModel.learning.collectAsStateWithLifecycle()
@@ -97,6 +98,7 @@ fun SettingsScreen(
                 oemBattery = oemBattery,
                 deniedSign = deniedSign,
                 onWindowChange = viewModel::setWindow,
+                onPickWindow = onPickWindow,
                 onSignalsChange = viewModel::setSignals,
                 onSignNeedsPermission = { sign ->
                     // Steps need Physical activity, apps opened Usage access. Turn the sign on only
@@ -135,6 +137,7 @@ private fun SettingsContent(
     oemBattery: OemBattery?,
     deniedSign: Sign?,
     onWindowChange: (Duration) -> Unit,
+    onPickWindow: () -> Unit = {},
     onSignalsChange: (WakeSignalSettings) -> Unit,
     onSignNeedsPermission: (Sign) -> Unit,
     onAppearanceChange: (Appearance) -> Unit,
@@ -162,7 +165,7 @@ private fun SettingsContent(
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(start = 6.dp, top = 22.dp, bottom = 18.dp),
         )
-        SpringIn(order = 0) { WindowSection(state.window, onWindowChange) }
+        SpringIn(order = 0) { WindowSection(state.window, onWindowChange, onPickWindow) }
         Gap()
         SpringIn(order = 1) {
             DismissModeSection(

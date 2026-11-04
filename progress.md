@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.4.2 (2026-11-04): the watching window's Custom uses the reminder's wheels
+
+1.4.1 got the user's request backwards: they liked 1.4.0's reminder Custom (the hours-and-minutes wheels) and wanted **How early should Dawnly start watching?** to work the same way. Now the reminder editor is back to 1.4.0's wheels (1 minute to 23 hr 59 min), and the watching window's Custom shows a "Custom  45 min" row that opens the same wheels in a glass circle over the screen (hours 0 to 3, kept between 5 minutes and 3 hours; the "That's short" note under 8 minutes stays). The wheels live in one shared file, ui/glass/Wheels.kt (`DurationWheel`, `Wheel`, `ValueButton`); the slider panel from 1.4.1 (`GlassDurationPicker`) is gone. MainTabs draws either overlay (reminder editor or window wheels) the same way.
+
+---
+
 ## ▶ 1.4.1 (2026-11-04): reminder Custom works like the watching window
 
 The user asked for the reminder's Custom to work like "How early should Dawnly start watching?". The hours-and-minutes wheel is gone; picking Custom now opens the same minus / plus / slider panel under the choices, 5 minutes to 3 hours (a minute at a time up to 30 minutes, then 5). That panel is now one shared control, `GlassDurationPicker` (ui/glass/DurationPicker.kt), used by both. A reminder saved in 1.4.0 with a custom repeat outside 5 min–3 hr is brought into that range when it's next opened in the editor.

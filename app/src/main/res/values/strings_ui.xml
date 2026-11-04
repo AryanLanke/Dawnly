@@ -63,7 +63,7 @@
     <string name="settings_window_custom">Custom</string>
     <string name="settings_shorter">Shorter</string>
     <string name="settings_longer">Longer</string>
-    <string name="settings_window_slider">How early to start watching</string>
+    <string name="settings_window_pick">How early to start watching</string>
     <string name="reminders_label">Reminders</string>
     <string name="reminder_add">Add a reminder</string>
     <string name="reminder_add_hint">Like drinking water, every 20 minutes</string>
@@ -86,7 +86,9 @@
     <string name="reminder_done">Done</string>
     <string name="reminder_sound">Sound</string>
     <string name="reminder_custom">Custom</string>
-    <string name="reminder_custom_slider">How often it repeats</string>
+    <string name="reminder_repeats_every">Repeats every</string>
+    <string name="wheel_unit_hr">hr</string>
+    <string name="wheel_unit_min">min</string>
     <string name="time_am">am</string>
     <string name="time_pm">pm</string>
     <string name="learning_label">Learning from you</string>

@@ -91,6 +91,8 @@ import com.dawnly.app.ui.permissions.PermissionsController
 import com.dawnly.app.ui.permissions.RestrictedSettingsHelp
 import com.dawnly.app.ui.permissions.rememberPermissionsController
 import com.dawnly.app.ui.settings.SettingsScreen
+import com.dawnly.app.ui.settings.WindowWheel
+import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.settings.SettingsViewModel
 import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
@@ -191,8 +193,9 @@ private fun MainTabs(
     }
     // Room for the funny line and the floating tab bar, so the last card can scroll clear of them.
     val padding = screenPadding(bottomExtra = NAV_FADE_SOLID + NAV_FADE_EDGE)
-    // The reminder being added or changed (Today's Reminders card); null when the editor is closed.
-    var editing by remember { mutableStateOf<ReminderEdit?>(null) }
+    // What's drawn over the tabs: the reminder editor (Today's Reminders card) or the custom
+    // watching window's wheels (Settings); null when nothing is open.
+    var editing by remember { mutableStateOf<Overlay?>(null) }
 
     // Frosted behind the reminder editor (Android 12+), like glass over the screen. Without the
     // frost, a stronger veil keeps the card readable.
@@ -204,7 +207,7 @@ private fun MainTabs(
         label = "editor",
     )
     // Kept while the card eases out, after editing is already null.
-    var lastEdit by remember { mutableStateOf<ReminderEdit?>(null) }
+    var lastEdit by remember { mutableStateOf<Overlay?>(null) }
     editing?.let { lastEdit = it }
     val frosted = if (canFrost) {
         Modifier.graphicsLayer {
@@ -234,6 +237,7 @@ private fun MainTabs(
                         onRequestPermission = permissions::request,
                         onOpenOemBattery = { oemBattery?.let(permissions::openBatterySettings) },
                         contentPadding = padding,
+                        onPickWindow = { editing = WindowPick() },
                     )
                 }
             }
@@ -276,12 +280,22 @@ private fun MainTabs(
                             exit = scaleOut(tween(EDITOR_MS), targetScale = 0.96f),
                         ),
                     ) {
-                        ReminderEditor(
-                            initial = edit.reminder,
-                            onSave = { home.saveReminder(it); editing = null },
-                            onDelete = { home.deleteReminder(it); editing = null },
-                            onClose = { editing = null },
-                        )
+                        when (edit) {
+                            is ReminderEdit -> ReminderEditor(
+                                initial = edit.reminder,
+                                onSave = { home.saveReminder(it); editing = null },
+                                onDelete = { home.deleteReminder(it); editing = null },
+                                onClose = { editing = null },
+                            )
+                            is WindowPick -> {
+                                val window = settings.uiState.collectAsStateWithLifecycle().value?.window ?: WatchWindow.DEFAULT
+                                WindowWheel(
+                                    window = window,
+                                    onDone = { settings.setWindow(it); editing = null },
+                                    onClose = { editing = null },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -292,8 +306,14 @@ private fun MainTabs(
 /** How long the reminder editor takes to ease in or out. */
 private const val EDITOR_MS = 340
 
-/** What the reminder editor is open for: an existing reminder, or null for a new one. */
-private class ReminderEdit(val reminder: Reminder?)
+/** What's drawn over the tabs, frosting them. A fresh one each time, so each opening starts anew. */
+private sealed interface Overlay
+
+/** The reminder editor, for an existing reminder, or null for a new one. */
+private class ReminderEdit(val reminder: Reminder?) : Overlay
+
+/** The custom watching window's wheels. */
+private class WindowPick : Overlay
 
 /**
  * A light line above the tabs, a different one each time Dawnly opens. Tap it for another.

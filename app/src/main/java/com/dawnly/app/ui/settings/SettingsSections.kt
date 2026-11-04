@@ -7,7 +7,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -38,10 +44,11 @@ import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
-import com.dawnly.app.ui.glass.GlassDurationPicker
+import com.dawnly.app.ui.glass.DurationWheel
 import com.dawnly.app.ui.glass.GlassSegmented
 import com.dawnly.app.ui.glass.GlassSwitch
 import com.dawnly.app.ui.glass.SectionLabel
+import com.dawnly.app.ui.glass.ValueButton
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.OemBattery
 import com.dawnly.app.ui.permissions.PermissionState
@@ -51,7 +58,7 @@ import java.time.Duration
 // The sections of the Settings screen, in the order SettingsContent shows them.
 
 @Composable
-internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
+internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit, onPickCustom: () -> Unit) {
     val presets = WatchWindow.PRESETS
     var customOpen by rememberSaveable { mutableStateOf(false) }
     val custom = customOpen || window !in presets
@@ -62,7 +69,7 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
             selected = if (custom) presets.size else presets.indexOf(window),
             onSelect = { index ->
                 customOpen = index == presets.size
-                if (!customOpen) onChange(presets[index])
+                if (customOpen) onPickCustom() else onChange(presets[index])
             },
         )
         AnimatedVisibility(
@@ -70,38 +77,60 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically(),
         ) {
-            CustomWindow(window, onChange)
+            CustomWindow(window, onPickCustom)
         }
     }
 }
 
 /**
- * The custom window, from 5 minutes to 3 hours. The slider moves a minute at a time up to half an
- * hour, where people want exact times like 6 or 8 minutes, then 5 minutes at a time; minus and
- * plus always move a minute. Under [WatchWindow.RECOMMENDED_MIN] a note says it's short. While dragging,
- * the time follows the finger and is saved on letting go, so a swipe is one settings change rather
- * than dozens.
+ * The custom window, from 5 minutes to 3 hours: "Custom  45 min", which opens the hours and
+ * minutes wheels in a glass circle, like a reminder's custom repeat (see [WindowWheel]). Under
+ * [WatchWindow.RECOMMENDED_MIN] a note says it's short.
  */
 @Composable
-private fun CustomWindow(window: Duration, onChange: (Duration) -> Unit) {
-    var dragging by remember { mutableStateOf<Duration?>(null) }
-    val shown = dragging ?: window
+private fun CustomWindow(window: Duration, onPick: () -> Unit) {
     Column {
-        GlassDurationPicker(
-            value = window,
-            stops = WatchWindow.SLIDER_STOPS,
-            step = WatchWindow.FINE_STEP,
-            sliderLabel = stringResource(R.string.settings_window_slider),
-            onChange = { onChange(WatchWindow.clamp(it)) },
-            onDrag = { dragging = it },
-            modifier = Modifier.padding(top = 10.dp),
+        ValueButton(
+            stringResource(R.string.settings_window_custom),
+            formatDuration(window),
+            Modifier.fillMaxWidth().padding(top = 10.dp),
+            onClick = onPick,
         )
-        AnimatedVisibility(visible = shown < WatchWindow.RECOMMENDED_MIN) {
+        AnimatedVisibility(visible = window < WatchWindow.RECOMMENDED_MIN) {
             Text(
                 stringResource(R.string.settings_window_short),
                 style = MaterialTheme.typography.bodySmall,
                 color = DawnlyTheme.colors.textSoft,
                 modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Picking the custom window on the wheels, drawn over the screen like the reminder editor: the
+ * glass circle with hours (0 to 3) and minutes, kept between 5 minutes and 3 hours. Tapping around
+ * it or Back closes it unchanged.
+ */
+@Composable
+internal fun WindowWheel(window: Duration, onDone: (Duration) -> Unit, onClose: () -> Unit) {
+    BackHandler(onBack = onClose)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClose)
+            .safeDrawingPadding()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Taps on the wheels stay on the wheels.
+        Box(Modifier.clickable(remember { MutableInteractionSource() }, indication = null) {}) {
+            DurationWheel(
+                stringResource(R.string.settings_window_pick),
+                window,
+                WatchWindow.MIN,
+                WatchWindow.MAX,
+                onDone = { onDone(WatchWindow.clamp(it)) },
             )
         }
     }

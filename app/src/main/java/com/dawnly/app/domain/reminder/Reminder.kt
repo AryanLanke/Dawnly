@@ -32,16 +32,6 @@ sealed interface ReminderSchedule {
         /** The repeats offered in the editor. */
         val REPEATS = listOf(15, 20, 30, 60)
 
-        /** A custom repeat, in minutes: like how early Dawnly starts watching, 5 minutes to 3 hours. */
-        const val CUSTOM_MIN = 5
-        const val CUSTOM_MAX = 180
-
-        /**
-         * Where the custom repeat's slider stops: every minute up to half an hour, where people
-         * want exact ones like 5 or 6 minutes, then every 5 minutes up to [CUSTOM_MAX].
-         */
-        val CUSTOM_STOPS: List<Int> = (CUSTOM_MIN..30) + (35..CUSTOM_MAX step 5)
-
         val DAY_START: LocalTime = LocalTime.of(8, 0)
         val DAY_END: LocalTime = LocalTime.of(22, 0)
     }

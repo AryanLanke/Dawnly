@@ -60,14 +60,4 @@ class ReminderTimesTest {
         assertEquals(at(3, 22), ReminderTimes.next(twoHours, at(3, 21)))
         assertEquals(at(4, 8), ReminderTimes.next(twoHours, at(3, 22)))
     }
-
-    @Test
-    fun `the custom repeat goes from 5 minutes to 3 hours, like how early Dawnly starts watching`() {
-        val stops = ReminderSchedule.CUSTOM_STOPS
-        assertEquals(5, stops.first())
-        assertEquals(180, stops.last())
-        assertEquals(listOf(5, 6, 7, 8), stops.take(4))
-        assertEquals(listOf(30, 35, 40), stops.filter { it in 30..40 })
-        assertEquals(com.dawnly.app.domain.watch.WatchWindow.SLIDER_STOPS.map { it.toMinutes().toInt() }, stops)
-    }
 }
