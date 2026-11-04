@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.5.2 (2026-11-04): a white moon like the sun, a blacker night
+
+The user wanted the moon whiter and without its spots, "just like the sun", and the night background blacker. The moon is now two gradients (a white disc whose outer 40% fades out, and a cool white glow), drawn at full strength; the seas, craters, shade, sprite and 2° turn are gone. The night wall is 0xFF030306 (was 0xFF0A0B12) and its two blue glows are half as strong (alpha 0.14, was 0.28).
+
+---
+
 ## ▶ 1.5.1 (2026-11-04): a brighter, bigger, softer moon
 
 The user likes light mode's sun (big and faded) and found dark mode's moon small. The moon is now 150px wide (was 120px, `MOON_SCALE`), sits where the sun does (48px in from the right, 60px down), is drawn at 90% instead of 50% with a stronger and wider glow, has lighter shade on its far side, and its outer third fades into the glow (a `DstIn` feather in its sprite), so it looks out of focus like the sun instead of ending in a sharp edge. All in ui/glass/FlowingBackground.kt.

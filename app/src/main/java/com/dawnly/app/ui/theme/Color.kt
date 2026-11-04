@@ -77,9 +77,10 @@ val LightColors = DawnlyColors(
 
 val DarkColors = DawnlyColors(
     isDark = true,
-    wall = Color(0xFF0A0B12),
+    // Nearly black, with fainter glows: the user wanted the night darker (2026-11-04).
+    wall = Color(0xFF030306),
     sky = emptyList(),
-    glow = Color(0xFF5E78DC).copy(alpha = 0.28f),
+    glow = Color(0xFF5E78DC).copy(alpha = 0.14f),
     star = Color(0xFFCFE2FF),
     starHead = Color.White,
     text = Color.White,

@@ -17,16 +17,13 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
@@ -35,7 +32,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.core.graphics.withTranslation
@@ -151,7 +147,7 @@ fun FlowingBackground(modifier: Modifier = Modifier) {
 /**
  * The night sky is blurred as one layer, so it's soft like the morning's clouds and sun rather than
  * sharp (the user's ask, 2026-11-03). One GPU blur of one layer (Android 12+), not a blur behind
- * every panel, which made Settings stutter. Older phones get a softer moon instead.
+ * every panel, which made Settings stutter.
  */
 private val SoftNight = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
@@ -227,7 +223,7 @@ private fun CacheDrawScope.nightSky(colors: DawnlyColors): DrawScope.(Long) -> U
         Rect(Offset(0.2f * size.width, 0.95f * size.height), Size(0.6f * size.width, 0.35f * size.height)),
     )
     val trail = Brush.horizontalGradient(0f to Color.Transparent, 1f to colors.star)
-    val moon = Moon(this, u)
+    val moon = Moon(u)
     // Soft like the morning's clouds: stars as small blurred glows rather than sharp dots.
     val starDot = Sprite.draw(this, layoutDirection, Size(2 * u, 2 * u), margin = 3 * u) {
         drawIntoCanvas { it.nativeCanvas.drawCircle(u, u, 1.1f * u, blurPaint(Color.White, 1.4f * u)) }
@@ -323,60 +319,27 @@ private const val MOON_FROM_RIGHT = 48f
 private const val MOON_FROM_TOP = 60f
 
 /**
- * The soft moon in the top corner, from the mockup's SVG: a cream disc, three blurred seas, craters
- * with a lit rim, and shade on its far side, with a warm glow around it. Bright, and out of focus
- * like the morning's sun: its edge fades into the glow rather than ending sharp. Drawn once into a
- * soft, low-resolution sprite; each frame only floats it up a little and turns it 2° and back.
+ * The moon in the top corner, drawn like the morning's sun (the user's ask, 2026-11-04): no seas,
+ * craters or shade, just a bright white disc whose edge fades into a soft white glow, so it looks
+ * out of focus. Two gradients, cheap to draw every frame; each frame only floats it up a little.
  */
-private class Moon(scope: CacheDrawScope, private val u: Float) {
+private class Moon(private val u: Float) {
     private val glow = Brush.radialGradient(
-        0f to Glow.copy(alpha = 0.75f),
-        0.4f to Glow.copy(alpha = 0.6f),
-        0.65f to Glow.copy(alpha = 0.2f),
+        0f to Glow.copy(alpha = 0.7f),
+        0.4f to Glow.copy(alpha = 0.5f),
+        0.65f to Glow.copy(alpha = 0.18f),
         1f to Glow.copy(alpha = 0f),
         center = Center,
         radius = 120f,
     )
-    private val disc: Sprite
-
-    init {
-        val body = Brush.radialGradient(
-            0f to Color(0xFFFBF8EE), 0.7f to Color(0xFFE6E0CF), 1f to Color(0xFFB9B3A3),
-            center = Offset(40.4f, 38.5f), radius = 62.4f,
-        )
-        val shade = Brush.radialGradient(
-            0.55f to Color(0x000A0B12), 1f to Color(0x590A0B12),
-            center = Offset(19.3f, 40.4f), radius = 86.4f,
-        )
-        val seas = android.graphics.Path().apply {
-            for (d in Seas) addPath(PathParser().parsePathString(d).toPath().asAndroidPath())
-        }
-        val seaPaint = blurPaint(Color(0xFFCFC8B5).copy(alpha = 0.75f), 3f)
-        // Keeps the middle and fades the outer third away, so the disc melts into its glow.
-        val feather = Brush.radialGradient(
-            0f to Color.White, 0.68f to Color.White, 0.85f to Color.White.copy(alpha = 0.55f), 1f to Color.Transparent,
-            center = Center,
-            radius = 48f,
-        )
-        val s = MOON_SCALE * u
-        // Drawn at low resolution and scaled up, so its seas and craters look gently out of focus;
-        // lower still where the night isn't blurred as a whole (before Android 12).
-        disc = Sprite.draw(
-            scope,
-            scope.layoutDirection,
-            Size(100 * s, 100 * s),
-            margin = 4 * u,
-            scale = if (SoftNight) 0.4f else 0.25f,
-        ) {
-            scale(s, s, pivot = Offset.Zero) {
-                drawCircle(body, radius = 48f, center = Center)
-                drawIntoCanvas { it.nativeCanvas.drawPath(seas, seaPaint) }
-                for (c in Craters) drawCrater(c)
-                drawCircle(shade, radius = 48f, center = Center)
-                drawRect(feather, size = Size(100f, 100f), blendMode = BlendMode.DstIn)
-            }
-        }
-    }
+    private val disc = Brush.radialGradient(
+        0f to Color.White,
+        0.6f to Color.White,
+        0.82f to Color.White.copy(alpha = 0.75f),
+        1f to Color.White.copy(alpha = 0f),
+        center = Center,
+        radius = 48f,
+    )
 
     fun draw(scope: DrawScope, time: Long) = with(scope) {
         // moonfloat: 16 s each way, eased.
@@ -386,51 +349,16 @@ private class Moon(scope: CacheDrawScope, private val u: Float) {
         val half = 50 * s
         withTransform({
             translate(size.width - MOON_FROM_RIGHT * u - half, MOON_FROM_TOP * u - half - 4 * u * t)
-            rotate(2 * t, pivot = Offset(half, half))
+            scale(s, s, pivot = Offset.Zero)
         }) {
-            scale(s, s, pivot = Offset.Zero) {
-                drawCircle(glow, radius = 120f, center = Center, alpha = 0.6f)
-            }
-            drawSprite(disc, alpha = 0.9f)
+            drawCircle(glow, radius = 120f, center = Center)
+            drawCircle(disc, radius = 48f, center = Center)
         }
     }
-
-    private fun DrawScope.drawCrater(c: Crater) {
-        val center = Offset(c.x, c.y)
-        drawCircle(
-            Brush.radialGradient(
-                0f to Color(0xFFC9C2AE),
-                1f to Color(0xFFADA693),
-                center = Offset(c.x - 0.2f * c.r, c.y - 0.3f * c.r),
-                radius = 1.2f * c.r,
-            ),
-            radius = c.r,
-            center = center,
-        )
-        if (c.rim > 0f) {
-            drawCircle(
-                Color.White.copy(alpha = c.rim),
-                radius = c.r,
-                center = center - Offset(0.15f * c.r, 0.17f * c.r),
-                style = Stroke(width = 0.15f * c.r),
-            )
-        }
-    }
-
-    private class Crater(val x: Float, val y: Float, val r: Float, val rim: Float = 0f)
 
     private companion object {
         val Center = Offset(50f, 50f)
-        val Glow = Color(0xFFFFF6DC)
-        val Seas = listOf(
-            "M28 30 C36 22 50 24 52 34 C54 42 44 46 36 44 C28 42 22 36 28 30Z",
-            "M56 52 C64 46 76 50 76 60 C76 68 66 72 58 68 C52 64 50 56 56 52Z",
-            "M30 60 C36 56 44 60 42 66 C40 72 32 72 29 68 C27 65 27 62 30 60Z",
-        )
-        val Craters = listOf(
-            Crater(66f, 28f, 6f, 0.5f), Crater(40f, 78f, 4.5f, 0.5f), Crater(78f, 44f, 3f),
-            Crater(22f, 50f, 2.6f), Crater(56f, 86f, 2.2f), Crater(48f, 18f, 2f),
-            Crater(70f, 76f, 3.4f, 0.45f),
-        )
+        /** Cool white moonlight. */
+        val Glow = Color(0xFFF2F6FF)
     }
 }
