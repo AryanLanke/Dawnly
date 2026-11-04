@@ -9,6 +9,13 @@
 
 ---
 
+## ▶ 1.4.3 (2026-11-04): any custom watching window up to 3 hr 59 min; clearer restricted-setting help
+
+- **Watching window:** the user wants any time they pick kept as is (3 hr 02 min, 2 hr 03 min, 1 hr 05 min); only under 5 minutes becomes 5. They don't want more than about 3 hours ("that's too much watching"). So the hours wheel still goes 0 to 3, but any minutes are kept: `WatchWindow.MAX` is now 3 hr 59 min (it was 3 hr, which cut 3 hr 02 min down to 3 hr). The 1.4.1 slider leftovers (`SLIDER_STOPS`, `FINE_STEP`) are gone.
+- **Restricted setting (Right away / Warn first, Usage access):** on Android 13+, an app installed from a file gets Android's "Restricted setting" / "App was denied access" box, which reads as if the phone won't allow it. Now: the Allow hint says beforehand that this is normal and Dawnly will show how to unlock it; Dawnly's help card shows after the first failed try (it waited for a second try unless Android clearly said the lock was on); its steps follow Android's own (Settings, Apps, Dawnly, See all apps tip; ⋮ More, Allow restricted settings; follow the on-screen steps; come back and tap Allow); and the card is readable (the veil behind it is nearly solid; before, the Settings text showed through the glass).
+
+---
+
 ## ▶ 1.4.2 (2026-11-04): the watching window's Custom uses the reminder's wheels
 
 1.4.1 got the user's request backwards: they liked 1.4.0's reminder Custom (the hours-and-minutes wheels) and wanted **How early should Dawnly start watching?** to work the same way. Now the reminder editor is back to 1.4.0's wheels (1 minute to 23 hr 59 min), and the watching window's Custom shows a "Custom  45 min" row that opens the same wheels in a glass circle over the screen (hours 0 to 3, kept between 5 minutes and 3 hours; the "That's short" note under 8 minutes stays). The wheels live in one shared file, ui/glass/Wheels.kt (`DurationWheel`, `Wheel`, `ValueButton`); the slider panel from 1.4.1 (`GlassDurationPicker`) is gone. MainTabs draws either overlay (reminder editor or window wheels) the same way.

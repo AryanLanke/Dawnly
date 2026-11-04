@@ -154,6 +154,7 @@
     <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
     <string name="settings_auto_dismiss_tap_note">With the phone locked, Dawnly does it all by itself. While you\'re using the phone, it asks for one tap. To skip that tap too, allow Display over other apps.</string>
     <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>
+    <string name="settings_auto_dismiss_restricted">If Android says it\'s a restricted setting, that\'s normal for apps installed from a file: Dawnly then shows you how to unlock it.</string>
     <string name="settings_permissions_label">Permissions</string>
     <string name="settings_appearance_label">Appearance</string>
     <string name="appearance_light">Light</string>
@@ -241,9 +242,10 @@
 
     <!-- Restricted settings help (Android 13+, apps installed from a file) -->
     <string name="restricted_title">Android locked %1$s</string>
-    <string name="restricted_body">Dawnly was installed from a file, not an app store, so Android keeps this switch locked until you unlock it. It takes ten seconds:</string>
-    <string name="restricted_step_1">1. Tap Open App info below.</string>
-    <string name="restricted_step_2">2. Tap ⋮ at the top right, then Allow restricted settings.</string>
-    <string name="restricted_step_3">3. Come back and tap Allow again.</string>
+    <string name="restricted_body">If Android said \"Restricted setting\" or that access was denied, your phone isn\'t refusing Dawnly. Android does this for apps installed from a file instead of an app store, until you unlock them once. It takes ten seconds:</string>
+    <string name="restricted_step_1">1. Tap Open App info below. (Or open Settings, tap Apps, then Dawnly. If you can\'t find it, tap See all apps first.)</string>
+    <string name="restricted_step_2">2. Tap ⋮ (More) at the top right, then Allow restricted settings.</string>
+    <string name="restricted_step_3">3. Follow the steps on screen, like confirming with your PIN or fingerprint.</string>
+    <string name="restricted_step_4">4. Come back to Dawnly and tap Allow again.</string>
     <string name="restricted_open">Open App info</string>
 </resources>

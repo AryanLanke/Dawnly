@@ -32,7 +32,9 @@ import com.dawnly.app.ui.theme.DawnlyTheme
 
 /**
  * Shown when Android's restricted settings lock kept [permission] off (see
- * [AppPermission.canBeLocked]). Dawnly can't lift the lock itself; this says how, in three steps.
+ * [AppPermission.canBeLocked]). Android then says "Restricted setting" or that access was denied,
+ * which reads as if the phone won't allow it. Dawnly can't lift the lock itself; this says it's
+ * normal and how to unlock it, in four steps.
  */
 @Composable
 fun RestrictedSettingsHelp(permission: AppPermission, onOpenAppInfo: () -> Unit, onClose: () -> Unit) {
@@ -40,7 +42,8 @@ fun RestrictedSettingsHelp(permission: AppPermission, onOpenAppInfo: () -> Unit,
     Box(
         Modifier
             .fillMaxSize()
-            .background(DawnlyTheme.colors.wall.copy(alpha = 0.6f))
+            // Nearly solid, so the screen behind doesn't show through the glass card.
+            .background(DawnlyTheme.colors.wall.copy(alpha = 0.92f))
             // Taps outside the card close it; taps on the card don't fall through.
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClose)
             .safeDrawingPadding()
@@ -54,8 +57,8 @@ fun RestrictedSettingsHelp(permission: AppPermission, onOpenAppInfo: () -> Unit,
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(stringResource(R.string.restricted_body), style = MaterialTheme.typography.bodyMedium)
-                listOf(R.string.restricted_step_1, R.string.restricted_step_2, R.string.restricted_step_3).forEach {
-                    Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = DawnlyTheme.colors.textSoft)
+                listOf(R.string.restricted_step_1, R.string.restricted_step_2, R.string.restricted_step_3, R.string.restricted_step_4).forEach {
+                    Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
                 }
                 Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PrimaryButton(stringResource(R.string.restricted_open), onOpenAppInfo, Modifier.weight(1f))

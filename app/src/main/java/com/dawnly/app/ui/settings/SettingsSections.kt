@@ -262,8 +262,14 @@ internal fun DismissModeSection(
                 // Android 11+ ignores the package Uri and opens the list of all apps.
                 val why = stringResource(R.string.settings_auto_dismiss_why)
                 val findDawnly = stringResource(R.string.settings_auto_dismiss_find)
+                // Android 13+ may lock the switch for apps installed from a file; say so before it happens.
+                val restricted = stringResource(R.string.settings_auto_dismiss_restricted)
                 Text(
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) "$why $findDawnly" else why,
+                    when {
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> "$why $findDawnly $restricted"
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> "$why $findDawnly"
+                        else -> why
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = DawnlyTheme.colors.textSoft,
                 )

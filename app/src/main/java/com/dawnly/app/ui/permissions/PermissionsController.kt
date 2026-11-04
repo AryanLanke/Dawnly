@@ -170,7 +170,8 @@ class PermissionsController internal constructor(
         if (!granted && request.inSettings && request.permission.canBeLocked) {
             val tries = (failedTries[request.permission] ?: 0) + 1
             failedTries[request.permission] = tries
-            if (tries >= 2 || AppPermission.restrictedSettingsLocked(context) == true) {
+            // At once, so nobody is left with Android's "Restricted setting" and no way on.
+            if (tries >= 2 || AppPermission.restrictedSettingsLocked(context) != false) {
                 restrictedHelp = request.permission
             }
         }
