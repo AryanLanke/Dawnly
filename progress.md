@@ -9,6 +9,12 @@
 
 ---
 
+## ▶ 1.4.1 (2026-11-04): reminder Custom works like the watching window
+
+The user asked for the reminder's Custom to work like "How early should Dawnly start watching?". The hours-and-minutes wheel is gone; picking Custom now opens the same minus / plus / slider panel under the choices, 5 minutes to 3 hours (a minute at a time up to 30 minutes, then 5). That panel is now one shared control, `GlassDurationPicker` (ui/glass/DurationPicker.kt), used by both. A reminder saved in 1.4.0 with a custom repeat outside 5 min–3 hr is brought into that range when it's next opened in the editor.
+
+---
+
 ## ▶ 1.4.0 (2026-11-04): custom reminder repeats
 
 The editor's repeat row offered only 15 min, 20 min, 30 min and 1 hr. It now has a fifth choice, **Custom**, which opens an hours-and-minutes wheel in the same glass circle as the time picker (0–23 hr, 0–59 min, never less than 1 minute), so people can pick every 5 minutes, 6 minutes, 2 hours, and so on. With Custom picked, a "Repeats every  2 hr" row under it opens the wheel again. Nothing changed in storage or scheduling: `ReminderSchedule.Every` already kept any number of minutes.

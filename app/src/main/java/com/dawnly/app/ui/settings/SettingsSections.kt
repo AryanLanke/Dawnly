@@ -38,10 +38,8 @@ import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
+import com.dawnly.app.ui.glass.GlassDurationPicker
 import com.dawnly.app.ui.glass.GlassSegmented
-import com.dawnly.app.ui.glass.GlassSlider
-import com.dawnly.app.ui.glass.GlassStepper
-import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.GlassSwitch
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.permissions.AppPermission
@@ -86,38 +84,18 @@ internal fun WindowSection(window: Duration, onChange: (Duration) -> Unit) {
  */
 @Composable
 private fun CustomWindow(window: Duration, onChange: (Duration) -> Unit) {
-    val stops = WatchWindow.SLIDER_STOPS
-    val steps = stops.lastIndex
-    // The nearest stop to a saved window.
-    fun toStep(d: Duration) = stops.indices.minBy { (stops[it] - d).abs() }
-    fun toWindow(step: Int): Duration = stops[step.coerceIn(0, steps)]
-    var dragging by remember { mutableStateOf<Int?>(null) }
-    val shown = dragging?.let(::toWindow) ?: window
+    var dragging by remember { mutableStateOf<Duration?>(null) }
+    val shown = dragging ?: window
     Column {
-        GlassSurface(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-            Column(Modifier.padding(10.dp)) {
-                GlassStepper(
-                    value = formatDuration(shown),
-                    onDecrease = { onChange(WatchWindow.clamp(window - WatchWindow.FINE_STEP)) },
-                    onIncrease = { onChange(WatchWindow.clamp(window + WatchWindow.FINE_STEP)) },
-                    decreaseEnabled = window > WatchWindow.MIN,
-                    increaseEnabled = window < WatchWindow.MAX,
-                    decreaseLabel = stringResource(R.string.settings_shorter),
-                    increaseLabel = stringResource(R.string.settings_longer),
-                )
-                GlassSlider(
-                    value = dragging ?: toStep(window),
-                    max = steps,
-                    onValueChange = { dragging = it },
-                    onValueChangeFinished = {
-                        dragging?.let { onChange(toWindow(it)) }
-                        dragging = null
-                    },
-                    label = stringResource(R.string.settings_window_slider),
-                    modifier = Modifier.padding(horizontal = 6.dp),
-                )
-            }
-        }
+        GlassDurationPicker(
+            value = window,
+            stops = WatchWindow.SLIDER_STOPS,
+            step = WatchWindow.FINE_STEP,
+            sliderLabel = stringResource(R.string.settings_window_slider),
+            onChange = { onChange(WatchWindow.clamp(it)) },
+            onDrag = { dragging = it },
+            modifier = Modifier.padding(top = 10.dp),
+        )
         AnimatedVisibility(visible = shown < WatchWindow.RECOMMENDED_MIN) {
             Text(
                 stringResource(R.string.settings_window_short),

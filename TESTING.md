@@ -190,7 +190,8 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 
 - [ ] **8.18 Reminder sound:** a reminder left on its default sound. **Expect:** it rings with Bubble, not the phone's own sound. Change it to another sound in the editor (Sound row): tapping a sound plays it; the next reminder rings with that one.
 
-- [ ] **8.19 Custom repeat:** in the editor, pick Every, then Custom. **Expect:** an hours and minutes wheel; set 0 hr 05 min, Done, and the row reads "Repeats every  5 min"; Today shows "Every 5 min, ...". Try 6 min and 2 hr too; reopening the reminder shows Custom still picked with its value. Picking 15/20/30 min or 1 hr goes back to that choice.
+- [ ] **8.19 Custom repeat:** in the editor, pick Every, then Custom. **Expect:** the same minus / plus / slider panel as "How early should Dawnly start watching?", from 5 min to 3 hr. Set 5 min and save: Today shows "Every 5 min, ...". Try 6 min and 2 hr too; minus stops at 5 min, plus at 3 hr. Reopening the reminder shows Custom still picked with its value. Picking 15/20/30 min or 1 hr hides the panel.
+- [ ] **8.20 Watching window still works:** Settings, How early should Dawnly start watching?, Custom: minus, plus and the slider still change it, and under 8 minutes the "That's short" note shows.
 
 ## Found while writing this plan (to fix)
 

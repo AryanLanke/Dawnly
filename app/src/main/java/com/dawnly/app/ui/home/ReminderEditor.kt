@@ -3,6 +3,9 @@ package com.dawnly.app.ui.home
 import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -69,6 +72,7 @@ import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderSchedule
 import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.GlassButton
+import com.dawnly.app.ui.glass.GlassDurationPicker
 import com.dawnly.app.ui.glass.GlassSegmented
 import com.dawnly.app.ui.glass.GlassShapes
 import com.dawnly.app.ui.glass.GlassSurface
@@ -80,8 +84,8 @@ import java.time.Duration
 import java.time.LocalTime
 import kotlin.math.abs
 
-/** The card's other pages: a time on the wheels, a custom repeat, or the reminder's sound. */
-private enum class EditorPage { At, From, Until, Interval, Sound }
+/** The card's other pages: a time on the wheels, or the reminder's sound. */
+private enum class EditorPage { At, From, Until, Sound }
 
 /**
  * Adding or changing a reminder, drawn over Today (in the app's own window, so it keeps the
@@ -102,9 +106,12 @@ internal fun ReminderEditor(
     val start = initial?.schedule
     var every by remember { mutableStateOf(start !is ReminderSchedule.Daily) }
     var at by remember { mutableStateOf((start as? ReminderSchedule.Daily)?.at ?: LocalTime.of(21, 0)) }
-    var minutes by remember { mutableStateOf((start as? ReminderSchedule.Every)?.minutes ?: 20) }
+    val startMinutes = (start as? ReminderSchedule.Every)?.minutes ?: 20
     // A repeat that isn't one of the offered ones, like every 5 minutes or every 2 hours.
-    var custom by remember { mutableStateOf(minutes !in ReminderSchedule.REPEATS) }
+    var custom by remember { mutableStateOf(startMinutes !in ReminderSchedule.REPEATS) }
+    var minutes by remember {
+        mutableStateOf(if (custom) startMinutes.coerceIn(ReminderSchedule.CUSTOM_MIN, ReminderSchedule.CUSTOM_MAX) else startMinutes)
+    }
     var from by remember { mutableStateOf((start as? ReminderSchedule.Every)?.from ?: ReminderSchedule.DAY_START) }
     var until by remember { mutableStateOf((start as? ReminderSchedule.Every)?.until ?: ReminderSchedule.DAY_END) }
     var sound by remember { mutableStateOf(initial?.let(ReminderScheduler::soundOf) ?: ReminderScheduler.DEFAULT_SOUND) }
@@ -130,13 +137,6 @@ internal fun ReminderEditor(
         ) { page ->
             if (page == EditorPage.Sound) {
                 SoundChoice(sound, onPick = { sound = it }, onDone = { picking = null })
-                return@AnimatedContent
-            }
-            if (page == EditorPage.Interval) {
-                IntervalWheel(minutes, onDone = { picked ->
-                    minutes = picked
-                    picking = null
-                })
                 return@AnimatedContent
             }
             if (page != null) {
@@ -198,21 +198,23 @@ internal fun ReminderEditor(
                                 stringResource(R.string.reminder_custom),
                             selected = if (custom) repeats.size else repeats.indexOf(minutes).coerceAtLeast(0),
                             onSelect = { i ->
-                                if (i < repeats.size) {
-                                    custom = false
-                                    minutes = repeats[i]
-                                } else {
-                                    custom = true
-                                    picking = EditorPage.Interval
-                                }
+                                custom = i == repeats.size
+                                if (!custom) minutes = repeats[i]
                             },
                         )
-                        if (custom) {
-                            ValueButton(
-                                stringResource(R.string.reminder_repeats_every),
-                                formatDuration(Duration.ofMinutes(minutes.toLong())),
-                                Modifier.fillMaxWidth(),
-                            ) { picking = EditorPage.Interval }
+                        // Like how early Dawnly starts watching: minus, plus and a slider, 5 minutes to 3 hours.
+                        AnimatedVisibility(
+                            visible = custom,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            GlassDurationPicker(
+                                value = Duration.ofMinutes(minutes.toLong()),
+                                stops = ReminderSchedule.CUSTOM_STOPS.map { Duration.ofMinutes(it.toLong()) },
+                                step = Duration.ofMinutes(1),
+                                sliderLabel = stringResource(R.string.reminder_custom_slider),
+                                onChange = { minutes = it.toMinutes().toInt() },
+                            )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TimeButton(stringResource(R.string.reminder_from), from, Modifier.weight(1f)) { picking = EditorPage.From }
@@ -405,43 +407,6 @@ private fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Uni
         GlassButton(stringResource(R.string.reminder_done), { onDone(LocalTime.of(hour, minute)) }, Modifier.width(200.dp))
     }
 }
-
-/**
- * Picking a custom repeat, in the same glass circle as the time: an hours wheel and a minutes
- * wheel, like 0 hr 5 min or 2 hr 0 min. Never less than a minute.
- */
-@Composable
-private fun IntervalWheel(minutes: Int, onDone: (Int) -> Unit) {
-    var hours by remember { mutableStateOf((minutes / 60).coerceIn(0, MAX_HOURS)) }
-    var mins by remember { mutableStateOf(minutes % 60) }
-    val digits = MaterialTheme.typography.displayLarge.copy(fontSize = 50.sp, lineHeight = 58.sp, textAlign = TextAlign.Center)
-    val unit = MaterialTheme.typography.titleMedium.copy(color = DawnlyTheme.colors.textSoft)
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        GlassSurface(
-            modifier = Modifier.fillMaxWidth(0.86f).widthIn(max = 340.dp).aspectRatio(1f),
-            shape = CircleShape,
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.reminder_repeats_every), style = MaterialTheme.typography.bodyMedium, color = DawnlyTheme.colors.textSoft)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Wheel(MAX_HOURS + 1, hours, 72.dp, digits, { i -> "$i" }) { hours = it }
-                    Text(stringResource(R.string.reminder_unit_hr), style = unit, modifier = Modifier.padding(end = 6.dp))
-                    Wheel(60, mins, 72.dp, digits, { i -> "%02d".format(i) }) { mins = it }
-                    Text(stringResource(R.string.reminder_unit_min), style = unit)
-                }
-            }
-        }
-        GlassButton(
-            stringResource(R.string.reminder_done),
-            { onDone((hours * 60 + mins).coerceAtLeast(1)) },
-            Modifier.width(200.dp),
-        )
-    }
-}
-
-/** The longest custom repeat, in hours. */
-private const val MAX_HOURS = 23
 
 /**
  * One wheel of [count] values, three rows tall, snapping so a value sits in the middle. Values
