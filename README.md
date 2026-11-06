@@ -9,7 +9,7 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/demo.gif" width="320" alt="Switching Dawnly from dark to light and back: the new look sweeps in from a corner">
+  <img src="docs/demo.gif" width="320" alt="A 40-second tour of Dawnly: switching from light to dark, setup, setting an alarm and adding reminders">
 </p>
 
 ## Screenshots
