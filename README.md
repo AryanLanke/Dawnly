@@ -28,7 +28,7 @@ It also has **Reminders** ("Drink water, every 20 minutes") and **learns from yo
 
 ## How it works
 
-1. **Reads your next alarm.** `AlarmManager.getNextAlarmClock()` gives the next alarm set in any Clock app (Google, Samsung, Xiaomi). Dawnly follows `ACTION_NEXT_ALARM_CLOCK_CHANGED`, so it updates as soon as you change an alarm. You can also set an alarm from Today: Dawnly picks the time on its glass wheels and hands it to the Clock app with `AlarmClock.ACTION_SET_ALARM`, so the alarm lives in the Clock app like any other. Dawnly never keeps alarms of its own.
+1. **Reads your next alarm.** `AlarmManager.getNextAlarmClock()` gives the next alarm set in any Clock app (Google, Samsung, Xiaomi). Dawnly follows `ACTION_NEXT_ALARM_CLOCK_CHANGED`, so it updates as soon as you change an alarm. You can also set an alarm from Today: Dawnly picks the time on its glass wheels and hands it to the Clock app with `AlarmClock.ACTION_SET_ALARM`, so the alarm lives in the Clock app like any other. An alarm set from Dawnly can be changed or deleted from Today: as Android has no edit intent, Dawnly dismisses the old one, waits for the next alarm to move, then sets the new one. Dawnly never keeps alarms of its own.
 2. **Watches only during a window you choose** (30 min, 1 hr, 2 hr, or custom from 5 min to 3 hr 59 min) before that alarm. An exact alarm starts a quiet foreground service when the window opens; it stops when the alarm rings or is dismissed. Nothing runs all night.
 3. **Looks for signs you're awake.** Each sign has a goal, set by one Low / Medium / High control:
 
@@ -74,7 +74,7 @@ app/src/main/java/com/dawnly/app/
 Debug-only code (the wake detection screen and an adb test receiver) lives in `app/src/debug/`, so it never ships in the release app.
 
 - **One entry point.** Everything that can change the plan (opening the app, a settings change, the next alarm changing, a reboot, an app update, our own alarm firing) calls `WatchScheduler.reconcile()`. It works the state out from scratch every time, so it's safe to call any number of times.
-- **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (137 in total, including reminder times, learning and the dismiss guard).
+- **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (141 in total, including reminder times, learning and the dismiss guard).
 - **The UI is a design system, not a theme.** `ui/glass/` has translucent glass surfaces (rim and shadow drawn once into bitmaps, so scrolling holds 120 Hz), a living sky behind the glass (morning clouds in light mode, stars, shooting stars and a moon in dark mode) drawn in the draw phase only, spring motion, and a progress ring. Everything is Compose, with light and dark modes, and the motion stays still when the system's reduce-animations setting is on. The mockups it was built from are in [design/mockups.html](design/mockups.html), and the app icon (a fried egg with a white of blue glass) and the script that draws it are in [design/app-icon](design/app-icon).
 
 ## Tech stack
@@ -86,7 +86,7 @@ Debug-only code (the wake detection screen and an adb test receiver) lives in `a
 | Architecture | MVVM, single module, `ui` / `data` / `domain` / `service` / `notify` packages |
 | Storage | Jetpack DataStore (Preferences), a little SharedPreferences |
 | Background work | `AlarmManager` exact alarms, a foreground service, dynamically registered receivers, sensors |
-| Tests | 137 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
+| Tests | 141 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
 | Build | Gradle 9.8 with a version catalog, AGP 9.4, R8 for release |
 | CI | GitHub Actions: unit tests, debug build and lint on every push and pull request |
 | Platform | minSdk 26 (Android 8.0), target and compile SDK 37 |

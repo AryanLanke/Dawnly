@@ -23,6 +23,14 @@
     <string name="alarm_set_toast">Alarm set for %1$s in %2$s</string>
     <string name="alarm_set_opened_clock">Finish setting it in %1$s</string>
     <string name="alarm_set_no_clock">No Clock app on this phone can set alarms</string>
+    <string name="alarm_edit_label">Change alarm</string>
+    <string name="alarm_delete">Delete alarm</string>
+    <string name="alarm_deleted">Alarm deleted</string>
+    <string name="alarm_edit_failed">The Clock app kept the old alarm on. Change it there.</string>
+    <string name="alarm_edit_moved">That alarm has changed. Try again.</string>
+    <string name="alarm_edit_in_clock">Change it in %1$s</string>
+    <string name="home_tap_to_change">Tap to change</string>
+    <string name="home_open_clock_description">Open the Clock app</string>
     <string name="home_day_today">Today</string>
     <string name="home_day_tomorrow">Tomorrow</string>
     <string name="home_waiting">On watch from %1$s</string>

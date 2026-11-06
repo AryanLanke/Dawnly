@@ -2,6 +2,11 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.1 (6 Nov)
+- **Change or delete an alarm set from Dawnly.** Tap the ring ("Tap to change"), move the wheels and tap Done, or tap Delete alarm. Android only lets apps set and dismiss alarms, so Dawnly switches the old one off in the Clock app, waits until it's really off, then sets the new one. If the Clock app keeps the old one on, nothing new is set and the Clock app stays open to change it there.
+- Alarms you made in the Clock app (they may repeat) are left to the Clock app: tapping the ring opens it.
+- The ring sinks a little, ripples and ticks when you tap it.
+
 ## 1.7.0 (6 Nov)
 - **Reminders can ring like an alarm.** In the editor, How it comes: Notification, or Ring like alarm. A ringing reminder fills the screen (even locked) and plays its sound again and again, each play fading out before the next, starting soft and getting louder. Stop, or Snooze 10 min. After 5 minutes it stops by itself and leaves a "Missed" notification. If Android won't let it take over the screen, the notification's sound repeats instead.
 - **Set an alarm from Dawnly.** With no alarm, tap the ring ("Tap to set an alarm"); with one, tap **Add alarm**. Pick the time on the glass wheels and Dawnly sets it in your Clock app, so it shows there and rings with the Clock's own sound.

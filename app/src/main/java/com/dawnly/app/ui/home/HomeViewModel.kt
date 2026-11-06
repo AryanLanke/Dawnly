@@ -9,6 +9,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.R
 import com.dawnly.app.data.alarm.ClockApp
+import com.dawnly.app.data.alarm.DawnlyAlarms
+import com.dawnly.app.domain.alarm.AlarmTimes
+import com.dawnly.app.notify.AlarmEdit
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.domain.reminder.Reminder
@@ -17,7 +20,7 @@ import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
 import com.dawnly.app.service.WatchSession
 import java.time.Instant
-import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import kotlinx.coroutines.delay
@@ -83,13 +86,42 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
         val clockApp = ClockApp(activity)
         val set = clockApp.setAlarm(activity, time)
         val message = if (set != null) {
-            val at = LocalDate.now().atTime(time).atZone(ZoneId.systemDefault()).toInstant()
+            val at = AlarmTimes.nextAt(time, LocalDateTime.now()).atZone(ZoneId.systemDefault()).toInstant()
+            // Remembered, so it can be changed or deleted from Today.
+            DawnlyAlarms(activity).remember(at)
             activity.getString(R.string.alarm_set_toast, Notify.time(activity, at), set.label)
         } else {
             clockApp.openClock(activity, null)?.let { activity.getString(R.string.alarm_set_opened_clock, it.label) }
                 ?: activity.getString(R.string.alarm_set_no_clock)
         }
         Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
+    }
+
+    /**
+     * Changes the alarm at [alarmAt] (set from Dawnly) to [newTime], or deletes it when [newTime] is
+     * null: it's switched off in the Clock app, then the new one is set ([AlarmEdit]).
+     */
+    fun editAlarm(activity: Activity, alarmAt: Instant, newTime: LocalTime?) {
+        val next = app.nextAlarms.current()
+        if (next == null || next.triggerAt != alarmAt) {
+            Toast.makeText(activity, R.string.alarm_edit_moved, Toast.LENGTH_LONG).show()
+            return
+        }
+        if (newTime != null && newTime == alarmAt.atZone(ZoneId.systemDefault()).toLocalTime().withSecond(0).withNano(0)) return
+        val message = when (val result = AlarmEdit.remove(activity, next, newTime)) {
+            is DismissResult.Requested -> null
+            is DismissResult.OpenedClock -> activity.getString(R.string.alarm_edit_in_clock, result.clock.label)
+            DismissResult.NoClockApp -> activity.getString(R.string.alarm_set_no_clock)
+        }
+        message?.let { Toast.makeText(activity, it, Toast.LENGTH_LONG).show() }
+    }
+
+    /** True if the alarm at [at] was set from Dawnly, so Today can change it. */
+    fun isDawnlyAlarm(at: Instant): Boolean = DawnlyAlarms(app).isOurs(at)
+
+    /** An alarm made in the Clock app: changed there, since it may repeat. */
+    fun openClock(activity: Activity) {
+        ClockApp(activity).openClock(activity, app.nextAlarms.current()?.ownerPackage)
     }
 
     fun clearDismissResult() {

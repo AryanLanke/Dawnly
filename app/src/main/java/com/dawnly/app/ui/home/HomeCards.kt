@@ -5,7 +5,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,11 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -46,6 +50,8 @@ import com.dawnly.app.ui.glass.PrimaryButton
 import com.dawnly.app.ui.glass.ProgressBar
 import com.dawnly.app.ui.glass.ProgressRing
 import com.dawnly.app.ui.glass.ROW_INSET
+import com.dawnly.app.ui.glass.pressScale
+import com.dawnly.app.ui.glass.rememberHaptics
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -53,19 +59,40 @@ import kotlin.math.roundToInt
 // The cards and pieces the Home screen is built from.
 
 @Composable
-internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Modifier, onSetAlarm: () -> Unit = {}) {
+internal fun AlarmRing(
+    status: HomeStatus,
+    now: Instant,
+    modifier: Modifier = Modifier,
+    changeable: Boolean = false,
+    onTap: () -> Unit = {},
+) {
     val progress = (status as? HomeStatus.Watching)?.progress
     val description = progress?.let {
         stringResource(R.string.home_progress_description, (it * 100).roundToInt())
     }
     val watching = status as? HomeStatus.Watching
-    // No alarm yet: the whole ring is a button that opens the wheels to set one.
-    val setLabel = stringResource(R.string.home_set_alarm_description)
-    val tappable = if (status == HomeStatus.NoAlarm) {
-        Modifier.clip(CircleShape).clickable(role = Role.Button, onClickLabel = setLabel, onClick = onSetAlarm)
-    } else {
-        Modifier
-    }
+    // The whole ring is a button: set an alarm, change the one set from Dawnly, or open the Clock
+    // app for one made there. It sinks a little and ripples when pressed.
+    val tapLabel = stringResource(
+        when {
+            status == HomeStatus.NoAlarm -> R.string.home_set_alarm_description
+            changeable -> R.string.alarm_edit_label
+            else -> R.string.home_open_clock_description
+        },
+    )
+    val interactions = remember { MutableInteractionSource() }
+    val haptic = rememberHaptics()
+    val scale by pressScale(interactions)
+    val tappable = Modifier
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .clip(CircleShape)
+        .clickable(interactions, LocalIndication.current, role = Role.Button, onClickLabel = tapLabel) {
+            haptic.click()
+            onTap()
+        }
     ProgressRing(
         startedAt = watching?.startedAt,
         endsAt = watching?.alarmAt,
@@ -101,6 +128,14 @@ internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Mo
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "subtitle",
             ) { Soft(it, Modifier.padding(top = 8.dp)) }
+            if (changeable) {
+                Text(
+                    stringResource(R.string.home_tap_to_change),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = DawnlyTheme.colors.accent,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
         }
     }
 }

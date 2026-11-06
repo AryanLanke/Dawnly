@@ -105,6 +105,15 @@ data class HomeUiState(
 }
 
 sealed interface HomeStatus {
+    /** When the alarm on Today rings, or null with none. */
+    val ringsAt: java.time.Instant?
+        get() = when (this) {
+            is Waiting -> alarmAt
+            is Watching -> alarmAt
+            is Skipped -> alarmAt
+            NoAlarm, Loading -> null
+        }
+
     /** Before the first reading; the screen shows only the background. */
     data object Loading : HomeStatus
 
