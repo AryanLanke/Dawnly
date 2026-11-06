@@ -9,7 +9,7 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 | | |
 |---|---|
 | Version | 1.7.8 (versionCode 26), app ID `com.aryanlanke.dawnly`, Kotlin namespace `com.dawnly.app` |
-| Works on | Nothing Phone (2a), Android 16, Google Clock (the phone it was built on). Friends ran it on Motorola, Redmi, OPPO and OnePlus phones. |
+| Works on | Nothing Phone (2a), Android 16, Google Clock (the phone it was built on). Testers ran it on Motorola, Redmi, OPPO and OnePlus phones. |
 | Not tested yet | Samsung Clock and Xiaomi Clock, a reboot during a watch window, real nights (TESTING.md Rounds 6 and 7), the 1.7 checks (ringing reminders, setting alarms from Today) |
 | Code | About 12,700 lines of Kotlin (with tests), 148 unit tests, CI on every push (tests, debug build, lint) |
 | Not done on purpose | A "Still awake?" nudge for falling back asleep after dismissing (the hook is `WakeWatcher.onAwake`) |
@@ -30,7 +30,7 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 - **Auto-dismiss on a locked phone.** The top priority, and it works. Starting another app's activity from the background is blocked, so it goes through a full-screen notification. After a dismiss the phone is left as it was: back to the app you were in, no Clock screen open, and the sound plays backwards so you know by ear.
 - **Ask me, Warn first, Right away.** Three ways to answer "When you're up".
 - **A living sky.** Morning clouds, night stars, a moon; light, dark, System, and Clock (night 7 pm to 6 am). Dropping the blur and baking each glass edge into a bitmap is what made scrolling hold 120 Hz.
-- **0.2.0, shared with friends.** Their phones showed four problems that shaped the app:
+- **0.2.0, shared with testers.** Their phones showed four problems that shaped the app:
   - Android 13+ locks Usage access and "Display over other apps" for apps installed from a file. Dawnly now needs nothing locked during setup: Usage access is optional and the automatic modes use a full-screen notification. It also shows step-by-step help when a lock does appear.
   - A Redmi swallowed the one-tap battery dialog, so each settings permission has a list of screens to try in turn.
   - A Redmi's Clock opened but did not dismiss, so the dismiss request has three forms, remembers the one that worked, and says "Your alarm is still on" if none does.
@@ -40,7 +40,7 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 ### 3 to 4 Nov: 0.3.0 to 1.5.4, more than an alarm helper
 - **0.3.0.** Reminders on Today, with a glass editor and time wheels. Learning from your mornings: Not yet and quick Dismiss answers steer how cautious Dawnly is, and it learns usual weekday and weekend times.
 - **1.3 to 1.4.** A sound per reminder; custom repeats and a custom watching window on hours-and-minutes wheels (a slider was tried and dropped).
-- **1.5.0, smarter detection.** Friends found setup cost too much for the payoff, so accuracy came from cheap things: the charger being unplugged as a sign, activity that has to keep going for a few minutes, and goals that are lower near the alarm and higher far from it.
+- **1.5.0, smarter detection.** Testers found setup cost too much for the payoff, so accuracy came from cheap things: the charger being unplugged as a sign, activity that has to keep going for a few minutes, and goals that are lower near the alarm and higher far from it.
 - **1.5.1 to 1.5.4.** The sun and the moon became the same soft glow, the night got blacker, and the "Alarm's off" notice stopped saying "good morning" at night.
 
 ### 5 to 6 Nov: 1.6.4 to 1.6.6
@@ -81,7 +81,7 @@ Tested on a Nothing Phone (2a), Android 16, Google Clock:
 | Samsung Clock, Xiaomi Clock | Not tested |
 
 ## Release facts
-- **What the key is for.** The release key signs every build. Android only installs an update over an app signed with the same key, and Google's 2027 registration of apps is tied to the key's fingerprint. If it is lost, the app on friends' phones can't be updated and would need uninstalling.
+- **What the key is for.** The release key signs every build. Android only installs an update over an app signed with the same key, and Google's 2027 registration of apps is tied to the key's fingerprint. If it is lost, the app on testers' phones can't be updated and would need uninstalling.
 - **Location.** `C:\Users\aryan\dawnly-keys\dawnly-release.jks` (PKCS12, RSA 4096, alias `dawnly`, valid to 2054). The password is in the git-ignored `keystore.properties` at the repo root. The only copy is on this PC; **back it up somewhere else**.
 - **SHA-256.** `DC:6D:70:4D:EA:FD:FF:B7:6B:32:2B:87:D0:1F:88:C1:0D:32:1E:AA:21:6D:CE:9F:28:49:89:72:F3:4E:0E:BE`
 - **Google registration.** A free "limited distribution" developer account registered `com.aryanlanke.dawnly` on 3 Nov. Since 30 Sep 2026 unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand; the rest of the world follows in 2027. adb installs are never affected.

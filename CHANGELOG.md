@@ -78,7 +78,7 @@ What changed in each version of Dawnly, newest first. Dates are 2026.
 - New app ID `com.aryanlanke.dawnly`.
 
 ## 0.2.0 (3 Nov)
-- First version shared with friends: works on Motorola, Redmi, OPPO and OnePlus phones installed from a file, with nothing Android locks during setup.
+- First version shared with testers: works on Motorola, Redmi, OPPO and OnePlus phones installed from a file, with nothing Android locks during setup.
 
 ## Before 0.2.0 (31 Oct to 2 Nov)
 - Reading the next alarm and dismissing it; the watch window and its foreground service; wake detection; the "Up already?" prompt with 17 sounds; the three choices for **When you're up** (Ask me, Warn first, Right away), which work with the phone locked; the glass look over a living sky; the Sunny Egg icon; CI; a signed release build.

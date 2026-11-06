@@ -107,7 +107,7 @@ app/src/main/java/com/dawnly/app/
 
 ## Status
 
-Tested on a Nothing Phone (2a), Android 16, with Google Clock. Dawnly reads and dismisses alarms there, including a repeating alarm (only the next ring is skipped). Friends have also run it on Motorola, Redmi, OPPO and OnePlus phones. Samsung Clock and Xiaomi Clock aren't tested yet; for any Clock app that can't take a dismiss request, Dawnly opens the Clock app instead.
+Tested on a Nothing Phone (2a), Android 16, with Google Clock. Dawnly reads and dismisses alarms there, including a repeating alarm (only the next ring is skipped). Testers have also run it on Motorola, Redmi, OPPO and OnePlus phones. Samsung Clock and Xiaomi Clock aren't tested yet; for any Clock app that can't take a dismiss request, Dawnly opens the Clock app instead.
 
 ## Credits
 

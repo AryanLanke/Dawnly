@@ -1,6 +1,6 @@
 # Sharing Dawnly through Google Play (internal testing)
 
-Friends who install the APK from a chat or a file get two kinds of warnings:
+Testers who install the APK from a chat or a file get two kinds of warnings:
 
 - **Play Protect** ("unsafe app", "this app may harm your device").
 - **Android's restricted settings lock** (Android 13+). It blocks Usage access and Display over other apps with "this can put your personal and financial info at risk".
@@ -18,14 +18,14 @@ Other ways, until then:
 
 ## One time: create the app
 1. Play Console → **Create app**. Name: Dawnly. Default language: English. App or game: **App**. Free. Tick the declarations → **Create app**.
-2. Left menu → **Test and release → Testing → Internal testing** → **Testers** tab → **Create email list**. Add each friend's Gmail address → **Save**.
+2. Left menu → **Test and release → Testing → Internal testing** → **Testers** tab → **Create email list**. Add each tester's Gmail address → **Save**.
 
 ## Each version
 1. Raise `versionCode` in `app/build.gradle.kts`; Play refuses the same number twice. Ask the developer to do it.
 2. Build the bundle; the developer can run it: `.\gradlew.bat bundleRelease`. The file is `app/build/outputs/bundle/release/app-release.aab`.
 3. Internal testing → **Create new release**. The first time, accept **Play App Signing**: Google keeps the key that signs what testers download, and your own key only uploads.
 4. Drag in `app-release.aab`, write a line in **Release notes** → **Next** → **Save and publish**.
-5. **Testers** tab → **Copy link**, and send it to your friends. They open it on their phone, tap **Accept invite**, then **Download it on Google Play**.
+5. **Testers** tab → **Copy link**, and send it to your testers. They open it on their phone, tap **Accept invite**, then **Download it on Google Play**.
 
 ## Forms Play asks for
 Play may not let you publish until these are filled in (left menu → **Policy → App content**). Use the answers below.

@@ -4,7 +4,7 @@ import java.time.LocalTime
 
 /**
  * The forms of `ACTION_DISMISS_ALARM` Dawnly can send. Clock apps differ in which they act on:
- * Google Clock takes [Next], but Xiaomi's Clock opened and left the alarm on (a friend's Redmi,
+ * Google Clock takes [Next], but Xiaomi's Clock opened and left the alarm on (a tester's Redmi,
  * 2026-11-03). So the forms are tried in turn until the next alarm moves (see `QuietDismiss`), and
  * the one that worked is tried first next time.
  */
