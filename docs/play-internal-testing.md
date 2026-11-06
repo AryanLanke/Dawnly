@@ -30,9 +30,15 @@ Other ways, until then:
 ## Forms Play asks for
 Play may not let you publish until these are filled in (left menu → **Policy → App content**). Use the answers below.
 
-- **Privacy policy:** a URL is needed because Dawnly reads usage stats and physical activity. A short page is enough, for example a GitHub Pages page in this repo: "Dawnly reads which app is in front, step counts and motion only during the watch window before your alarm. Nothing leaves your phone. No accounts, no ads, no analytics."
-- **Data safety:** no data is collected or shared. Everything stays on the device.
+- **Privacy policy:** a URL is needed because Dawnly reads usage stats and physical activity. Use the policy in this repo, https://github.com/AryanLanke/Dawnly/blob/main/docs/privacy-policy.md. It covers what Dawnly reads, what it keeps on the phone (settings, reminders, what it learned) and that nothing leaves the phone.
+- **Data safety:** no data is collected or shared. Everything stays on the device. (Feedback only opens the user's own email app.)
 - **Foreground service:** type **Special use**. Reason: the same text as the manifest's `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` ("Runs only during a short, user-chosen window before the user's next alarm, watching for signs they woke up early so it can offer to dismiss that alarm."). Play may ask for a short video of the watch window running.
 - **Ads:** no ads. **Target audience:** 18+ or 13+, your choice. **Content rating:** fill in the questionnaire (no violence etc.).
+
+Play also asks why Dawnly uses these sensitive permissions. Suggested reasons:
+- **`USE_FULL_SCREEN_INTENT`** (restricted on Android 14+): "Warn first and Right away dismiss the user's alarm while the phone is locked in a pocket. A full-screen notification is the only way to start the Clock app from the background."
+- **`SCHEDULE_EXACT_ALARM`**: "The watch window must start at the minute the user chose before their alarm, and reminders must come at the time the user set. Without it Android can delay them by up to an hour."
+- **`PACKAGE_USAGE_STATS`** (optional, off by default): "Counts how many apps the user opens during the watch window, and finds the app they were in so Dawnly can take them back to it after dismissing."
+- **`SYSTEM_ALERT_WINDOW`** (optional): "Lets Dawnly open the Clock app's dismiss request without an extra tap while the phone is in use. Dawnly never draws over other apps."
 
 If a review question comes up about **battery optimization** (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`), the reason is: "Dawnly's core job is watching in the background during a window before the user's alarm. If the phone stops it, the feature fails."
