@@ -21,3 +21,10 @@ keystore.properties
 
 # Python bytecode (design/app-icon/generator)
 __pycache__/
+
+# Built apps and memory dumps
+*.apk
+*.aab
+/app/release/
+*.hprof
+.vscode/
