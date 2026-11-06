@@ -2,6 +2,9 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.7 (6 Nov)
+- Code audit, no change in behaviour: removed an unused helper and its test, silenced two deprecation warnings on the usage-access check with the reason noted, tidied an import and the README's description of which alarms Dawnly keeps.
+
 ## 1.7.6 (6 Nov)
 - Eight more automated tests (149 in all): reminders survive saving and loading, including ones saved before the ring setting existed, and the hour and minute sent to the Clock app (midnight, noon, 23:59).
 

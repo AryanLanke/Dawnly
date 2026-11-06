@@ -106,7 +106,7 @@ data class HomeUiState(
 
 sealed interface HomeStatus {
     /** When the alarm on Today rings, or null with none. */
-    val ringsAt: java.time.Instant?
+    val ringsAt: Instant?
         get() = when (this) {
             is Waiting -> alarmAt
             is Watching -> alarmAt

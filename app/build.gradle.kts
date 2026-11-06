@@ -1,4 +1,4 @@
-import java.util.Properties
+﻿import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,8 +19,8 @@ android {
         applicationId = "com.aryanlanke.dawnly"
         minSdk = 26
         targetSdk = 37
-        versionCode = 24
-        versionName = "1.7.6"
+        versionCode = 25
+        versionName = "1.7.7"
     }
 
     signingConfigs {

@@ -158,6 +158,8 @@ enum class AppPermission {
         fun restrictedSettingsLocked(context: Context): Boolean? {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
             return try {
+                // The only check of this op the public SDK offers; see AppUsage.isGranted.
+                @Suppress("DEPRECATION")
                 val mode = context.getSystemService(AppOpsManager::class.java).unsafeCheckOpNoThrow(
                     "android:access_restricted_settings",
                     Process.myUid(),

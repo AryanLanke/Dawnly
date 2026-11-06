@@ -13,6 +13,9 @@ object AppUsage {
     /** Usage access is an app op the user grants in system settings, not a runtime permission. */
     fun isGranted(context: Context): Boolean {
         val ops = context.getSystemService(AppOpsManager::class.java)
+        // unsafeCheckOpNoThrow is the only check of this op that works from Android 10; deprecated
+        // in the SDK's Java docs, not in behaviour.
+        @Suppress("DEPRECATION")
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
         } else {
