@@ -1,21 +1,21 @@
 package com.dawnly.app.ui.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.padding
 import com.dawnly.app.R
 import com.dawnly.app.domain.learn.Learned
+import com.dawnly.app.ui.format.clock
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSwitch
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
-import com.dawnly.app.ui.home.clock
 
 /**
  * "Learning from you" in More options: the switch, and in plain words what Dawnly has learned from

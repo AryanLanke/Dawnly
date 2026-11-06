@@ -134,7 +134,7 @@ private fun HomeContent(
             SpringIn(order++) { SignalCard(state.signals, (status as? HomeStatus.Watching)?.wakeProgress) }
         }
         AnimatedVisibility(visible = dismissResult != null, enter = fadeIn(), exit = fadeOut()) {
-            dismissResult?.let { NoteCard(describe(it), onClick = onClearDismissResult) }
+            dismissResult?.let { NoteCard(describeDismiss(it), onClick = onClearDismissResult) }
         }
         if (status is HomeStatus.Watching) {
             SpringIn(order++) { DismissAction(status.alarmAt, status.awake && !status.notYet, onDismissAlarm) }

@@ -9,6 +9,8 @@ import androidx.compose.ui.res.stringResource
 import com.dawnly.app.R
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -20,6 +22,11 @@ data class ClockFace(val digits: String, val marker: String?)
 @Composable
 @ReadOnlyComposable
 fun formatTime(instant: Instant): String = pattern(instant, if (is24Hour()) "Hm" else "hm", locale())
+
+/** A time of day (a reminder's, a usual wake-up time) as the phone shows it. */
+@Composable
+fun clock(time: LocalTime): String =
+    formatTime(LocalDate.now().atTime(time).atZone(ZoneId.systemDefault()).toInstant())
 
 @Composable
 @ReadOnlyComposable

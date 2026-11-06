@@ -14,8 +14,8 @@ import com.dawnly.app.R
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
+import com.dawnly.app.ui.format.clock
 import com.dawnly.app.ui.format.formatDuration
-import com.dawnly.app.ui.format.formatTime
 import com.dawnly.app.ui.glass.GlassIcons
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
@@ -24,8 +24,6 @@ import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -91,8 +89,4 @@ private fun describe(reminder: Reminder): String {
     val head = if (days == null) schedule else "$schedule · $days"
     return if (reminder.why.isBlank()) head else "$head · ${reminder.why}"
 }
-
-@Composable
-internal fun clock(time: LocalTime): String =
-    formatTime(LocalDate.now().atTime(time).atZone(ZoneId.systemDefault()).toInstant())
 

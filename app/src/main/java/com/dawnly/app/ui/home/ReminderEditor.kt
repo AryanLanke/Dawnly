@@ -49,6 +49,7 @@ import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
+import com.dawnly.app.ui.format.clock
 import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.CheckBadge
 import com.dawnly.app.ui.glass.DurationWheel

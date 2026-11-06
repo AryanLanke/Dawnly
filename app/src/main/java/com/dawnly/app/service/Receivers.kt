@@ -6,7 +6,6 @@ import android.content.Intent
 import android.util.Log
 import com.dawnly.app.dawnly
 import com.dawnly.app.notify.ReminderScheduler
-import kotlinx.coroutines.launch
 
 /** Our own check alarm, set by [WatchScheduler]: the window opens, or the alarm is due. */
 class WatchAlarmReceiver : BroadcastReceiver() {
@@ -30,14 +29,8 @@ class SystemEventsReceiver : BroadcastReceiver() {
 
 /** Runs inside [goAsync], so the process isn't killed before the reminders are set again. */
 private fun BroadcastReceiver.reconcileAsync(context: Context, fromCheckAlarm: Boolean, resetReminders: Boolean) {
-    val pending = goAsync()
-    val app = context.dawnly
-    app.scope.launch {
-        try {
-            if (resetReminders) ReminderScheduler.sync(context)
-            app.watchScheduler.reconcile(fromCheckAlarm)
-        } finally {
-            pending.finish()
-        }
+    launchAsync(context) {
+        if (resetReminders) ReminderScheduler.sync(context)
+        context.dawnly.watchScheduler.reconcile(fromCheckAlarm)
     }
 }

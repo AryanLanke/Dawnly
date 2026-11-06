@@ -2,7 +2,6 @@ package com.dawnly.app.notify
 
 import android.app.AlarmManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -17,7 +16,6 @@ import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderTimes
 import java.time.LocalDateTime
 import java.time.ZoneId
-import kotlinx.coroutines.launch
 
 /**
  * Times the user's reminders: one alarm per reminder that's on, for its next time. When it goes
@@ -133,23 +131,4 @@ object ReminderScheduler {
 
     private const val KNOWN = "reminder_alarms"
     private const val KNOWN_IDS = "ids"
-}
-
-/** A reminder is due: show it, then set its next time. */
-class ReminderReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val id = intent.getLongExtra(ReminderScheduler.EXTRA_ID, -1L)
-        val pending = goAsync()
-        val app = context.dawnly
-        app.scope.launch {
-            try {
-                val reminder = app.reminders.current().firstOrNull { it.id == id } ?: return@launch
-                if (!reminder.on) return@launch
-                ReminderScheduler.show(context, reminder)
-                ReminderScheduler.schedule(context, reminder)
-            } finally {
-                pending.finish()
-            }
-        }
-    }
 }

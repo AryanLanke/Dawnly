@@ -248,7 +248,7 @@ private fun Soft(text: String, modifier: Modifier = Modifier, align: TextAlign =
 }
 
 @Composable
-internal fun describe(result: DismissResult) = when (result) {
+internal fun describeDismiss(result: DismissResult) = when (result) {
     is DismissResult.OpenedClock -> stringResource(R.string.home_opened_clock, result.clock.label)
     DismissResult.NoClockApp -> stringResource(R.string.home_no_clock)
     is DismissResult.Requested -> ""
