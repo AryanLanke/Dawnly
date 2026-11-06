@@ -40,20 +40,6 @@ import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import kotlin.math.abs
 
-/** A glass button with a soft [label] and its [value] on the right, like "Sound  Bubble". */
-@Composable
-fun ValueButton(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    GlassSurface(modifier = modifier, shape = GlassShapes.Button, onClick = onClick) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = DawnlyTheme.colors.textSoft, modifier = Modifier.weight(1f))
-            Text(value, style = MaterialTheme.typography.bodyLarge)
-        }
-    }
-}
-
 /** The big light digits on the wheels: Today's alarm digits, a little smaller so three rows fit the circle. */
 @Composable
 fun wheelDigits(): TextStyle =

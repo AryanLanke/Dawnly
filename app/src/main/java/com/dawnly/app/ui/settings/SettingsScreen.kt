@@ -1,16 +1,15 @@
 package com.dawnly.app.ui.settings
 
-import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -30,17 +29,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.settings.DismissMode
-import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.ui.glass.GlassSegmented
-import com.dawnly.app.ui.glass.PreviewFrame
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
@@ -131,7 +127,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsContent(
+internal fun SettingsContent(
     state: SettingsUiState,
     permissions: PermissionState,
     oemBattery: OemBattery?,
@@ -228,7 +224,6 @@ private fun SettingsContent(
 @Composable
 private fun Gap() = Spacer(Modifier.height(22.dp))
 
-
 private val Sensitivity.label
     get() = when (this) {
         Sensitivity.Low -> R.string.sensitivity_low
@@ -243,38 +238,3 @@ private val Appearance.label
         Appearance.System -> R.string.appearance_system
         Appearance.Clock -> R.string.appearance_clock
     }
-
-
-@Composable
-private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
-    PreviewFrame(dark) {
-        SettingsContent(
-            state = SettingsUiState(window, WakeSignalSettings(), Appearance.System, AlertSound.Flute),
-            permissions = PermissionState(setOf(AppPermission.Notifications, AppPermission.ActivityRecognition)),
-            oemBattery = oem,
-            deniedSign = null,
-            onPickWindow = {},
-            onWindowChange = {},
-            onSignalsChange = {},
-            onSignNeedsPermission = {},
-            onAppearanceChange = {},
-            onDismissModeChange = {},
-            onAllowOverlay = {},
-            onRequestPermission = {},
-            onOpenOemBattery = {},
-            onOpenSounds = {},
-            moreOpen = true,
-            onToggleMore = {},
-            contentPadding = PaddingValues(top = 40.dp, bottom = 100.dp),
-        )
-    }
-}
-
-@Preview(name = "Settings, light", showSystemUi = true)
-@Composable
-private fun SettingsLightPreview() = SettingsPreview(dark = false, window = Duration.ofHours(1), oem = null)
-
-@Preview(name = "Settings, dark, custom, Samsung", showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun SettingsDarkPreview() =
-    SettingsPreview(dark = true, window = Duration.ofMinutes(45), oem = OemBattery.Samsung)

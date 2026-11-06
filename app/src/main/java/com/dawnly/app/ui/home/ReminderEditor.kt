@@ -1,6 +1,5 @@
 package com.dawnly.app.ui.home
 
-import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -19,13 +18,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,12 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
 import com.dawnly.app.data.reminder.ReminderSounds
@@ -52,21 +44,19 @@ import com.dawnly.app.domain.reminder.ReminderSchedule
 import com.dawnly.app.ui.format.clock
 import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.CheckBadge
+import com.dawnly.app.ui.glass.DateWheel
 import com.dawnly.app.ui.glass.DurationWheel
 import com.dawnly.app.ui.glass.GlassButton
+import com.dawnly.app.ui.glass.GlassField
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSegmented
-import com.dawnly.app.ui.glass.GlassShapes
 import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
+import com.dawnly.app.ui.glass.TimeWheel
 import com.dawnly.app.ui.glass.ValueButton
-import com.dawnly.app.ui.glass.Wheel
-import com.dawnly.app.ui.glass.WheelCircle
-import com.dawnly.app.ui.glass.wheelDigits
 import com.dawnly.app.ui.settings.rememberSoundPreview
-import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -328,43 +318,6 @@ internal fun ReminderEditor(
     }
 }
 
-/** A text field made of glass: a soft label above, a rounded translucent pane, and a hint inside. */
-@Composable
-private fun GlassField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    error: String? = null,
-) {
-    val colors = DawnlyTheme.colors
-    Column {
-        SectionLabel(label)
-        GlassSurface(Modifier.fillMaxWidth(), shape = GlassShapes.Button) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.text),
-                cursorBrush = SolidColor(colors.accent),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { field ->
-                    Box(Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-                        if (value.isEmpty()) {
-                            Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = colors.textSoft.copy(alpha = 0.6f))
-                        }
-                        field()
-                    }
-                },
-            )
-        }
-        if (error != null) {
-            Text(error, style = MaterialTheme.typography.bodySmall, color = colors.tick, modifier = Modifier.padding(start = 8.dp, top = 6.dp))
-        }
-    }
-}
-
 /** A glass button showing "[label]  9:00 pm", for opening the time wheel. */
 @Composable
 private fun TimeButton(label: String, time: LocalTime, modifier: Modifier = Modifier, onClick: () -> Unit) =
@@ -405,70 +358,6 @@ private fun SoundChoice(selected: AlertSound, onPick: (AlertSound) -> Unit, onDo
                 Modifier.fillMaxWidth(),
             )
         }
-    }
-}
-
-/**
- * Picking a time, laid out like Today's alarm: a glass circle with a small [label] on top and the
- * time in big light digits. The hour, minutes and, on a 12-hour phone, am/pm are wheels: scroll
- * them, and the one in the middle is the time. A tick as each number passes the middle.
- */
-@Composable
-private fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
-    val twelveHour = !DateFormat.is24HourFormat(LocalContext.current)
-    var hour by remember { mutableStateOf(time.hour) }
-    var minute by remember { mutableStateOf(time.minute) }
-    val digits = wheelDigits()
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        WheelCircle(label) {
-            if (twelveHour) {
-                // 12, 1, 2 ... 11.
-                Wheel(12, (hour % 12), 86.dp, digits, { i -> if (i == 0) "12" else "$i" }) { i ->
-                    hour = i + if (hour >= 12) 12 else 0
-                }
-            } else {
-                Wheel(24, hour, 86.dp, digits, { i -> "%02d".format(i) }) { hour = it }
-            }
-            Text(":", style = digits, modifier = Modifier.padding(bottom = 6.dp))
-            Wheel(60, minute, 86.dp, digits, { i -> "%02d".format(i) }) { minute = it }
-            if (twelveHour) {
-                val marks = listOf(stringResource(R.string.time_am), stringResource(R.string.time_pm))
-                Wheel(
-                    2,
-                    if (hour >= 12) 1 else 0,
-                    44.dp,
-                    MaterialTheme.typography.titleMedium.copy(color = DawnlyTheme.colors.textSoft, textAlign = TextAlign.Center),
-                    { marks[it] },
-                ) { pm -> hour = hour % 12 + if (pm == 1) 12 else 0 }
-            }
-        }
-        GlassButton(stringResource(R.string.reminder_done), { onDone(LocalTime.of(hour, minute)) }, Modifier.width(200.dp))
-    }
-}
-
-/**
- * Picking a date, like the time wheel: a glass circle with a small [label] and day, month and year
- * on wheels. The year wheel starts at this year ([today]) or the date's own, if earlier.
- */
-@Composable
-private fun DateWheel(label: String, date: LocalDate, today: LocalDate, onDone: (LocalDate) -> Unit) {
-    var day by remember { mutableStateOf(date.dayOfMonth) }
-    var month by remember { mutableStateOf(date.monthValue) }
-    val firstYear = minOf(today.year, date.year)
-    var year by remember { mutableStateOf(date.year) }
-    val digits = wheelDigits()
-    val months = remember { java.time.Month.entries.map { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) } }
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        WheelCircle(label) {
-            Wheel(31, day - 1, 70.dp, digits, { i -> "${i + 1}" }) { day = it + 1 }
-            Wheel(12, month - 1, 96.dp, digits, { i -> months[i] }) { month = it + 1 }
-            Wheel(6, year - firstYear, 110.dp, digits, { i -> "${firstYear + i}" }) { year = firstYear + it }
-        }
-        GlassButton(
-            stringResource(R.string.reminder_done),
-            { onDone(LocalDate.of(year, month, day.coerceAtMost(java.time.YearMonth.of(year, month).lengthOfMonth()))) },
-            Modifier.width(200.dp),
-        )
     }
 }
 

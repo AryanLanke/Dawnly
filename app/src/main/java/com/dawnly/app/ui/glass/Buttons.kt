@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -107,4 +108,18 @@ internal fun pressScale(interactions: MutableInteractionSource): State<Float> {
 private fun Modifier.scaled(scale: State<Float>): Modifier = graphicsLayer {
     scaleX = scale.value
     scaleY = scale.value
+}
+
+/** A glass button with a soft [label] and its [value] on the right, like "Sound  Bubble". */
+@Composable
+fun ValueButton(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    GlassSurface(modifier = modifier, shape = GlassShapes.Button, onClick = onClick) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, style = MaterialTheme.typography.bodySmall, color = DawnlyTheme.colors.textSoft, modifier = Modifier.weight(1f))
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
 }

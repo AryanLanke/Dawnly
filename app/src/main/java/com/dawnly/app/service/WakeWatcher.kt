@@ -53,21 +53,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
-/** Something that changes the wake signals. Times are `SystemClock.elapsedRealtime()`. */
-private sealed interface WakeEvent {
-    data class Unlocked(val at: Long) : WakeEvent
-    data class ScreenOff(val at: Long) : WakeEvent
-    data class Unplugged(val at: Long) : WakeEvent
-    data class Steps(val totalSinceBoot: Float, val at: Long) : WakeEvent
-    data object StepsStopped : WakeEvent
-    data class StepsAvailable(val available: Boolean) : WakeEvent
-    data class AppResumed(val packageName: String) : WakeEvent
-    data class AppsAvailable(val available: Boolean) : WakeEvent
-    class Acceleration(val x: Float, val y: Float, val z: Float, val timestampNanos: Long, val at: Long) : WakeEvent
-    /** Nothing happened, but time passed (screen time grows) or the settings changed. */
-    data object Tick : WakeEvent
-}
-
 /**
  * Watches for signs the user is awake before the alarm at [alarmAt]: screen use from system
  * broadcasts, apps opened from Usage access, steps from the step counter, movement from the
