@@ -1,6 +1,6 @@
 # Dawnly: how it progressed
 
-Dawnly is at **1.7.7**. This file tells how it got there, version by version, what each step
+Dawnly is at **1.7.8**. This file tells how it got there, version by version, what each step
 taught, and what is still untested. The short list of changes per version is in [CHANGELOG.md](CHANGELOG.md);
 the test plan for the later testing phase is [TESTING.md](TESTING.md).
 
@@ -8,7 +8,7 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 
 | | |
 |---|---|
-| Version | 1.7.7 (versionCode 25), app ID `com.aryanlanke.dawnly`, Kotlin namespace `com.dawnly.app` |
+| Version | 1.7.8 (versionCode 26), app ID `com.aryanlanke.dawnly`, Kotlin namespace `com.dawnly.app` |
 | Works on | Nothing Phone (2a), Android 16, Google Clock (the phone it was built on). Friends ran it on Motorola, Redmi, OPPO and OnePlus phones. |
 | Not tested yet | Samsung Clock and Xiaomi Clock, a reboot during a watch window, real nights (TESTING.md Rounds 6 and 7), the 1.7 checks (ringing reminders, setting alarms from Today) |
 | Code | About 12,700 lines of Kotlin (with tests), 148 unit tests, CI on every push (tests, debug build, lint) |

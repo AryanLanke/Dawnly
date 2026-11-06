@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.8 (6 Nov)
+- Haptics only while sliding: taps on the Light / Dark / System choices, the tabs, switches, buttons, the Today ring, and wheel values are silent. Swiping between Today and Settings is silent.
+- A press and hold on a segmented choice or the tab bar gives a short buzz when it lets you slide, then a tick as the finger crosses each option. Dragging a wheel ticks as each value passes the middle.
+
 ## 1.7.7 (6 Nov)
 - Code audit, no change in behaviour: removed an unused helper and its test, silenced two deprecation warnings on the usage-access check with the reason noted, tidied an import and the README's description of which alarms Dawnly keeps.
 
