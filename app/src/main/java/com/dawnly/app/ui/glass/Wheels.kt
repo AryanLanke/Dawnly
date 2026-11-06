@@ -2,6 +2,7 @@ package com.dawnly.app.ui.glass
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -98,7 +100,7 @@ private val WheelRow = 58.dp
 /**
  * One wheel of [count] values, three rows tall, snapping so a value sits in the middle. Values
  * fade and shrink away from the middle, done while drawing so scrolling doesn't recompose. A tick
- * as each value passes the middle. Tapping a value above or below the middle scrolls it there, so
+ * as each value passes the middle while the wheel is slid by hand; taps don't tick. Tapping a value above or below the middle scrolls it there, so
  * AM to PM, or 7 to 8, is one tap instead of a swipe.
  */
 @Composable
@@ -116,8 +118,17 @@ fun Wheel(
     val rowPx = with(LocalDensity.current) { WheelRow.toPx() }
     val middle by remember { derivedStateOf { centred(state, rowPx) } }
     var first by remember { mutableStateOf(true) }
+    // Set by a finger dragging the wheel (and cleared when its fling ends), so a tap that scrolls
+    // a value into the middle stays silent.
+    var byHand by remember { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        state.interactionSource.interactions.collect { if (it is DragInteraction.Start) byHand = true }
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.isScrollInProgress }.collect { if (!it) byHand = false }
+    }
     LaunchedEffect(middle) {
-        if (first) first = false else haptic.tick()
+        if (first) first = false else if (byHand) haptic.tick()
         onSelect(middle.coerceIn(0, count - 1))
     }
     LazyColumn(

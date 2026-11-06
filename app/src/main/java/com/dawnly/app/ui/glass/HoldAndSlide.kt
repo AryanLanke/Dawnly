@@ -13,9 +13,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.roundToInt
 
 /**
- * Press and hold a row of equal options, then slide: it buzzes when the hold starts, the bright
- * pill follows the finger, each option ticks as the finger crosses into it, and letting go picks
- * the one under the finger. A plain tap still works the usual way. Used by the tab bar and every
+ * Press and hold a row of equal options, then slide: it buzzes when the hold lets you slide, the
+ * bright pill follows the finger, each option ticks as the finger crosses into it, and letting go
+ * picks the one under the finger. A plain tap still works the usual way. Used by the tab bar and every
  * segmented choice. Put [modifier] on the box that spans exactly the options.
  */
 @Stable

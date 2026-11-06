@@ -236,7 +236,7 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **10.14 Close without setting:** open the wheels and tap around them or press Back. **Expect:** no alarm is set.
 - [ ] **10.15 24-hour phone:** with 24-hour time, the wheels show 0 to 23 and the alarm lands at the right hour.
 - [ ] **10.16 Other Clock apps:** on Samsung or Xiaomi, setting an alarm either sets it quietly or opens the Clock app's own screen to finish it.
-- [ ] **10.17 Touch effect:** press the ring. **Expect:** it visibly sinks and a soft light rises over it, with a small tick.
+- [ ] **10.17 Touch effect:** press the ring. **Expect:** it visibly sinks and a soft light rises over it. No buzz on the tap.
 - [ ] **10.18 Set an alarm, back by itself:** set one from the wheels. **Expect:** the Clock app may flash up, then Dawnly is back in front with "Alarm set for ...", with no flute.
 - [ ] **10.19 Open in Clock:** with an alarm on Today ("Tap to open in Clock"), tap the ring. **Expect:** the Clock app's alarm list opens; change or delete the alarm there, press Back. **Expect:** Dawnly, with no flute, showing the new next alarm.
 - [ ] **10.20 Flute from the icon:** close Dawnly and open it from its icon. **Expect:** the flute plays.
@@ -251,5 +251,5 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **11.6 Custom date:** in the alarm wheel pick Custom date, set a date 3 days away, then 8:00 am. **Expect:** the date wheels slide away and the time wheels slide in; toast "Alarm set for 8:00 am on <date>"; Reminders lists "Alarm" on that date; it rings that day.
 - [ ] **11.7 Sliding:** switch between Today, Tomorrow and Custom date. **Expect:** the pill slides between the choices, and the wheels slide when the date and time wheels swap.
 - [ ] **11.8 Past date:** pick a date in the past. **Expect:** "That date has already passed." and no alarm.
-- [ ] **11.9 Tap a wheel value:** on the time wheels with 7 in the middle, tap the 8 below it, then the 6 above it; then tap PM next to AM. **Expect:** each one scrolls to the middle by itself, with a tick.
+- [ ] **11.9 Tap a wheel value:** on the time wheels with 7 in the middle, tap the 8 below it, then the 6 above it; then tap PM next to AM. **Expect:** each one scrolls to the middle by itself, with no buzz. Then drag a wheel slowly past a few values. **Expect:** a tick as each value passes the middle.
 - [ ] **11.10 Year not cut off:** on the date wheels, scroll the year to 2028 and 2030. **Expect:** all four digits show.

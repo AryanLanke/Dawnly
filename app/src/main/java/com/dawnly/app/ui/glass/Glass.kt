@@ -84,7 +84,6 @@ fun GlassSurface(
     val tint = if (strong) colors.glassStrong else colors.glass
     val interactions = remember { MutableInteractionSource() }
     val scale by pressScale(interactions)
-    val haptic = rememberHaptics()
 
     Box(
         modifier = modifier
@@ -103,10 +102,7 @@ fun GlassSurface(
                         indication = null,
                         role = Role.Button,
                         onClickLabel = onClickLabel,
-                        onClick = {
-                            haptic.click()
-                            onClick()
-                        },
+                        onClick = onClick,
                     )
                 } else {
                     Modifier

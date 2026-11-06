@@ -49,7 +49,6 @@ fun GlassSegmented(
     modifier: Modifier = Modifier,
 ) {
     val colors = DawnlyTheme.colors
-    val haptic = rememberHaptics()
     var width by remember { mutableIntStateOf(0) }
     val segment = if (options.isEmpty()) 0f else width / options.size.toFloat()
     // The pill springs to the choice, and follows the finger while held (see HoldAndSlide).
@@ -94,10 +93,7 @@ fun GlassSegmented(
                             .selectable(
                                 selected = index == selected,
                                 role = Role.RadioButton,
-                                onClick = {
-                                    if (index != selected) haptic.tick()
-                                    onSelect(index)
-                                },
+                                onClick = { onSelect(index) },
                             ),
                         contentAlignment = Alignment.Center,
                     ) {

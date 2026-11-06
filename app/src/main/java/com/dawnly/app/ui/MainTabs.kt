@@ -23,14 +23,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlurEffect
@@ -43,7 +41,6 @@ import com.dawnly.app.R
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.glass.GlassTabBar
-import com.dawnly.app.ui.glass.rememberHaptics
 import com.dawnly.app.ui.home.AlarmWheel
 import com.dawnly.app.ui.home.HomeScreen
 import com.dawnly.app.ui.home.HomeViewModel
@@ -55,7 +52,6 @@ import com.dawnly.app.ui.settings.SettingsViewModel
 import com.dawnly.app.ui.settings.WindowWheel
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 @Composable
@@ -67,7 +63,6 @@ internal fun MainTabs(
 ) {
     val pager = rememberPagerState(initialPage = TODAY) { 2 }
     val scope = rememberCoroutineScope()
-    val haptic = rememberHaptics()
     val reduceMotion = LocalReduceMotion.current
     val activity = LocalActivity.current
     fun goTo(page: Int) {
@@ -77,10 +72,6 @@ internal fun MainTabs(
         }
     }
     BackHandler(enabled = pager.targetPage != TODAY) { goTo(TODAY) }
-    // A tick each time a page settles, after a swipe or a tap on a tab.
-    LaunchedEffect(pager) {
-        snapshotFlow { pager.settledPage }.drop(1).collect { haptic.tick() }
-    }
     // Room for the funny line and the floating tab bar, so the last card can scroll clear of them.
     val padding = screenPadding(bottomExtra = NAV_FADE_SOLID + NAV_FADE_EDGE)
     // What's drawn over the tabs: the reminder editor (Today's Reminders card) or the custom

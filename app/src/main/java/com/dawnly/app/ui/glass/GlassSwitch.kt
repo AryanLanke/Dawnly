@@ -31,7 +31,6 @@ fun GlassSwitch(
     modifier: Modifier = Modifier,
 ) {
     val colors = DawnlyTheme.colors
-    val haptic = rememberHaptics()
     val thumbOffset by animateDpAsState(if (checked) 21.dp else 3.dp, DawnlyMotion.bouncy(), label = "thumb")
     val track by animateColorAsState(if (checked) colors.accent else colors.track, label = "track")
     val thumb by animateColorAsState(if (checked) colors.onAccent else Color.White, label = "thumbColor")
@@ -40,10 +39,7 @@ fun GlassSwitch(
             .size(width = 44.dp, height = 26.dp)
             .clip(CircleShape)
             .background(track)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = { on ->
-                haptic.toggle(on)
-                onCheckedChange(on)
-            }),
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
     ) {
         Box(
             Modifier

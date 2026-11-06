@@ -53,7 +53,6 @@ import com.dawnly.app.ui.glass.PrimaryButton
 import com.dawnly.app.ui.glass.ProgressBar
 import com.dawnly.app.ui.glass.ProgressRing
 import com.dawnly.app.ui.glass.ROW_INSET
-import com.dawnly.app.ui.glass.rememberHaptics
 import com.dawnly.app.ui.theme.DawnlyMotion
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Instant
@@ -84,7 +83,6 @@ internal fun AlarmRing(
         if (status == HomeStatus.NoAlarm) R.string.home_set_alarm_description else R.string.home_open_clock_description,
     )
     val interactions = remember { MutableInteractionSource() }
-    val haptic = rememberHaptics()
     val pressed by interactions.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) PRESSED_SCALE else 1f, DawnlyMotion.bouncy(), label = "ringPress")
     val glow by animateFloatAsState(if (pressed) PRESSED_GLOW else 0f, tween(if (pressed) 90 else 260), label = "ringGlow")
@@ -99,10 +97,7 @@ internal fun AlarmRing(
             if (glow > 0f) drawCircle(light.copy(alpha = glow))
         }
         .clip(CircleShape)
-        .clickable(interactions, indication = null, role = Role.Button, onClickLabel = tapLabel) {
-            haptic.click()
-            onTap()
-        }
+        .clickable(interactions, indication = null, role = Role.Button, onClickLabel = tapLabel, onClick = onTap)
     ProgressRing(
         startedAt = watching?.startedAt,
         endsAt = watching?.alarmAt,

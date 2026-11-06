@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
 import com.dawnly.app.ui.glass.GlassShapes
-import com.dawnly.app.ui.glass.rememberHaptics
 import com.dawnly.app.ui.theme.DawnlyTheme
 import kotlin.random.Random
 
@@ -34,7 +33,6 @@ import kotlin.random.Random
 internal fun FunnyLine(shown: () -> Float, tappable: Boolean, modifier: Modifier = Modifier) {
     val lines = stringArrayResource(R.array.funny_lines)
     var index by rememberSaveable { mutableIntStateOf(Random.nextInt(lines.size)) }
-    val haptic = rememberHaptics()
     AnimatedContent(
         targetState = index,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
@@ -49,7 +47,6 @@ internal fun FunnyLine(shown: () -> Float, tappable: Boolean, modifier: Modifier
             modifier = Modifier
                 .clip(GlassShapes.Pill)
                 .clickable(enabled = tappable, onClickLabel = stringResource(R.string.funny_line_next)) {
-                    haptic.tick()
                     // Any other line, never the same one twice in a row.
                     index = (index + 1 + Random.nextInt(lines.size - 1)) % lines.size
                 }
