@@ -16,7 +16,7 @@ import com.dawnly.app.data.alarm.NextAlarm
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.dawnly
 import com.dawnly.app.domain.learn.Answer
-import com.dawnly.app.system.UsageAccess
+import com.dawnly.app.system.AppUsage
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -129,7 +129,7 @@ object QuietDismiss {
     }
 
     private fun whereTheUserWas(context: Context, before: Long): ReturnTo {
-        val lastApp = if (UsageAccess.isGranted(context)) lastAppInFront(context, before) else null
+        val lastApp = if (AppUsage.isGranted(context)) lastAppInFront(context, before) else null
         return ReturnPlan.pick(lastApp, context.packageName, homeApps(context))
     }
 
@@ -150,7 +150,7 @@ object QuietDismiss {
         return last
     }
 
-    private fun homeApps(context: Context): Set<String> = UsageAccess.launchers(context) + UsageAccess.SYSTEM_UI
+    private fun homeApps(context: Context): Set<String> = AppUsage.launchers(context) + AppUsage.SYSTEM_UI
 
     private fun home(): Intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
 

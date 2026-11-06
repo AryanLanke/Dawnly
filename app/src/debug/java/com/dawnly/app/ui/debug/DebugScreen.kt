@@ -47,7 +47,7 @@ import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.watch.WatchState
 import com.dawnly.app.service.WatchService
 import com.dawnly.app.service.WatchSession
-import com.dawnly.app.system.UsageAccess
+import com.dawnly.app.system.AppUsage
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import java.time.Instant
@@ -86,10 +86,10 @@ fun DebugScreen(modifier: Modifier = Modifier) {
     val stepSensor = remember { stepSensor(context) }
 
     var activityAllowed by remember { mutableStateOf(activityAllowed(context)) }
-    var usageAllowed by remember { mutableStateOf(UsageAccess.isGranted(context)) }
+    var usageAllowed by remember { mutableStateOf(AppUsage.isGranted(context)) }
     LifecycleResumeEffect(Unit) {
         activityAllowed = activityAllowed(context)
-        usageAllowed = UsageAccess.isGranted(context)
+        usageAllowed = AppUsage.isGranted(context)
         onPauseOrDispose { }
     }
     val requestActivity = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {

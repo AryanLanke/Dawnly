@@ -27,7 +27,7 @@ import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.wake.WakeTracker
 import com.dawnly.app.notify.AwakeNotifier
-import com.dawnly.app.system.UsageAccess
+import com.dawnly.app.system.AppUsage
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -84,7 +84,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun watch() = coroutineScope {
         val saved = store.load(alarmAt)
-        val tracker = WakeTracker(resumeFrom = saved?.signals ?: WakeSignals(), ignoredApps = UsageAccess.ignoredApps(app))
+        val tracker = WakeTracker(resumeFrom = saved?.signals ?: WakeSignals(), ignoredApps = AppUsage.ignoredApps(app))
         tracker.movementAvailable = accelerometer != null
         var notified = saved?.notified ?: false
         var lastSaved = saved
@@ -242,7 +242,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         var lastSeen = System.currentTimeMillis()
         while (true) {
             delay(APPS_CHECK_PERIOD_MILLIS)
-            val allowed = UsageAccess.isGranted(app)
+            val allowed = AppUsage.isGranted(app)
             emit(WakeEvent.AppsAvailable(allowed))
             if (!allowed) continue
             val now = System.currentTimeMillis()

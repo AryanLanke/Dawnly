@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.Process
 
 /** What Dawnly needs to know about the apps on the phone, for the "apps opened" sign and going back. */
-object UsageAccess {
+object AppUsage {
     const val SYSTEM_UI = "com.android.systemui"
 
     /** Usage access is an app op the user grants in system settings, not a runtime permission. */

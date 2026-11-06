@@ -14,7 +14,7 @@ import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.dawnly.app.system.UsageAccess
+import com.dawnly.app.system.AppUsage
 
 /** The permissions Dawnly asks for, in onboarding order. */
 enum class AppPermission {
@@ -90,7 +90,7 @@ enum class AppPermission {
             Battery -> context.getSystemService(PowerManager::class.java)
                 .isIgnoringBatteryOptimizations(context.packageName)
             Overlay -> Settings.canDrawOverlays(context)
-            UsageAccess -> UsageAccess.isGranted(context)
+            UsageAccess -> AppUsage.isGranted(context)
             FullScreen -> Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
                 context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
             Notifications, ActivityRecognition -> true
