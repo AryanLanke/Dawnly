@@ -1,6 +1,6 @@
 # Dawnly: how it progressed
 
-Dawnly is at **1.7.6**. This file tells how it got there, version by version, what each step
+Dawnly is at **1.7.7**. This file tells how it got there, version by version, what each step
 taught, and what is still untested. The short list of changes per version is in [CHANGELOG.md](CHANGELOG.md);
 the test plan for the later testing phase is [TESTING.md](TESTING.md).
 
@@ -8,10 +8,10 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 
 | | |
 |---|---|
-| Version | 1.7.6 (versionCode 24), app ID `com.aryanlanke.dawnly`, Kotlin namespace `com.dawnly.app` |
+| Version | 1.7.7 (versionCode 25), app ID `com.aryanlanke.dawnly`, Kotlin namespace `com.dawnly.app` |
 | Works on | Nothing Phone (2a), Android 16, Google Clock (the phone it was built on). Friends ran it on Motorola, Redmi, OPPO and OnePlus phones. |
-| Not tested yet | Samsung Clock and Xiaomi Clock, a reboot during a watch window, real nights (TESTING.md Rounds 6 and 7) |
-| Code | About 12,700 lines of Kotlin (with tests), 149 unit tests, CI on every push (tests, debug build, lint) |
+| Not tested yet | Samsung Clock and Xiaomi Clock, a reboot during a watch window, real nights (TESTING.md Rounds 6 and 7), the 1.7 checks (ringing reminders, setting alarms from Today) |
+| Code | About 12,700 lines of Kotlin (with tests), 148 unit tests, CI on every push (tests, debug build, lint) |
 | Not done on purpose | A "Still awake?" nudge for falling back asleep after dismissing (the hook is `WakeWatcher.onAwake`) |
 
 ## How it progressed
@@ -47,8 +47,16 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 - **1.6.4 and 1.6.5.** "Which days" for a reminder (every day, today, tomorrow, a date, or a range) and a glass date wheel.
 - **1.6.6, the cleanup.** Learning stopped recording when switched off, reminders are set again before Android can stop the app after a reboot, backups leave out state that belongs to one phone, wrong in-app texts were fixed, large files were split into focused ones, shared helpers replaced copies, and the tests grew from 122 to 135. The README, privacy policy and test plan were brought up to date, the screenshots and demo were recorded again on the phone (cropped to the app, rounded corners, an animated WebP at 60 fps), and the code went under the MIT licence.
 
+### 6 Nov: 1.7.0 to 1.7.7, alarms and reminders that ring
+- **1.7.0.** Reminders can **ring like an alarm**: a full-screen ring that repeats its sound, each play fading out and getting louder, until Stop or Snooze 10 min. Alarms can be set from Today: the glass wheels pick the time and the Clock app gets it, so the alarm lives there like any other.
+- **1.7.1 and 1.7.2.** Editing and deleting from Dawnly worked by switching the old alarm off, waiting, then setting the new one. It could half-fail and leave the old alarm on, and Google Clock showed its own screen for every change anyway. So 1.7.2 removed Dawnly's Change and Delete: tapping an alarm's ring opens the Clock app.
+- **1.7.3 and 1.7.4.** Today, Tomorrow or a Custom date. Only Today goes to the Clock app, which takes a time and nothing else. Any other day is kept by Dawnly as a one-day reminder that rings like an alarm, since the Clock app can't be given a date. Dawnly comes back to the front after the Clock app is left (this needs Usage access, which is optional).
+- **1.7.5.** Tapping a value on any wheel scrolls it to the middle. The year on the date wheel was cut off ("202"), now fixed.
+- **1.7.6 and 1.7.7.** Tests grew to 149, then a code audit removed an unused helper and its test: 148 now, no change in behaviour.
+- **Not yet done:** the 1.7 checks in TESTING.md are still to be run on the phone, so the new ring and set-alarm behaviour has no device results here yet.
+
 ## Decisions that shaped it, and what they cost
-- **Read the Clock app's alarm, never set one.** Alarms stay where users already have them. Cost: Dawnly must never use `setAlarmClock()` for its own alarm, or it would read its own alarm as "the next alarm".
+- **Read the Clock app's alarm, and set new ones only through the Clock app.** Alarms stay where users already have them. Dawnly hands a new alarm's time to the Clock app and leaves edits and deletes to it. Cost: Dawnly must never use `setAlarmClock()` for its own alarm, or it would read its own alarm as "the next alarm". A date other than today can't be given to the Clock app, so Dawnly keeps that one alarm itself as a one-day reminder.
 - **Foreground service type `specialUse`.** No standard type fits "watching for signs someone woke up early". `health` needs Physical activity granted before every start; `dataSync` has a daily cap on Android 15; `shortService` stops after 3 minutes. Cost: a reason is declared for Play review.
 - **"Skipped" alarms.** Only alarms whose window Dawnly scheduled ahead of time are watched. Cost: an alarm set at 4:55 for 5:00 is left alone, and Home says so.
 - **One notification channel per sound.** Android fixes a channel's sound at creation. Cost: channels are swapped when the user picks a sound.
