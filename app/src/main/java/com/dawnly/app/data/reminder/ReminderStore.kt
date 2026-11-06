@@ -8,6 +8,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.dawnly.app.data.safeData
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderSchedule
+import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -53,6 +54,8 @@ class ReminderStore(context: Context) {
                         .put("why", r.why)
                         .put("on", r.on)
                         .apply { r.sound?.let { put("sound", it) } }
+                        .apply { r.firstDay?.let { put("firstDay", it.toString()) } }
+                        .apply { r.lastDay?.let { put("lastDay", it.toString()) } }
                         .apply {
                             when (val s = r.schedule) {
                                 is ReminderSchedule.Daily -> put("kind", "daily").put("at", s.at.toString())
@@ -85,6 +88,8 @@ class ReminderStore(context: Context) {
                         schedule = schedule,
                         on = o.optBoolean("on", true),
                         sound = o.optString("sound").takeIf { it.isNotEmpty() },
+                        firstDay = o.optString("firstDay").takeIf { it.isNotEmpty() }?.let(LocalDate::parse),
+                        lastDay = o.optString("lastDay").takeIf { it.isNotEmpty() }?.let(LocalDate::parse),
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Skipping a reminder that can't be read", e)

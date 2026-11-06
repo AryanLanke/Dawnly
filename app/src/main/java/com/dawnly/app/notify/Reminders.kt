@@ -89,7 +89,13 @@ object ReminderScheduler {
         val zone = ZoneId.systemDefault()
         // From a second on, so a reminder that just went off on time isn't set for the same moment.
         val after = LocalDateTime.now(zone).plusSeconds(1)
-        val at = ReminderTimes.next(reminder.schedule, after).atZone(zone).toInstant().toEpochMilli()
+        // Null once its last day has passed: nothing more to set.
+        val next = ReminderTimes.next(reminder.schedule, after, reminder.firstDay, reminder.lastDay)
+        if (next == null) {
+            cancel(context, reminder.id)
+            return
+        }
+        val at = next.atZone(zone).toInstant().toEpochMilli()
         val alarms = context.getSystemService(AlarmManager::class.java)
         val intent = pending(context, reminder.id)
         try {

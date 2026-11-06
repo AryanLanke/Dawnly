@@ -25,6 +25,8 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /**
  * The user's reminders on Today, like "Drink water, every 20 minutes": each with a switch, tap one
@@ -73,7 +75,19 @@ private fun describe(reminder: Reminder): String {
             clock(s.until),
         )
     }
-    return if (reminder.why.isBlank()) schedule else "$schedule · ${reminder.why}"
+    val first = reminder.firstDay
+    val last = reminder.lastDay
+    val today = LocalDate.now()
+    val days = when {
+        first == null || last == null -> null
+        first == last && first == today -> stringResource(R.string.reminder_days_today)
+        first == last && first == today.plusDays(1) -> stringResource(R.string.reminder_days_tomorrow)
+        first == today && last == today.plusDays(1) -> stringResource(R.string.reminder_days_both)
+        first == last -> stringResource(R.string.reminder_on_date, first.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
+        else -> null
+    }
+    val head = if (days == null) schedule else "$schedule · $days"
+    return if (reminder.why.isBlank()) head else "$head · ${reminder.why}"
 }
 
 @Composable

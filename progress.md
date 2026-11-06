@@ -9,6 +9,10 @@
 
 ---
 
+## ▶ 1.6.4 (2026-11-05): which days a reminder comes
+
+A reminder now has a "Which days" choice: every day, just today, just tomorrow, today and tomorrow, or a particular date. Stored as `firstDay`/`lastDay` on the reminder; `ReminderTimes.next` returns null after the last day and the alarm is cancelled.
+
 ## ▶ 1.5.4 (2026-11-04): no "good morning" at night
 
 The "Alarm's off" notice said "Have a good morning!" even for a 7:45 pm alarm. It now says "Your 7:45 pm alarm is off. You're all set.", with no time of day in it (`dismiss_done`).

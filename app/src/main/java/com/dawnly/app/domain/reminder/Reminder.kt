@@ -1,6 +1,7 @@
 package com.dawnly.app.domain.reminder
 
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -16,6 +17,9 @@ data class Reminder(
     val schedule: ReminderSchedule,
     val on: Boolean = true,
     val sound: String? = null,
+    /** The first and last day it comes; both null is every day. */
+    val firstDay: LocalDate? = null,
+    val lastDay: LocalDate? = null,
 )
 
 sealed interface ReminderSchedule {
@@ -40,7 +44,22 @@ sealed interface ReminderSchedule {
 /** When reminders come next. Pure, so it's unit tested. */
 object ReminderTimes {
     /** The first time [schedule] comes strictly after [after]. */
-    fun next(schedule: ReminderSchedule, after: LocalDateTime): LocalDateTime = when (schedule) {
+    fun next(
+        schedule: ReminderSchedule,
+        after: LocalDateTime,
+        firstDay: LocalDate? = null,
+        lastDay: LocalDate? = null,
+    ): LocalDateTime? {
+        val from = if (firstDay != null && after.toLocalDate().isBefore(firstDay)) {
+            firstDay.atStartOfDay().minusNanos(1)
+        } else {
+            after
+        }
+        val time = nextEveryDay(schedule, from)
+        return if (lastDay != null && time.toLocalDate().isAfter(lastDay)) null else time
+    }
+
+    private fun nextEveryDay(schedule: ReminderSchedule, after: LocalDateTime): LocalDateTime = when (schedule) {
         is ReminderSchedule.Daily -> {
             val today = after.toLocalDate().atTime(schedule.at)
             if (today.isAfter(after)) today else today.plusDays(1)
