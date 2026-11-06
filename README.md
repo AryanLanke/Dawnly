@@ -9,7 +9,9 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/demo.webp" width="320" alt="Demo: Dawnly watching before an alarm, the reminder editor with its time wheel, light and dark mode, then the Up already? prompt and the Alarm's off notice after the alarm is dismissed">
+  <img src="docs/screenshots/today-1.7.8.webp" width="240" alt="Today: set an alarm or add a reminder">
+  <img src="docs/screenshots/settings-1.7.8.webp" width="240" alt="Settings: how early to watch, when you're up, sound and appearance">
+  <img src="docs/screenshots/reminder-editor-1.7.8.webp" width="240" alt="The reminder editor: name, repeat, times and which days">
 </p>
 
 ## Screenshots
