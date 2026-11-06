@@ -11,6 +11,7 @@ val keystoreFile: File = rootProject.file("keystore.properties")
 val keystore = Properties().apply { if (keystoreFile.exists()) keystoreFile.inputStream().use(::load) }
 
 android {
+    testOptions { unitTests.isReturnDefaultValues = true }
     namespace = "com.dawnly.app"
     compileSdk = 37
 
@@ -18,8 +19,8 @@ android {
         applicationId = "com.aryanlanke.dawnly"
         minSdk = 26
         targetSdk = 37
-        versionCode = 23
-        versionName = "1.7.5"
+        versionCode = 24
+        versionName = "1.7.6"
     }
 
     signingConfigs {
@@ -73,4 +74,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    // Android's org.json is a stub on the PC; this is the same API, for the reminder-store tests.
+    testImplementation("org.json:json:20240303")
 }

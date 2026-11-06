@@ -41,7 +41,7 @@ class ReminderStore(context: Context) {
         store.edit { prefs -> prefs[LIST] = encode(change(prefs[LIST]?.let(::decode).orEmpty())) }
     }
 
-    private companion object {
+    internal companion object {
         const val TAG = "ReminderStore"
         val LIST = stringPreferencesKey("list")
 

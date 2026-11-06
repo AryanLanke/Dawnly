@@ -13,6 +13,16 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 
+/**
+ * The hour and minute sent with ACTION_SET_ALARM: 24-hour values, so 00:00 is midnight and 12 is
+ * noon. Pure, so it's unit tested; the Clock app reads these as the time of day.
+ */
+data class SetAlarmExtras(val hour: Int, val minutes: Int) {
+    companion object {
+        fun of(time: LocalTime) = SetAlarmExtras(time.hour, time.minute)
+    }
+}
+
 /** An installed app, named the way the user sees it. */
 data class AppRef(val packageName: String, val label: String)
 
@@ -127,10 +137,13 @@ class ClockApp(context: Context) {
         private const val TAG = "ClockApp"
 
         /** A new alarm at [time], set without opening the Clock app's screen. */
-        fun setAlarmIntent(time: LocalTime): Intent = Intent(AlarmClock.ACTION_SET_ALARM)
-            .putExtra(AlarmClock.EXTRA_HOUR, time.hour)
-            .putExtra(AlarmClock.EXTRA_MINUTES, time.minute)
-            .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        fun setAlarmIntent(time: LocalTime): Intent {
+            val extras = SetAlarmExtras.of(time)
+            return Intent(AlarmClock.ACTION_SET_ALARM)
+                .putExtra(AlarmClock.EXTRA_HOUR, extras.hour)
+                .putExtra(AlarmClock.EXTRA_MINUTES, extras.minutes)
+                .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        }
 
         /**
          * `EXTRA_SKIP_UI` is documented only for setting alarms, and Google Clock shows its alarm

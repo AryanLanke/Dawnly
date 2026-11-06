@@ -74,7 +74,7 @@ app/src/main/java/com/dawnly/app/
 Debug-only code (the wake detection screen and an adb test receiver) lives in `app/src/debug/`, so it never ships in the release app.
 
 - **One entry point.** Everything that can change the plan (opening the app, a settings change, the next alarm changing, a reboot, an app update, our own alarm firing) calls `WatchScheduler.reconcile()`. It works the state out from scratch every time, so it's safe to call any number of times.
-- **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (141 in total, including reminder times, learning and the dismiss guard).
+- **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (149 in total, including reminder times, learning and the dismiss guard).
 - **The UI is a design system, not a theme.** `ui/glass/` has translucent glass surfaces (rim and shadow drawn once into bitmaps, so scrolling holds 120 Hz), a living sky behind the glass (morning clouds in light mode, stars, shooting stars and a moon in dark mode) drawn in the draw phase only, spring motion, and a progress ring. Everything is Compose, with light and dark modes, and the motion stays still when the system's reduce-animations setting is on. The mockups it was built from are in [design/mockups.html](design/mockups.html), and the app icon (a fried egg with a white of blue glass) and the script that draws it are in [design/app-icon](design/app-icon).
 
 ## Tech stack
@@ -86,7 +86,7 @@ Debug-only code (the wake detection screen and an adb test receiver) lives in `a
 | Architecture | MVVM, single module, `ui` / `data` / `domain` / `service` / `notify` packages |
 | Storage | Jetpack DataStore (Preferences), a little SharedPreferences |
 | Background work | `AlarmManager` exact alarms, a foreground service, dynamically registered receivers, sensors |
-| Tests | 141 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
+| Tests | 149 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
 | Build | Gradle 9.8 with a version catalog, AGP 9.4, R8 for release |
 | CI | GitHub Actions: unit tests, debug build and lint on every push and pull request |
 | Platform | minSdk 26 (Android 8.0), target and compile SDK 37 |

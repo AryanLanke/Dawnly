@@ -2,6 +2,9 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.6 (6 Nov)
+- Eight more automated tests (149 in all): reminders survive saving and loading, including ones saved before the ring setting existed, and the hour and minute sent to the Clock app (midnight, noon, 23:59).
+
 ## 1.7.5 (6 Nov)
 - Tap a value on any wheel to scroll it to the middle: AM to PM, 7 to 8, a month, a year. Swiping still works.
 - The year on the date wheel is no longer cut off (2028 showed as 202); the wheels are one line each and the year wheel is wider.
