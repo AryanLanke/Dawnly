@@ -9,16 +9,16 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/demo.gif" width="320" alt="A 40-second tour of Dawnly: switching from light to dark, setup, setting an alarm and adding reminders">
+  <img src="docs/demo.webp" width="320" alt="A tour of Dawnly: switching from light to dark, setup, setting an alarm and adding reminders">
 </p>
 
 ## Screenshots
 
 | | Light | Dark |
 |---|---|---|
-| **Today**, with reminders | <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode"> | <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode"> |
-| **Settings** | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode"> |
-| **New reminder** | <img src="docs/screenshots/reminder-editor-light.webp" width="240" alt="The reminder editor in light mode"> | <img src="docs/screenshots/reminder-editor-dark.webp" width="240" alt="The reminder editor in dark mode"> |
+| **Today**, switching reminders on and off | <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode, reminders switched off and on"> | <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode, reminders switched off and on"> |
+| **Settings**, sliding across the choices | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode, sliding across the watch window and When you're up"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode, sliding across the choices"> |
+| **New reminder**, sliding across the repeat | <img src="docs/screenshots/reminder-editor-light.webp" width="240" alt="The reminder editor in light mode, sliding across the repeat choices"> | <img src="docs/screenshots/reminder-editor-dark.webp" width="240" alt="The reminder editor in dark mode, sliding across the repeat choices"> |
 
 ## How it works
 
