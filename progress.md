@@ -9,6 +9,10 @@
 
 ---
 
+## ▶ 1.6.5 (2026-11-06): date ranges and a glass date wheel
+
+Reminders can run "From one date to another" (e.g. 6 to 12 November). Picking a date now uses a glass wheel (day, month, year) like the time wheel, instead of the Material date dialog.
+
 ## ▶ 1.6.4 (2026-11-05): which days a reminder comes
 
 A reminder now has a "Which days" choice: every day, just today, just tomorrow, today and tomorrow, or a particular date. Stored as `firstDay`/`lastDay` on the reminder; `ReminderTimes.next` returns null after the last day and the alarm is cancelled.

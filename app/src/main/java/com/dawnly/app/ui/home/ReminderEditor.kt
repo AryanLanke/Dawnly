@@ -65,16 +65,10 @@ import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
 import com.dawnly.app.ui.theme.DawnlyTheme
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -85,10 +79,11 @@ private enum class Days(val label: Int) {
     Tomorrow(R.string.reminder_days_tomorrow),
     Both(R.string.reminder_days_both),
     OnDate(R.string.reminder_days_date),
+    Range(R.string.reminder_days_range),
 }
 
 /** The card's other pages: a time on the wheels, a custom repeat, or the reminder's sound. */
-private enum class EditorPage { At, From, Until, Interval, Sound }
+private enum class EditorPage { At, From, Until, Interval, Sound, DateA, DateB }
 
 /**
  * Adding or changing a reminder, drawn over Today (in the app's own window, so it keeps the
@@ -127,14 +122,14 @@ internal fun ReminderEditor(
                 first == last && first == today -> Days.Today
                 first == last && first == today.plusDays(1) -> Days.Tomorrow
                 first == today && last == today.plusDays(1) -> Days.Both
-                else -> Days.OnDate
+                first == last -> Days.OnDate
+                else -> Days.Range
             },
         )
     }
     var date by remember { mutableStateOf(initial?.firstDay?.takeIf { it >= today } ?: today) }
-    var pickingDate by remember { mutableStateOf(false) }
+    var dateTo by remember { mutableStateOf(initial?.lastDay?.takeIf { it >= date } ?: date.plusDays(6)) }
 
-    if (pickingDate) DateChoice(date, onPick = { date = it }, onDismiss = { pickingDate = false })
     BackHandler { if (picking != null) picking = null else onClose() }
     Box(
         Modifier
@@ -155,6 +150,23 @@ internal fun ReminderEditor(
         ) { page ->
             if (page == EditorPage.Sound) {
                 SoundChoice(sound, onPick = { sound = it }, onDone = { picking = null })
+                return@AnimatedContent
+            }
+            if (page == EditorPage.DateA || page == EditorPage.DateB) {
+                val isTo = page == EditorPage.DateB
+                DateWheel(
+                    stringResource(if (days == Days.Range) (if (isTo) R.string.reminder_date_to else R.string.reminder_date_from) else R.string.reminder_date),
+                    if (isTo) dateTo else date,
+                    today,
+                    onDone = { picked ->
+                        if (isTo) dateTo = picked else date = picked
+                        if (days == Days.Range) {
+                            if (!isTo && dateTo < picked) dateTo = picked
+                            if (isTo && picked < date) date = picked
+                        }
+                        picking = null
+                    },
+                )
                 return@AnimatedContent
             }
             if (page == EditorPage.Interval) {
@@ -258,7 +270,7 @@ internal fun ReminderEditor(
                                 divider = index > 0,
                                 modifier = Modifier.selectable(selected = option == days, role = Role.RadioButton) {
                                     days = option
-                                    if (option == Days.OnDate) pickingDate = true
+                                    if (option == Days.OnDate) picking = EditorPage.DateA
                                 },
                             ) {
                                 if (option == days) CheckBadge()
@@ -270,7 +282,19 @@ internal fun ReminderEditor(
                             stringResource(R.string.reminder_date),
                             date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                             Modifier.fillMaxWidth(),
-                        ) { pickingDate = true }
+                        ) { picking = EditorPage.DateA }
+                    }
+                    if (days == Days.Range) {
+                        ValueButton(
+                            stringResource(R.string.reminder_date_from),
+                            date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                            Modifier.fillMaxWidth(),
+                        ) { picking = EditorPage.DateA }
+                        ValueButton(
+                            stringResource(R.string.reminder_date_to),
+                            dateTo.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                            Modifier.fillMaxWidth(),
+                        ) { picking = EditorPage.DateB }
                     }
                     // Its own sound, so a reminder is never mistaken for the alarm's question.
                     ValueButton(stringResource(R.string.reminder_sound), stringResource(sound.label), Modifier.fillMaxWidth()) {
@@ -291,6 +315,7 @@ internal fun ReminderEditor(
                                         Days.Tomorrow -> today.plusDays(1) to today.plusDays(1)
                                         Days.Both -> today to today.plusDays(1)
                                         Days.OnDate -> date to date
+                                        Days.Range -> date to dateTo
                                     }
                                     onSave(
                                         Reminder(
@@ -321,23 +346,6 @@ internal fun ReminderEditor(
             }
         }
     }
-}
-
-/** A date picker over the card; [onPick] gets the chosen day. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DateChoice(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> Unit) {
-    val state = rememberDatePickerState(initialSelectedDateMillis = initial.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli())
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                state.selectedDateMillis?.let { onPick(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
-                onDismiss()
-            }) { Text(stringResource(R.string.reminder_done)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) } },
-    ) { DatePicker(state) }
 }
 
 /** A text field made of glass: a soft label above, a rounded translucent pane, and a hint inside. */
@@ -455,6 +463,32 @@ private fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Uni
             }
         }
         GlassButton(stringResource(R.string.reminder_done), { onDone(LocalTime.of(hour, minute)) }, Modifier.width(200.dp))
+    }
+}
+
+/**
+ * Picking a date, like the time wheel: a glass circle with a small [label] and day, month and year
+ * on wheels. The year wheel starts at this year ([today]) or the date's own, if earlier.
+ */
+@Composable
+private fun DateWheel(label: String, date: LocalDate, today: LocalDate, onDone: (LocalDate) -> Unit) {
+    var day by remember { mutableStateOf(date.dayOfMonth) }
+    var month by remember { mutableStateOf(date.monthValue) }
+    val firstYear = minOf(today.year, date.year)
+    var year by remember { mutableStateOf(date.year) }
+    val digits = wheelDigits()
+    val months = remember { java.time.Month.entries.map { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) } }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        WheelCircle(label) {
+            Wheel(31, day - 1, 70.dp, digits, { i -> "${i + 1}" }) { day = it + 1 }
+            Wheel(12, month - 1, 96.dp, digits, { i -> months[i] }) { month = it + 1 }
+            Wheel(6, year - firstYear, 110.dp, digits, { i -> "${firstYear + i}" }) { year = firstYear + it }
+        }
+        GlassButton(
+            stringResource(R.string.reminder_done),
+            { onDone(LocalDate.of(year, month, day.coerceAtMost(java.time.YearMonth.of(year, month).lengthOfMonth()))) },
+            Modifier.width(200.dp),
+        )
     }
 }
 

@@ -84,7 +84,10 @@ private fun describe(reminder: Reminder): String {
         first == last && first == today.plusDays(1) -> stringResource(R.string.reminder_days_tomorrow)
         first == today && last == today.plusDays(1) -> stringResource(R.string.reminder_days_both)
         first == last -> stringResource(R.string.reminder_on_date, first.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
-        else -> null
+        else -> {
+            val f = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+            stringResource(R.string.reminder_range, first.format(f), last.format(f))
+        }
     }
     val head = if (days == null) schedule else "$schedule · $days"
     return if (reminder.why.isBlank()) head else "$head · ${reminder.why}"
