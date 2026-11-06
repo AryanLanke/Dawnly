@@ -8,13 +8,24 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
-## Screenshots
+<p align="center">
+  <img src="docs/website-phone.gif" height="540" alt="The Dawnly website on a phone: tapping Download APK, then Yes, download it">
+</p>
 
-| | Light | Dark |
-|---|---|---|
-| **Today**, switching reminders on and off | <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode, reminders switched off and on"> | <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode, reminders switched off and on"> |
-| **Settings**, sliding across the choices | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode, sliding across the watch window and When you're up"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode, sliding across the choices"> |
-| **New reminder**, sliding across the repeat | <img src="docs/screenshots/reminder-editor-light.webp" width="240" alt="The reminder editor in light mode, sliding across the repeat choices"> | <img src="docs/screenshots/reminder-editor-dark.webp" width="240" alt="The reminder editor in dark mode, sliding across the repeat choices"> |
+## Try it
+
+**[Download Dawnly from dawnly-website.pages.dev →](https://dawnly-website.pages.dev)**
+
+Open the link on your Android phone (Android 8.0 or newer). On a computer the download button is hidden and the page asks you to open it on your phone. It's a signed APK, free, with no account: tap it, allow installs from your browser, and Dawnly walks you through the rest. Android warns about any app that isn't from the Play Store; that warning is normal for an APK. The site's own code is in [dawnly-firstlight](https://github.com/AryanLanke/dawnly-firstlight).
+
+## What it does
+
+- **Turns off an alarm you've beaten.** In a short window before your alarm, Dawnly looks for signs you're up (screen use, apps opened, steps, movement, the charger unplugged) and offers to dismiss the alarm in your Clock app. You choose: **Ask me**, **Warn first** (a one-minute countdown), or **Right away**.
+- **Works with your Clock app.** It reads the next alarm from Google, Samsung or Xiaomi Clock, and can set new ones there from Today on glass time wheels. Edits and deletes stay in the Clock app.
+- **Reminders.** A name, an optional "why", and a time: once a day, or every 15, 20, 30 or 60 minutes (or any custom gap) between two times. Pick which days, a sound, and whether it comes as a notification or **rings like an alarm**.
+- **Learns your mornings.** "Not yet" makes it more careful, a quick "Dismiss" makes it bolder, and it learns your usual weekday and weekend wake-up times. All of it stays on the phone.
+- **Glass design.** Translucent glass over a living sky (clouds by day, stars and a moon at night) in Light, Dark, System or Clock mode, holding 120 Hz while scrolling. Press and hold any choice to slide across it.
+- **Private by design.** No internet permission, no account, nothing sent anywhere.
 
 ## How it works
 

@@ -5,7 +5,7 @@
 **What every store asks for:**
 - **Privacy policy link:** https://github.com/AryanLanke/Dawnly/blob/main/docs/privacy-policy.md. It only works once that file is pushed to GitHub.
 - **The app file:** ask the developer for a release build. The APK is `app/build/outputs/apk/release/app-release.apk`; Google Play would use the `.aab`.
-- **Icon, screenshots and description:** the icon is `design/app-icon/egg-512.png`, screenshots are in `docs/screenshots/`, and the description can reuse the README's opening paragraph (add a line about reminders).
+- **Icon, screenshots and description:** the icon is `design/app-icon/egg-512.png`, screenshots can be taken on the phone (the README shows the download site, `docs/website-phone.gif`), and the description can reuse the README's opening paragraph (add a line about reminders).
 - **Category:** Tools (or Lifestyle). **Price:** free. **Ads:** none. **In-app purchases:** none.
 
 ## Xiaomi GetApps (Xiaomi, Redmi and POCO phones)
