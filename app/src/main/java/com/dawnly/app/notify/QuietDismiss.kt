@@ -157,7 +157,7 @@ object QuietDismiss {
     /** Brings [target] back over the Clock app, as if the user had tapped its icon. */
     private fun goBack(context: Context, target: ReturnTo) {
         val intent = when (target) {
-            ReturnTo.Dawnly -> Intent(context, MainActivity::class.java)
+            ReturnTo.Dawnly -> MainActivity.backToFront(context)
             is ReturnTo.App -> context.packageManager.getLaunchIntentForPackage(target.packageName) ?: home()
             ReturnTo.Home -> home()
         }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

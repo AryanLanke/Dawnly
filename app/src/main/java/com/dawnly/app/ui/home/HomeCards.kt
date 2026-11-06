@@ -5,9 +5,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.LocalIndication
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -50,20 +53,23 @@ import com.dawnly.app.ui.glass.PrimaryButton
 import com.dawnly.app.ui.glass.ProgressBar
 import com.dawnly.app.ui.glass.ProgressRing
 import com.dawnly.app.ui.glass.ROW_INSET
-import com.dawnly.app.ui.glass.pressScale
 import com.dawnly.app.ui.glass.rememberHaptics
+import com.dawnly.app.ui.theme.DawnlyMotion
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Instant
 import kotlin.math.roundToInt
 
 // The cards and pieces the Home screen is built from.
 
+/** How far the alarm ring sinks, and how bright its light gets, while pressed. */
+private const val PRESSED_SCALE = 0.93f
+private const val PRESSED_GLOW = 0.16f
+
 @Composable
 internal fun AlarmRing(
     status: HomeStatus,
     now: Instant,
     modifier: Modifier = Modifier,
-    changeable: Boolean = false,
     onTap: () -> Unit = {},
 ) {
     val progress = (status as? HomeStatus.Watching)?.progress
@@ -71,25 +77,29 @@ internal fun AlarmRing(
         stringResource(R.string.home_progress_description, (it * 100).roundToInt())
     }
     val watching = status as? HomeStatus.Watching
-    // The whole ring is a button: set an alarm, change the one set from Dawnly, or open the Clock
-    // app for one made there. It sinks a little and ripples when pressed.
+    // The whole ring is a button: set an alarm, or open the Clock app to change or delete the one
+    // there. Pressed, it sinks and a soft light rises over the glass (a ripple would be hidden
+    // under the glass), with a tick.
     val tapLabel = stringResource(
-        when {
-            status == HomeStatus.NoAlarm -> R.string.home_set_alarm_description
-            changeable -> R.string.alarm_edit_label
-            else -> R.string.home_open_clock_description
-        },
+        if (status == HomeStatus.NoAlarm) R.string.home_set_alarm_description else R.string.home_open_clock_description,
     )
     val interactions = remember { MutableInteractionSource() }
     val haptic = rememberHaptics()
-    val scale by pressScale(interactions)
+    val pressed by interactions.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) PRESSED_SCALE else 1f, DawnlyMotion.bouncy(), label = "ringPress")
+    val glow by animateFloatAsState(if (pressed) PRESSED_GLOW else 0f, tween(if (pressed) 90 else 260), label = "ringGlow")
+    val light = DawnlyTheme.colors.accent
     val tappable = Modifier
         .graphicsLayer {
             scaleX = scale
             scaleY = scale
         }
+        .drawWithContent {
+            drawContent()
+            if (glow > 0f) drawCircle(light.copy(alpha = glow))
+        }
         .clip(CircleShape)
-        .clickable(interactions, LocalIndication.current, role = Role.Button, onClickLabel = tapLabel) {
+        .clickable(interactions, indication = null, role = Role.Button, onClickLabel = tapLabel) {
             haptic.click()
             onTap()
         }
@@ -128,14 +138,12 @@ internal fun AlarmRing(
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
                 label = "subtitle",
             ) { Soft(it, Modifier.padding(top = 8.dp)) }
-            if (changeable) {
-                Text(
-                    stringResource(R.string.home_tap_to_change),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = DawnlyTheme.colors.accent,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-            }
+            Text(
+                stringResource(R.string.home_tap_to_change),
+                style = MaterialTheme.typography.labelMedium,
+                color = DawnlyTheme.colors.accent,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
     }
 }

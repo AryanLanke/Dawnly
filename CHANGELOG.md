@@ -2,6 +2,12 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.2 (6 Nov)
+- Simpler alarms: tapping the ring on an alarm opens the Clock app ("Tap to open in Clock"), where you change or delete it with its own controls. Dawnly's own Change and Delete are gone: Google Clock showed its screen for every change anyway, and the switch-off-then-set trick could half-fail.
+- After setting an alarm, Dawnly comes back in front by itself once the Clock app has it.
+- The ring visibly sinks and lights up when pressed, with a tick.
+- The flute plays only when Dawnly is opened from its icon, not when it comes back from the Clock app.
+
 ## 1.7.1 (6 Nov)
 - **Change or delete an alarm set from Dawnly.** Tap the ring ("Tap to change"), move the wheels and tap Done, or tap Delete alarm. Android only lets apps set and dismiss alarms, so Dawnly switches the old one off in the Clock app, waits until it's really off, then sets the new one. If the Clock app keeps the old one on, nothing new is set and the Clock app stays open to change it there.
 - Alarms you made in the Clock app (they may repeat) are left to the Clock app: tapping the ring opens it.

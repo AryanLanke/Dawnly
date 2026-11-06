@@ -28,7 +28,7 @@ It also has **Reminders** ("Drink water, every 20 minutes") and **learns from yo
 
 ## How it works
 
-1. **Reads your next alarm.** `AlarmManager.getNextAlarmClock()` gives the next alarm set in any Clock app (Google, Samsung, Xiaomi). Dawnly follows `ACTION_NEXT_ALARM_CLOCK_CHANGED`, so it updates as soon as you change an alarm. You can also set an alarm from Today: Dawnly picks the time on its glass wheels and hands it to the Clock app with `AlarmClock.ACTION_SET_ALARM`, so the alarm lives in the Clock app like any other. An alarm set from Dawnly can be changed or deleted from Today: as Android has no edit intent, Dawnly dismisses the old one, waits for the next alarm to move, then sets the new one. Dawnly never keeps alarms of its own.
+1. **Reads your next alarm.** `AlarmManager.getNextAlarmClock()` gives the next alarm set in any Clock app (Google, Samsung, Xiaomi). Dawnly follows `ACTION_NEXT_ALARM_CLOCK_CHANGED`, so it updates as soon as you change an alarm. You can also set an alarm from Today: Dawnly picks the time on its glass wheels and hands it to the Clock app with `AlarmClock.ACTION_SET_ALARM`, so the alarm lives in the Clock app like any other. To change or delete an alarm, tapping it on Today opens the Clock app: Android gives apps no way to edit another app's alarms. Dawnly never keeps alarms of its own.
 2. **Watches only during a window you choose** (30 min, 1 hr, 2 hr, or custom from 5 min to 3 hr 59 min) before that alarm. An exact alarm starts a quiet foreground service when the window opens; it stops when the alarm rings or is dismissed. Nothing runs all night.
 3. **Looks for signs you're awake.** Each sign has a goal, set by one Low / Medium / High control:
 

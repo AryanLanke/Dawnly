@@ -1,5 +1,6 @@
 package com.dawnly.app
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,7 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import com.dawnly.app.data.sound.AlertSound
-import com.dawnly.app.notify.AlarmEdit
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.ui.DawnlyRoot
 import com.dawnly.app.ui.MainViewModel
@@ -17,6 +17,12 @@ import com.dawnly.app.ui.settings.SoundPreview
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        /** Brings the Dawnly screen that's already open back in front, rather than a new one. */
+        fun backToFront(context: android.content.Context): Intent = Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    }
+
     private val main: MainViewModel by viewModels { MainViewModel.factory(dawnly) }
     private val home: HomeViewModel by viewModels { HomeViewModel.factory(dawnly) }
     private val settings: SettingsViewModel by viewModels { SettingsViewModel.factory(dawnly) }
@@ -32,7 +38,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         preferFastestRefreshRate()
         // Once per opening, not again when the screen turns.
-        if (savedInstanceState == null) chime.play(AlertSound.Flute)
+        // Only when opened from its icon: not when it comes back from the Clock app, a
+        // notification or a ringing reminder.
+        if (savedInstanceState == null && openedFromIcon(intent)) chime.play(AlertSound.Flute)
         setContent {
             DawnlyRoot(main, home, settings)
         }
@@ -53,6 +61,9 @@ class MainActivity : ComponentActivity() {
         window.attributes = window.attributes.apply { preferredDisplayModeId = fastest.modeId }
     }
 
+    private fun openedFromIcon(intent: Intent?): Boolean =
+        intent?.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
+
     override fun onDestroy() {
         chime.stop()
         super.onDestroy()
@@ -63,7 +74,5 @@ class MainActivity : ComponentActivity() {
         // Covers a fresh install (no broadcast has arrived yet) and returning from permission settings.
         dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
         dawnly.scope.launch { ReminderScheduler.sync(this@MainActivity) }
-        // Back from the Clock app after an alarm was changed: the old one is off, set the new one.
-        AlarmEdit.takePendingSet()?.let { home.setAlarm(this, it) }
     }
 }

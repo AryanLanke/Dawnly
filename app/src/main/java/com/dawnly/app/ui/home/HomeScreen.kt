@@ -19,7 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -44,7 +43,6 @@ fun HomeScreen(
     onRequestPermission: (AppPermission) -> Unit,
     onEditReminder: (Reminder?) -> Unit,
     onSetAlarm: () -> Unit,
-    onEditAlarm: (Instant) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,8 +61,6 @@ fun HomeScreen(
         onRequestPermission = onRequestPermission,
         contentPadding = contentPadding,
         onSetAlarm = onSetAlarm,
-        onEditAlarm = onEditAlarm,
-        isDawnlyAlarm = viewModel::isDawnlyAlarm,
         onOpenClock = { activity?.let(viewModel::openClock) },
     )
 }
@@ -83,8 +79,6 @@ internal fun HomeContent(
     contentPadding: PaddingValues,
     now: Instant = Instant.now(),
     onSetAlarm: () -> Unit = {},
-    onEditAlarm: (Instant) -> Unit = {},
-    isDawnlyAlarm: (Instant) -> Boolean = { false },
     onOpenClock: () -> Unit = {},
 ) {
     val status = state.status
@@ -100,21 +94,12 @@ internal fun HomeContent(
     ) {
         Spacer(Modifier.height(20.dp))
         SpringIn(order = 0) {
-            val alarmAt = status.ringsAt
-            // Read again when the alarm changes, e.g. after one set from Dawnly shows up.
-            val changeable = remember(alarmAt) { alarmAt != null && isDawnlyAlarm(alarmAt) }
+            // No alarm: set one here. An alarm: the Clock app changes or deletes it.
             AlarmRing(
                 status,
                 now,
                 Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp),
-                changeable = changeable,
-                onTap = {
-                    when {
-                        alarmAt == null -> onSetAlarm()
-                        changeable -> onEditAlarm(alarmAt)
-                        else -> onOpenClock()
-                    }
-                },
+                onTap = { if (status.ringsAt == null) onSetAlarm() else onOpenClock() },
             )
         }
         // With an alarm already set, another one is still a tap away.

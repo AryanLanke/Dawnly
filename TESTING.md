@@ -236,8 +236,7 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **10.14 Close without setting:** open the wheels and tap around them or press Back. **Expect:** no alarm is set.
 - [ ] **10.15 24-hour phone:** with 24-hour time, the wheels show 0 to 23 and the alarm lands at the right hour.
 - [ ] **10.16 Other Clock apps:** on Samsung or Xiaomi, setting an alarm either sets it quietly or opens the Clock app's own screen to finish it.
-- [ ] **10.17 Touch effect:** tap the ring. **Expect:** it sinks a little, ripples and gives a small tick.
-- [ ] **10.18 Change an alarm:** set an alarm from Dawnly, then tap the ring ("Tap to change"), move it 10 minutes and tap Done. **Expect:** the Clock app opens briefly, Dawnly comes back with "Alarm set for ...", and the Clock app's list has the new time with the old one switched off.
-- [ ] **10.19 Delete an alarm:** tap the ring, Delete alarm. **Expect:** "Alarm deleted"; the Clock app shows it switched off; Today shows the next alarm, or "No alarm yet".
-- [ ] **10.20 Far-off alarm:** change an alarm set for tomorrow. **Expect:** it works, or, if the Clock app won't switch it off, "The Clock app kept the old alarm on" and no second alarm is set.
-- [ ] **10.21 Clock-made alarm:** with the next alarm made in the Clock app, tap the ring. **Expect:** the Clock app opens; no "Tap to change" under the time.
+- [ ] **10.17 Touch effect:** press the ring. **Expect:** it visibly sinks and a soft light rises over it, with a small tick.
+- [ ] **10.18 Set an alarm, back by itself:** set one from the wheels. **Expect:** the Clock app may flash up, then Dawnly is back in front with "Alarm set for ...", with no flute.
+- [ ] **10.19 Open in Clock:** with an alarm on Today ("Tap to open in Clock"), tap the ring. **Expect:** the Clock app's alarm list opens; change or delete the alarm there, press Back. **Expect:** Dawnly, with no flute, showing the new next alarm.
+- [ ] **10.20 Flute from the icon:** close Dawnly and open it from its icon. **Expect:** the flute plays.

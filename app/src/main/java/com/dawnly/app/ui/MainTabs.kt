@@ -118,8 +118,7 @@ internal fun MainTabs(
                         permissions = permissions.state,
                         onRequestPermission = { permissions.request(it) },
                         onEditReminder = { editing = ReminderEdit(it) },
-                        onSetAlarm = { editing = AlarmPick(null) },
-                        onEditAlarm = { editing = AlarmPick(it) },
+                        onSetAlarm = { editing = AlarmPick() },
                         contentPadding = padding,
                     )
                     else -> SettingsScreen(
@@ -180,15 +179,8 @@ internal fun MainTabs(
                                 onClose = { editing = null },
                             )
                             is AlarmPick -> AlarmWheel(
-                                editing = edit.alarmAt,
                                 onDone = { time ->
-                                    activity?.let {
-                                        if (edit.alarmAt == null) home.setAlarm(it, time) else home.editAlarm(it, edit.alarmAt, time)
-                                    }
-                                    editing = null
-                                },
-                                onDelete = {
-                                    edit.alarmAt?.let { at -> activity?.let { home.editAlarm(it, at, null) } }
+                                    activity?.let { home.setAlarm(it, time) }
                                     editing = null
                                 },
                                 onClose = { editing = null },
@@ -221,6 +213,6 @@ private class ReminderEdit(val reminder: Reminder?) : Overlay
 /** The custom watching window's wheels. */
 private class WindowPick : Overlay
 
-/** Setting a new alarm in the Clock app on the time wheels, or changing the one at [alarmAt]. */
-private class AlarmPick(val alarmAt: java.time.Instant?) : Overlay
+/** Setting a new alarm in the Clock app, on the time wheels. */
+private class AlarmPick : Overlay
 private const val TODAY = 0
