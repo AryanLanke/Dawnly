@@ -72,12 +72,6 @@ app/src/main/java/com/dawnly/app/
 └─ ui/        Compose screens (home, settings, onboarding), the glass design system (ui/glass), theme, permissions
 ```
 
-Debug-only code (the wake detection screen and an adb test receiver) lives in `app/src/debug/`, so it never ships in the release app.
-
-- **One entry point.** Everything that can change the plan (opening the app, a settings change, the next alarm changing, a reboot, an app update, our own alarm firing) calls `WatchScheduler.reconcile()`. It works the state out from scratch every time, so it's safe to call any number of times.
-- **Pure logic, tested.** `WatchPlanner.decide()` returns Idle, Waiting, Watching or Skipped. `WakeTracker` turns raw events into readings, and `WakeScore` judges them. None of them touch Android, so they're plain JUnit tests (148 in total, including reminder times, learning and the dismiss guard).
-- **The UI is a design system, not a theme.** `ui/glass/` has translucent glass surfaces (rim and shadow drawn once into bitmaps, so scrolling holds 120 Hz), a living sky behind the glass (morning clouds in light mode, stars, shooting stars and a moon in dark mode) drawn in the draw phase only, spring motion, and a progress ring. Everything is Compose, with light and dark modes, and the motion stays still when the system's reduce-animations setting is on. The mockups it was built from are in [design/mockups.html](design/mockups.html), and the app icon (a fried egg with a white of blue glass) and the script that draws it are in [design/app-icon](design/app-icon).
-
 ## Tech stack
 
 | | |
@@ -110,30 +104,6 @@ Debug-only code (the wake detection screen and an adb test receiver) lives in `a
 **Never dismissing the wrong alarm.** `ACTION_DISMISS_ALARM` with "next alarm" dismisses whatever is next *when the request arrives*. A prompt about today's 5:30 tapped after that alarm was already dismissed would skip tomorrow's. `DismissGuard` (unit tested) checks the prompt's alarm is still next and still ahead, both before posting and again before dismissing. The prompt is also removed as soon as the next alarm changes.
 
 **Auto-dismiss from the background.** Starting another app's activity from the background is blocked on Android 10+, so the automatic choices work through a full-screen notification, which opens by itself on a locked phone. "Display over other apps" is optional: when it's allowed, Dawnly can skip a tap with the phone in use. Dawnly never draws anything over other apps. If the countdown can't be shown, or can't finish before the alarm, Dawnly asks instead. On Android 13+, an app installed from a file also meets the "Restricted setting" lock for Usage access and the overlay, so Dawnly shows step-by-step help for unlocking it.
-
-## Build and run
-
-You need Android Studio (for the SDK and JDK) or the Android SDK command-line tools, and a phone with USB debugging on.
-
-```bash
-git clone https://github.com/AryanLanke/Dawnly.git
-cd Dawnly
-./gradlew installDebug            # Windows: .\gradlew.bat installDebug
-```
-
-Then open Dawnly on the phone and walk through the permission steps (each one can be skipped).
-
-```bash
-./gradlew testDebugUnitTest       # unit tests
-./gradlew lintDebug               # lint
-./gradlew assembleRelease         # minified release build (needs your own signing config)
-```
-
-Installing a debug build over the release-signed one fails (the keys differ), so uninstall first or use `installRelease`. Debug builds add a **Dawnly debug** launcher icon. It shows live sign readings and lets you change the goals, so you can test detection quickly. To show the prompt without waiting for detection:
-
-```bash
-adb shell am broadcast -a com.dawnly.app.debug.USER_AWAKE -p com.aryanlanke.dawnly
-```
 
 ## Status
 
