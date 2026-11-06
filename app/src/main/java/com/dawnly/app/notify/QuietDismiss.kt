@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.dawnly.app.MainActivity
-import com.dawnly.app.dawnly
 import com.dawnly.app.data.alarm.AppRef
 import com.dawnly.app.data.alarm.ClockApp
 import com.dawnly.app.data.alarm.DismissMemory
@@ -15,8 +14,9 @@ import com.dawnly.app.data.alarm.DismissRequest
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.data.alarm.NextAlarm
 import com.dawnly.app.data.settings.DismissMode
+import com.dawnly.app.dawnly
 import com.dawnly.app.domain.learn.Answer
-import com.dawnly.app.service.WakeWatcher
+import com.dawnly.app.system.UsageAccess
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -50,8 +50,6 @@ object QuietDismiss {
 
     /** How far back to look for the app the user was in. A locked phone can sit for hours. */
     private const val LOOKBACK_MS = 24 * 60 * 60 * 1000L
-
-    private const val SYSTEM_UI = "com.android.systemui"
 
     /**
      * [launcher] starts the Clock app, so it must be an activity. [backToDawnly] when the user
@@ -131,7 +129,7 @@ object QuietDismiss {
     }
 
     private fun whereTheUserWas(context: Context, before: Long): ReturnTo {
-        val lastApp = if (WakeWatcher.hasUsageAccess(context)) lastAppInFront(context, before) else null
+        val lastApp = if (UsageAccess.isGranted(context)) lastAppInFront(context, before) else null
         return ReturnPlan.pick(lastApp, context.packageName, homeApps(context))
     }
 
@@ -152,8 +150,7 @@ object QuietDismiss {
         return last
     }
 
-    private fun homeApps(context: Context): Set<String> =
-        context.packageManager.queryIntentActivities(home(), 0).map { it.activityInfo.packageName }.toSet() + SYSTEM_UI
+    private fun homeApps(context: Context): Set<String> = UsageAccess.launchers(context) + UsageAccess.SYSTEM_UI
 
     private fun home(): Intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
 

@@ -7,23 +7,19 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioAttributes
 import android.os.Build
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.dawnly.app.MainActivity
 import com.dawnly.app.R
-import com.dawnly.app.dawnly
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.dawnly
 import java.time.Duration
 import java.time.Instant
-import java.util.Date
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -118,7 +114,7 @@ object AwakeNotifier {
             Log.w(TAG, "Notifications are off, so the alarm can't be dismissed without Display over other apps")
             return
         }
-        val text = context.getString(R.string.auto_dismiss_tap_text, formatTime(context, alarmAt))
+        val text = context.getString(R.string.auto_dismiss_tap_text, Notify.time(context, alarmAt))
         val builder = prompt(context, alarmAt, text, retry)
             .setFullScreenIntent(dismissAlarm(context, alarmAt, retry), true)
             .setAutoCancel(true)
@@ -133,7 +129,7 @@ object AwakeNotifier {
             Log.w(TAG, "Notifications are off, so the user can't be asked")
             return
         }
-        val time = formatTime(context, alarmAt)
+        val time = Notify.time(context, alarmAt)
         val builder = prompt(context, alarmAt, context.getString(R.string.awake_text, time))
             .setAutoCancel(true)
         // Gone by itself once the alarm rings: there's nothing left to dismiss.
@@ -171,12 +167,7 @@ object AwakeNotifier {
      * changed, so it's cheap to call on every app start to stay in step with the saved choice.
      */
     fun useSound(context: Context, sound: AlertSound) {
-        val manager = NotificationManagerCompat.from(context)
-        val wanted = CHANNEL_PREFIX + sound.name.lowercase()
-        manager.notificationChannelsCompat
-            .filter { it.id == OLD_CHANNEL || (it.id.startsWith(CHANNEL_PREFIX) && it.id != wanted) }
-            .forEach { manager.deleteNotificationChannel(it.id) }
-        if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound)
+        SoundChannels.use(context, CHANNEL_PREFIX, sound, alsoRemove = setOf(OLD_CHANNEL)) { createChannel(context, it, sound) }
         DismissedNotice.useSound(context, sound)
     }
 
@@ -193,7 +184,7 @@ object AwakeNotifier {
             post(context, alarmAt)
             return
         }
-        val time = formatTime(context, alarmAt)
+        val time = Notify.time(context, alarmAt)
         val builder = prompt(context, alarmAt, context.getString(R.string.auto_dismiss_text, time))
             // Swiping the warning away counts as "Not yet": never dismiss once the user waved it off.
             .setDeleteIntent(notYet(context))
@@ -229,7 +220,7 @@ object AwakeNotifier {
             .setContentText(text)
             // The whole question when expanded; one line cuts it off on most phones.
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setContentIntent(openApp(context))
+            .setContentIntent(Notify.openApp(context))
             .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt, retry))
             .addAction(0, context.getString(R.string.action_not_yet), notYet(context))
             .addExtras(Bundle().apply { putLong(EXTRA_ALARM_AT, alarmAt.toEpochMilli()) })
@@ -253,43 +244,24 @@ object AwakeNotifier {
         return allowed && NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    private fun formatTime(context: Context, at: Instant): String =
-        DateFormat.getTimeFormat(context).format(Date.from(at))
-
     /** The channel for the chosen sound; Dawnly's default sound until the user picks one. */
-    private fun currentChannel(context: Context): String {
-        val existing = NotificationManagerCompat.from(context).notificationChannelsCompat
-            .firstOrNull { it.id.startsWith(CHANNEL_PREFIX) }
-        if (existing != null) return existing.id
-        useSound(context, AlertSound.DEFAULT)
-        return CHANNEL_PREFIX + AlertSound.DEFAULT.name.lowercase()
-    }
+    private fun currentChannel(context: Context): String =
+        SoundChannels.current(context, CHANNEL_PREFIX) { useSound(context, AlertSound.DEFAULT) }
 
     /**
      * Heads-up so it's seen while the phone is in use, with a short soft sound and no vibration:
      * a quiet question, not an alarm.
      */
     private fun createChannel(context: Context, id: String, sound: AlertSound) {
-        val audio = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
         val channel = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_HIGH)
             .setName(context.getString(R.string.channel_awake))
             .setDescription(context.getString(R.string.channel_awake_description))
-            .setSound(sound.uri(context), audio)
+            .setSound(sound.uri(context), Notify.audio)
             .setVibrationEnabled(false)
             .setShowBadge(false)
             .build()
         NotificationManagerCompat.from(context).createNotificationChannel(channel)
     }
-
-    private fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        Intent(context, MainActivity::class.java),
-        PendingIntent.FLAG_IMMUTABLE,
-    )
 
     /** Straight to an activity, not through a receiver: Android 12+ blocks notification trampolines. */
     private fun dismissAlarm(context: Context, alarmAt: Instant, retry: Boolean = false): PendingIntent = PendingIntent.getActivity(

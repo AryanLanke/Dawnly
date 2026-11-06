@@ -1,7 +1,6 @@
 package com.dawnly.app.ui.settings
 
 import android.content.Context
-import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
@@ -10,6 +9,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.notify.Notify
 
 /**
  * Plays a sound once, the way the prompt will: on the notification stream, so it follows the
@@ -30,12 +30,7 @@ class SoundPreview(private val context: Context) {
         stop()
         player = try {
             MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build(),
-                )
+                setAudioAttributes(Notify.audio)
                 setDataSource(context, sound.uri(context))
                 setOnPreparedListener { it.start() }
                 setOnCompletionListener { stop() }

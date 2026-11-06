@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
 import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
 import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.format.formatTime
@@ -78,16 +79,14 @@ private fun describe(reminder: Reminder): String {
     val first = reminder.firstDay
     val last = reminder.lastDay
     val today = LocalDate.now()
-    val days = when {
-        first == null || last == null -> null
-        first == last && first == today -> stringResource(R.string.reminder_days_today)
-        first == last && first == today.plusDays(1) -> stringResource(R.string.reminder_days_tomorrow)
-        first == today && last == today.plusDays(1) -> stringResource(R.string.reminder_days_both)
-        first == last -> stringResource(R.string.reminder_on_date, first.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
-        else -> {
-            val f = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-            stringResource(R.string.reminder_range, first.format(f), last.format(f))
-        }
+    val f = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val days = when (ReminderDays.of(first, last, today)) {
+        ReminderDays.EveryDay -> null
+        ReminderDays.Today -> stringResource(R.string.reminder_days_today)
+        ReminderDays.Tomorrow -> stringResource(R.string.reminder_days_tomorrow)
+        ReminderDays.Both -> stringResource(R.string.reminder_days_both)
+        ReminderDays.OnDate -> stringResource(R.string.reminder_on_date, first!!.format(f))
+        ReminderDays.Range -> stringResource(R.string.reminder_range, first!!.format(f), last!!.format(f))
     }
     val head = if (days == null) schedule else "$schedule · $days"
     return if (reminder.why.isBlank()) head else "$head · ${reminder.why}"

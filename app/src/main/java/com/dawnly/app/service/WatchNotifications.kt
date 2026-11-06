@@ -1,17 +1,13 @@
 package com.dawnly.app.service
 
 import android.app.Notification
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.text.format.DateFormat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.dawnly.app.MainActivity
 import com.dawnly.app.R
+import com.dawnly.app.notify.Notify
 import java.time.Instant
-import java.util.Date
 
 object WatchNotifications {
     const val WATCHING_ID = 1
@@ -28,20 +24,14 @@ object WatchNotifications {
 
     /** The quiet ongoing notification shown while the service runs. */
     fun watching(context: Context, alarmAt: Instant?): Notification {
-        val openApp = PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE,
-        )
         val text = alarmAt?.let {
-            context.getString(R.string.watching_until, DateFormat.getTimeFormat(context).format(Date.from(it)))
+            context.getString(R.string.watching_until, Notify.time(context, it))
         }
         return NotificationCompat.Builder(context, WATCHING_CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.watching_title))
             .setContentText(text)
-            .setContentIntent(openApp)
+            .setContentIntent(Notify.openApp(context))
             .setOngoing(true)
             .setSilent(true)
             .setShowWhen(false)

@@ -1,21 +1,15 @@
 package com.dawnly.app.notify
 
 import android.app.KeyguardManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.media.AudioAttributes
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.dawnly.app.MainActivity
 import com.dawnly.app.R
 import com.dawnly.app.data.sound.AlertSound
 import java.time.Duration
 import java.time.Instant
-import java.util.Date
 
 /**
  * "Your 5:30 alarm is dismissed" after every dismiss (auto or tapped). With the phone locked in a
@@ -44,12 +38,12 @@ object DismissedNotice {
     /** [forward] plays the sound forwards (Right away) rather than backwards. */
     fun post(context: Context, alarmAt: Instant, forward: Boolean = false) {
         val locked = context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
-        val time = DateFormat.getTimeFormat(context).format(Date.from(alarmAt))
+        val time = Notify.time(context, alarmAt)
         val builder = NotificationCompat.Builder(context, currentChannel(context, if (forward) FORWARD_PREFIX else CHANNEL_PREFIX))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.dismissed_title))
             .setContentText(context.getString(R.string.dismiss_done, time))
-            .setContentIntent(openApp(context))
+            .setContentIntent(Notify.openApp(context))
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -65,46 +59,25 @@ object DismissedNotice {
 
     /** Keeps both channels' sounds in step with the prompt's. [AwakeNotifier.useSound] calls it. */
     fun useSound(context: Context, sound: AlertSound) {
-        val manager = NotificationManagerCompat.from(context)
         for (prefix in listOf(CHANNEL_PREFIX, FORWARD_PREFIX)) {
-            val wanted = prefix + sound.name.lowercase()
-            manager.notificationChannelsCompat
-                .filter { it.id.startsWith(prefix) && it.id != wanted }
-                .forEach { manager.deleteNotificationChannel(it.id) }
-            if (manager.getNotificationChannelCompat(wanted) == null) createChannel(context, wanted, sound, prefix == FORWARD_PREFIX)
+            SoundChannels.use(context, prefix, sound) { createChannel(context, it, sound, prefix == FORWARD_PREFIX) }
         }
     }
 
-    private fun currentChannel(context: Context, prefix: String): String {
-        val existing = NotificationManagerCompat.from(context).notificationChannelsCompat
-            .firstOrNull { it.id.startsWith(prefix) }
-        if (existing != null) return existing.id
-        useSound(context, AlertSound.DEFAULT)
-        return prefix + AlertSound.DEFAULT.name.lowercase()
-    }
+    private fun currentChannel(context: Context, prefix: String): String =
+        SoundChannels.current(context, prefix) { useSound(context, AlertSound.DEFAULT) }
 
     /** Heads-up and no vibration, like the prompt. */
     private fun createChannel(context: Context, id: String, sound: AlertSound, forward: Boolean) {
-        val audio = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
         val channel = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_HIGH)
             .setName(context.getString(if (forward) R.string.channel_dismissed_now else R.string.channel_dismissed))
             .setDescription(
                 context.getString(if (forward) R.string.channel_dismissed_now_description else R.string.channel_dismissed_description),
             )
-            .setSound(if (forward) sound.uri(context) else sound.reversedUri(context), audio)
+            .setSound(if (forward) sound.uri(context) else sound.reversedUri(context), Notify.audio)
             .setVibrationEnabled(false)
             .setShowBadge(false)
             .build()
         NotificationManagerCompat.from(context).createNotificationChannel(channel)
     }
-
-    private fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        Intent(context, MainActivity::class.java),
-        PendingIntent.FLAG_IMMUTABLE,
-    )
 }

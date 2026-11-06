@@ -15,12 +15,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,34 +39,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.ui.semantics.Role
+import com.dawnly.app.data.reminder.ReminderSounds
 import com.dawnly.app.data.sound.AlertSound
-import com.dawnly.app.notify.ReminderScheduler
-import com.dawnly.app.ui.glass.CheckBadge
-import com.dawnly.app.ui.glass.GlassList
-import com.dawnly.app.ui.glass.GlassRow
-import com.dawnly.app.ui.settings.rememberSoundPreview
 import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
 import com.dawnly.app.ui.format.formatDuration
+import com.dawnly.app.ui.glass.CheckBadge
 import com.dawnly.app.ui.glass.DurationWheel
 import com.dawnly.app.ui.glass.GlassButton
-import com.dawnly.app.ui.glass.ValueButton
-import com.dawnly.app.ui.glass.Wheel
-import com.dawnly.app.ui.glass.WheelCircle
-import com.dawnly.app.ui.glass.wheelDigits
+import com.dawnly.app.ui.glass.GlassList
+import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSegmented
 import com.dawnly.app.ui.glass.GlassShapes
 import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
+import com.dawnly.app.ui.glass.ValueButton
+import com.dawnly.app.ui.glass.Wheel
+import com.dawnly.app.ui.glass.WheelCircle
+import com.dawnly.app.ui.glass.wheelDigits
+import com.dawnly.app.ui.settings.rememberSoundPreview
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import java.time.LocalDate
@@ -71,15 +72,15 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/** Which days a reminder comes. */
-private enum class Days(val label: Int) {
-    EveryDay(R.string.reminder_days_every_day),
-    Today(R.string.reminder_days_today),
-    Tomorrow(R.string.reminder_days_tomorrow),
-    Both(R.string.reminder_days_both),
-    OnDate(R.string.reminder_days_date),
-    Range(R.string.reminder_days_range),
-}
+private val ReminderDays.label: Int
+    get() = when (this) {
+        ReminderDays.EveryDay -> R.string.reminder_days_every_day
+        ReminderDays.Today -> R.string.reminder_days_today
+        ReminderDays.Tomorrow -> R.string.reminder_days_tomorrow
+        ReminderDays.Both -> R.string.reminder_days_both
+        ReminderDays.OnDate -> R.string.reminder_days_date
+        ReminderDays.Range -> R.string.reminder_days_range
+    }
 
 /** The card's other pages: a time on the wheels, a custom repeat, or the reminder's sound. */
 private enum class EditorPage { At, From, Until, Interval, Sound, DateA, DateB }
@@ -108,23 +109,10 @@ internal fun ReminderEditor(
     var custom by remember { mutableStateOf(minutes !in ReminderSchedule.REPEATS) }
     var from by remember { mutableStateOf((start as? ReminderSchedule.Every)?.from ?: ReminderSchedule.DAY_START) }
     var until by remember { mutableStateOf((start as? ReminderSchedule.Every)?.until ?: ReminderSchedule.DAY_END) }
-    var sound by remember { mutableStateOf(initial?.let(ReminderScheduler::soundOf) ?: ReminderScheduler.DEFAULT_SOUND) }
+    var sound by remember { mutableStateOf(initial?.let(ReminderSounds::of) ?: ReminderSounds.DEFAULT) }
     var picking by remember { mutableStateOf<EditorPage?>(null) }
     val today = LocalDate.now()
-    var days by remember {
-        val first = initial?.firstDay
-        val last = initial?.lastDay
-        mutableStateOf(
-            when {
-                first == null || last == null -> Days.EveryDay
-                first == last && first == today -> Days.Today
-                first == last && first == today.plusDays(1) -> Days.Tomorrow
-                first == today && last == today.plusDays(1) -> Days.Both
-                first == last -> Days.OnDate
-                else -> Days.Range
-            },
-        )
-    }
+    var days by remember { mutableStateOf(ReminderDays.of(initial?.firstDay, initial?.lastDay, today)) }
     var date by remember { mutableStateOf(initial?.firstDay?.takeIf { it >= today } ?: today) }
     var dateTo by remember { mutableStateOf(initial?.lastDay?.takeIf { it >= date } ?: date.plusDays(6)) }
 
@@ -153,12 +141,12 @@ internal fun ReminderEditor(
             if (page == EditorPage.DateA || page == EditorPage.DateB) {
                 val isTo = page == EditorPage.DateB
                 DateWheel(
-                    stringResource(if (days == Days.Range) (if (isTo) R.string.reminder_date_to else R.string.reminder_date_from) else R.string.reminder_date),
+                    stringResource(if (days == ReminderDays.Range) (if (isTo) R.string.reminder_date_to else R.string.reminder_date_from) else R.string.reminder_date),
                     if (isTo) dateTo else date,
                     today,
                     onDone = { picked ->
                         if (isTo) dateTo = picked else date = picked
-                        if (days == Days.Range) {
+                        if (days == ReminderDays.Range) {
                             if (!isTo && dateTo < picked) dateTo = picked
                             if (isTo && picked < date) date = picked
                         }
@@ -262,27 +250,27 @@ internal fun ReminderEditor(
                     }
                     SectionLabel(stringResource(R.string.reminder_days))
                     GlassList(Modifier.selectableGroup()) {
-                        Days.entries.forEachIndexed { index, option ->
+                        ReminderDays.entries.forEachIndexed { index, option ->
                             GlassRow(
                                 title = stringResource(option.label),
                                 divider = index > 0,
                                 modifier = Modifier.selectable(selected = option == days, role = Role.RadioButton) {
                                     days = option
-                                    if (option == Days.OnDate) picking = EditorPage.DateA
+                                    if (option == ReminderDays.OnDate) picking = EditorPage.DateA
                                 },
                             ) {
                                 if (option == days) CheckBadge()
                             }
                         }
                     }
-                    if (days == Days.OnDate) {
+                    if (days == ReminderDays.OnDate) {
                         ValueButton(
                             stringResource(R.string.reminder_date),
                             date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                             Modifier.fillMaxWidth(),
                         ) { picking = EditorPage.DateA }
                     }
-                    if (days == Days.Range) {
+                    if (days == ReminderDays.Range) {
                         ValueButton(
                             stringResource(R.string.reminder_date_from),
                             date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
@@ -307,14 +295,7 @@ internal fun ReminderEditor(
                                     nameMissing = true
                                 } else {
                                     val schedule = if (every) ReminderSchedule.Every(minutes, from, until) else ReminderSchedule.Daily(at)
-                                    val (firstDay, lastDay) = when (days) {
-                                        Days.EveryDay -> null to null
-                                        Days.Today -> today to today
-                                        Days.Tomorrow -> today.plusDays(1) to today.plusDays(1)
-                                        Days.Both -> today to today.plusDays(1)
-                                        Days.OnDate -> date to date
-                                        Days.Range -> date to dateTo
-                                    }
+                                    val (firstDay, lastDay) = days.span(today, date, dateTo)
                                     onSave(
                                         Reminder(
                                             id = initial?.id ?: System.currentTimeMillis(),

@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.provider.AlarmClock
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -12,7 +11,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.dawnly.app.MainActivity
 import com.dawnly.app.R
 import java.time.Instant
-import java.util.Date
 
 /**
  * "Your alarm is still on": the Clock app took the dismiss request but left the alarm on, even
@@ -30,9 +28,9 @@ object DismissFailedNotice {
     /** [retryAt] is when Dawnly will try again, if it will. */
     fun post(context: Context, alarmAt: Instant, clockLabel: String, retryAt: Instant?) {
         ensureChannel(context)
-        val time = formatTime(context, alarmAt)
+        val time = Notify.time(context, alarmAt)
         val text = if (retryAt != null) {
-            context.getString(R.string.dismiss_failed_retry_text, clockLabel, time, formatTime(context, retryAt))
+            context.getString(R.string.dismiss_failed_retry_text, clockLabel, time, Notify.time(context, retryAt))
         } else {
             context.getString(R.string.dismiss_failed_text, clockLabel, time)
         }
@@ -69,9 +67,6 @@ object DismissFailedNotice {
             .build()
         manager.createNotificationChannel(channel)
     }
-
-    private fun formatTime(context: Context, at: Instant): String =
-        DateFormat.getTimeFormat(context).format(Date.from(at))
 
     /** The alarm list, or Dawnly if no app shows one. */
     private fun openClock(context: Context): PendingIntent {

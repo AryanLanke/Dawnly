@@ -1,7 +1,6 @@
 package com.dawnly.app.service
 
 import android.Manifest
-import android.app.AppOpsManager
 import android.app.KeyguardManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
@@ -17,18 +16,18 @@ import android.hardware.SensorManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.PowerManager
-import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.dawnly.app.dawnly
-import com.dawnly.app.domain.wake.Closeness
 import com.dawnly.app.data.wake.WakeProgress
 import com.dawnly.app.data.wake.WakeProgressStore
+import com.dawnly.app.dawnly
+import com.dawnly.app.domain.wake.Closeness
 import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.wake.WakeTracker
 import com.dawnly.app.notify.AwakeNotifier
+import com.dawnly.app.system.UsageAccess
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -44,10 +43,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -100,7 +99,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun watch() = coroutineScope {
         val saved = store.load(alarmAt)
-        val tracker = WakeTracker(resumeFrom = saved?.signals ?: WakeSignals(), ignoredApps = ignoredApps())
+        val tracker = WakeTracker(resumeFrom = saved?.signals ?: WakeSignals(), ignoredApps = UsageAccess.ignoredApps(app))
         tracker.movementAvailable = accelerometer != null
         var notified = saved?.notified ?: false
         var lastSaved = saved
@@ -258,7 +257,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         var lastSeen = System.currentTimeMillis()
         while (true) {
             delay(APPS_CHECK_PERIOD_MILLIS)
-            val allowed = hasUsageAccess(app)
+            val allowed = UsageAccess.isGranted(app)
             emit(WakeEvent.AppsAvailable(allowed))
             if (!allowed) continue
             val now = System.currentTimeMillis()
@@ -275,13 +274,6 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
             }
         }
     }.flowOn(Dispatchers.IO)
-
-    /** Opening these isn't a sign of being up: the home screen, the system UI, and Dawnly itself. */
-    private fun ignoredApps(): Set<String> {
-        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        val launchers = app.packageManager.queryIntentActivities(home, 0).map { it.activityInfo.packageName }
-        return launchers.toSet() + SYSTEM_UI + app.packageName
-    }
 
     /** Needs a step counter, and the activity recognition permission on Android 10+. */
     private fun canCountSteps(): Boolean = stepSensor != null && (
@@ -300,19 +292,6 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         private const val APPS_LOOKBACK_MILLIS = 60_000L
         private const val SAVE_PERIOD_MILLIS = 30_000L
         private const val SENSOR_BATCH_MICROS = 10_000_000
-        private const val SYSTEM_UI = "com.android.systemui"
-
-        /** Usage access is an app op the user grants in system settings, not a runtime permission. */
-        fun hasUsageAccess(context: Context): Boolean {
-            val ops = context.getSystemService(AppOpsManager::class.java)
-            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
-            } else {
-                @Suppress("DEPRECATION")
-                ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
-            }
-            return mode == AppOpsManager.MODE_ALLOWED
-        }
 
         private fun ticks(periodMillis: Long): Flow<Unit> = flow {
             while (true) {
