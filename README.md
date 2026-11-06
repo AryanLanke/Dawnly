@@ -9,24 +9,29 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/screenshots/today-1.7.8.webp" width="240" alt="Today: set an alarm or add a reminder">
-  <img src="docs/screenshots/settings-1.7.8.webp" width="240" alt="Settings: how early to watch, when you're up, sound and appearance">
-  <img src="docs/screenshots/reminder-editor-1.7.8.webp" width="240" alt="The reminder editor: name, repeat, times and which days">
+  <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode, with the alarm ring and reminders">
+  <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode">
 </p>
 
 ## Screenshots
 
 | | Light | Dark |
 |---|---|---|
-| **Today**, watching before the alarm | <img src="docs/screenshots/today-watching-light.webp" width="240" alt="Today in light mode while watching"> | <img src="docs/screenshots/today-watching-dark.webp" width="240" alt="Today in dark mode while watching"> |
-| **New reminder**, with Which days | <img src="docs/screenshots/editor-light.webp" width="240" alt="The reminder editor in light mode"> | <img src="docs/screenshots/editor-dark.webp" width="240" alt="The reminder editor in dark mode"> |
+| **Today**, with reminders | <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode"> | <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode"> |
 | **Settings** | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode"> |
+| **New reminder** | <img src="docs/screenshots/reminder-editor-light.webp" width="240" alt="The reminder editor in light mode"> | <img src="docs/screenshots/reminder-editor-dark.webp" width="240" alt="The reminder editor in dark mode"> |
 
-| The prompt | After the dismiss | Reminders |
+| Light to dark | Dark to light |
+|---|---|
+| <img src="docs/screenshots/transition-light-to-dark.webp" width="240" alt="Switching from light to dark, mid-sweep"> | <img src="docs/screenshots/transition-dark-to-light.webp" width="240" alt="Switching from dark to light, mid-sweep"> |
+
+| Set an alarm | Choosing the sound | More options |
 |---|---|---|
-| <img src="docs/screenshots/prompt.webp" width="240" alt="The Up already? notification over Today"> | <img src="docs/screenshots/alarm-off.webp" width="240" alt="The Alarm's off notification"> | <img src="docs/screenshots/reminders-light.webp" width="240" alt="Reminders on Today"> |
-| **Date wheel** | **Sound picker** | **More options** |
-| <img src="docs/screenshots/date-wheel-light.webp" width="240" alt="The glass date wheel"> | <img src="docs/screenshots/sound-picker.webp" width="240" alt="Choosing Dawnly's sound"> | <img src="docs/screenshots/more-options.webp" width="240" alt="More options: which signs count"> |
+| <img src="docs/screenshots/set-alarm-light.webp" width="240" alt="Setting an alarm on the time wheels"> | <img src="docs/screenshots/sound-picker-light.webp" width="240" alt="Choosing Dawnly's sound"> | <img src="docs/screenshots/more-options-light.webp" width="240" alt="More options: which signs count"> |
+
+| The prompt | After the dismiss | Reminder options |
+|---|---|---|
+| <img src="docs/screenshots/prompt.webp" width="240" alt="The Up already? notification over Today"> | <img src="docs/screenshots/alarm-off.webp" width="240" alt="The Alarm's off notification"> | <img src="docs/screenshots/reminder-editor-light-options.webp" width="240" alt="The reminder editor: repeat, times, which days and how it comes"> |
 
 ## How it works
 
