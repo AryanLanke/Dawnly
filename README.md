@@ -139,8 +139,8 @@ Tested on a Nothing Phone (2a), Android 16, with Google Clock. Dawnly reads and 
 
 ## Changelog and privacy
 
-What changed in each version is in [CHANGELOG.md](CHANGELOG.md). The privacy policy is [docs/privacy-policy.md](docs/privacy-policy.md).
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md), and how the app got here, step by step, is in [progress.md](progress.md). The privacy policy is [docs/privacy-policy.md](docs/privacy-policy.md).
 
 ## Licence
 
-Copyright © 2026 Aryan Lanke. All rights reserved: the code is here to read, not to reuse. See [LICENSE](LICENSE). The font and sounds above keep their own licences.
+The code is MIT licensed: copyright © 2026 Aryan Lanke, see [LICENSE](LICENSE). The egg icon and the design mockups stay all rights reserved, and the font and sounds above keep their own licences.
