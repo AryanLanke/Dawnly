@@ -9,12 +9,12 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/website-phone.gif" height="540" alt="The Dawnly website on a phone: tapping Download APK, then Yes, download it">
+  <img src="docs/website-phone.gif" height="540" alt="The Dawnly website on a phone: tapping Download APK, then No, I was too afraid">
 </p>
 
 ## Try it
 
-**[Download Dawnly from dawnly-website.pages.dev →](https://dawnly-website.pages.dev)**
+**[Download Dawnly from dawnlyapp.pages.dev →](https://dawnlyapp.pages.dev)**
 
 Open the link on your Android phone (Android 8.0 or newer). On a computer the download button is hidden and the page asks you to open it on your phone. It's a signed APK, free, with no account: tap it, allow installs from your browser, and Dawnly walks you through the rest. Android warns about any app that isn't from the Play Store; that warning is normal for an APK. The site's own code is in [dawnly-firstlight](https://github.com/AryanLanke/dawnly-firstlight).
 
