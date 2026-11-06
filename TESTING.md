@@ -248,3 +248,6 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **11.3 Back from the Clock app:** tap an alarm on Today. The Clock app opens. Press Back. **Expect:** Dawnly comes back to the front, with no flute. (Needs Usage access on, in Settings.)
 - [ ] **11.4 Home from the Clock app:** the same, but press Home. **Expect:** Dawnly comes back.
 - [ ] **11.5 Without Usage access:** turn Usage access off for Dawnly. Repeat 11.3. **Expect:** Back goes to where Android sends it; nothing breaks.
+- [ ] **11.6 Custom date:** in the alarm wheel pick Custom date, set a date 3 days away, then 8:00 am. **Expect:** the date wheels slide away and the time wheels slide in; toast "Alarm set for 8:00 am on <date>"; Reminders lists "Alarm" on that date; it rings that day.
+- [ ] **11.7 Sliding:** switch between Today, Tomorrow and Custom date. **Expect:** the pill slides between the choices, and the wheels slide when the date and time wheels swap.
+- [ ] **11.8 Past date:** pick a date in the past. **Expect:** "That date has already passed." and no alarm.

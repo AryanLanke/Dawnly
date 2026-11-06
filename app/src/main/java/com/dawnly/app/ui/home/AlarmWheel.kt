@@ -1,6 +1,12 @@
 package com.dawnly.app.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,18 +25,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
+import com.dawnly.app.ui.glass.DateWheel
 import com.dawnly.app.ui.glass.GlassSegmented
 import com.dawnly.app.ui.glass.TimeWheel
+import java.time.LocalDate
 import java.time.LocalTime
+
+/** The steps of the alarm picker: first the date (for a custom date), then the time. */
+private enum class AlarmStep { Date, Time }
 
 /**
  * Setting an alarm from Today: the same glass circle with time wheels as the reminder editor.
- * Done sets it in the Clock app; tapping around it or Back closes it without one.
+ * Today, Tomorrow or a custom date (picked on its own wheels first). Each change slides across.
+ * [onDone] gets the time and the day, where null means today. Tapping around the wheels or Back
+ * closes it without an alarm.
  */
 @Composable
-internal fun AlarmWheel(onDone: (LocalTime, Boolean) -> Unit, onClose: () -> Unit) {
+internal fun AlarmWheel(onDone: (LocalTime, LocalDate?) -> Unit, onClose: () -> Unit) {
     BackHandler(onBack = onClose)
-    var tomorrow by remember { mutableStateOf(false) }
+    val today = remember { LocalDate.now() }
+    // 0 today, 1 tomorrow, 2 a custom date.
+    var choice by remember { mutableStateOf(0) }
+    var date by remember { mutableStateOf(today.plusDays(1)) }
+    // A custom date is picked first; its time comes after.
+    var pickingDate by remember { mutableStateOf(false) }
+    val step = if (choice == CUSTOM && pickingDate) AlarmStep.Date else AlarmStep.Time
+    val dayOf: () -> LocalDate? = {
+        when (choice) {
+            TOMORROW -> today.plusDays(1)
+            CUSTOM -> date
+            else -> null
+        }
+    }
+
     Box(
         Modifier
             .fillMaxSize()
@@ -46,14 +73,41 @@ internal fun AlarmWheel(onDone: (LocalTime, Boolean) -> Unit, onClose: () -> Uni
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             GlassSegmented(
-                options = listOf(stringResource(R.string.alarm_today), stringResource(R.string.alarm_tomorrow)),
-                selected = if (tomorrow) 1 else 0,
-                onSelect = { tomorrow = it == 1 },
+                options = listOf(
+                    stringResource(R.string.alarm_today),
+                    stringResource(R.string.alarm_tomorrow),
+                    stringResource(R.string.alarm_custom_date),
+                ),
+                selected = choice,
+                onSelect = {
+                    choice = it
+                    pickingDate = it == CUSTOM
+                },
             )
-            TimeWheel(stringResource(R.string.alarm_pick_label), DEFAULT_ALARM, onDone = { onDone(it, tomorrow) })
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    val forward = targetState == AlarmStep.Time
+                    (slideInHorizontally { if (forward) it / 2 else -it / 2 } + fadeIn()) togetherWith
+                        (slideOutHorizontally { if (forward) -it / 2 else it / 2 } + fadeOut())
+                },
+                label = "alarmStep",
+            ) { current ->
+                if (current == AlarmStep.Date) {
+                    DateWheel(stringResource(R.string.alarm_date_label), date, today, onDone = {
+                        date = it
+                        pickingDate = false
+                    })
+                } else {
+                    TimeWheel(stringResource(R.string.alarm_pick_label), DEFAULT_ALARM, onDone = { onDone(it, dayOf()) })
+                }
+            }
         }
     }
 }
+
+private const val TOMORROW = 1
+private const val CUSTOM = 2
 
 /** Where the wheels start: a usual morning alarm. */
 private val DEFAULT_ALARM: LocalTime = LocalTime.of(7, 0)

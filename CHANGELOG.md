@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.4 (6 Nov)
+- Set an alarm for a **Custom date**: Today, Tomorrow or Custom date. A custom date is picked on the date wheels first, then the time. Any day but today is kept by Dawnly as a one-day alarm that rings (the Clock app can't take a date).
+- Changing between Today, Tomorrow, Custom date and the date and time wheels now slides across.
+
 ## 1.7.3 (6 Nov)
 - Set an alarm for **Today** or **Tomorrow**: a choice above the wheels. Today goes to the Clock app, which takes only a time; if that time has already passed, Dawnly asks you to choose Tomorrow. Tomorrow is kept by Dawnly as a one-day reminder that rings like an alarm, since the Clock app can't be asked for one specific date. It's listed under Reminders as "Alarm".
 - After the Clock app is left (Back or Home), Dawnly comes back to the front by itself. This needs Usage access, which is optional; without it Dawnly stays where Android leaves it.
