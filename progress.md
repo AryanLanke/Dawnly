@@ -45,7 +45,7 @@ the test plan for the later testing phase is [TESTING.md](TESTING.md).
 
 ### 5 to 6 Nov: 1.6.4 to 1.6.6
 - **1.6.4 and 1.6.5.** "Which days" for a reminder (every day, today, tomorrow, a date, or a range) and a glass date wheel.
-- **1.6.6, the cleanup.** Learning stopped recording when switched off, reminders are set again before Android can stop the app after a reboot, backups leave out state that belongs to one phone, wrong in-app texts were fixed, large files were split into focused ones, shared helpers replaced copies, and the tests grew from 122 to 135. The README, privacy policy and test plan were brought up to date, and the code went under the MIT licence.
+- **1.6.6, the cleanup.** Learning stopped recording when switched off, reminders are set again before Android can stop the app after a reboot, backups leave out state that belongs to one phone, wrong in-app texts were fixed, large files were split into focused ones, shared helpers replaced copies, and the tests grew from 122 to 135. The README, privacy policy and test plan were brought up to date, the screenshots and demo were recorded again on the phone (cropped to the app, rounded corners, an animated WebP at 60 fps), and the code went under the MIT licence.
 
 ## Decisions that shaped it, and what they cost
 - **Read the Clock app's alarm, never set one.** Alarms stay where users already have them. Cost: Dawnly must never use `setAlarmClock()` for its own alarm, or it would read its own alarm as "the next alarm".
