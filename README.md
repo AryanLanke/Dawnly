@@ -9,8 +9,7 @@ Kotlin · Jetpack Compose · fully offline · no account · watches only in the 
 It also has **Reminders** ("Drink water, every 20 minutes") and **learns from your mornings**, so it asks sooner or later to suit you.
 
 <p align="center">
-  <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode, with the alarm ring and reminders">
-  <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode">
+  <img src="docs/demo.gif" width="320" alt="Switching Dawnly from dark to light and back: the new look sweeps in from a corner">
 </p>
 
 ## Screenshots
@@ -20,18 +19,6 @@ It also has **Reminders** ("Drink water, every 20 minutes") and **learns from yo
 | **Today**, with reminders | <img src="docs/screenshots/today-light.webp" width="240" alt="Today in light mode"> | <img src="docs/screenshots/today-dark.webp" width="240" alt="Today in dark mode"> |
 | **Settings** | <img src="docs/screenshots/settings-light.webp" width="240" alt="Settings in light mode"> | <img src="docs/screenshots/settings-dark.webp" width="240" alt="Settings in dark mode"> |
 | **New reminder** | <img src="docs/screenshots/reminder-editor-light.webp" width="240" alt="The reminder editor in light mode"> | <img src="docs/screenshots/reminder-editor-dark.webp" width="240" alt="The reminder editor in dark mode"> |
-
-| Light to dark | Dark to light |
-|---|---|
-| <img src="docs/screenshots/transition-light-to-dark.webp" width="240" alt="Switching from light to dark, mid-sweep"> | <img src="docs/screenshots/transition-dark-to-light.webp" width="240" alt="Switching from dark to light, mid-sweep"> |
-
-| Set an alarm | Choosing the sound | More options |
-|---|---|---|
-| <img src="docs/screenshots/set-alarm-light.webp" width="240" alt="Setting an alarm on the time wheels"> | <img src="docs/screenshots/sound-picker-light.webp" width="240" alt="Choosing Dawnly's sound"> | <img src="docs/screenshots/more-options-light.webp" width="240" alt="More options: which signs count"> |
-
-| The prompt | After the dismiss | Reminder options |
-|---|---|---|
-| <img src="docs/screenshots/prompt.webp" width="240" alt="The Up already? notification over Today"> | <img src="docs/screenshots/alarm-off.webp" width="240" alt="The Alarm's off notification"> | <img src="docs/screenshots/reminder-editor-light-options.webp" width="240" alt="The reminder editor: repeat, times, which days and how it comes"> |
 
 ## How it works
 
