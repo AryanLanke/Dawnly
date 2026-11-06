@@ -1,6 +1,8 @@
 package com.dawnly.app.ui.glass
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +42,7 @@ import com.dawnly.app.R
 import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 import kotlin.math.abs
+import kotlinx.coroutines.launch
 
 /** The big light digits on the wheels: Today's alarm digits, a little smaller so three rows fit the circle. */
 @Composable
@@ -94,7 +98,8 @@ private val WheelRow = 58.dp
 /**
  * One wheel of [count] values, three rows tall, snapping so a value sits in the middle. Values
  * fade and shrink away from the middle, done while drawing so scrolling doesn't recompose. A tick
- * as each value passes the middle.
+ * as each value passes the middle. Tapping a value above or below the middle scrolls it there, so
+ * AM to PM, or 7 to 8, is one tap instead of a swipe.
  */
 @Composable
 fun Wheel(
@@ -107,6 +112,7 @@ fun Wheel(
 ) {
     val state = rememberLazyListState(initialFirstVisibleItemIndex = selected)
     val haptic = rememberHaptics()
+    val scope = rememberCoroutineScope()
     val rowPx = with(LocalDensity.current) { WheelRow.toPx() }
     val middle by remember { derivedStateOf { centred(state, rowPx) } }
     var first by remember { mutableStateOf(true) }
@@ -125,6 +131,9 @@ fun Wheel(
                 Modifier
                     .fillMaxWidth()
                     .height(WheelRow)
+                    .clickable(remember { MutableInteractionSource() }, indication = null) {
+                        scope.launch { state.animateScrollToItem(i) }
+                    }
                     .graphicsLayer {
                         val info = state.layoutInfo
                         val item = info.visibleItemsInfo.firstOrNull { it.index == i }
@@ -138,7 +147,8 @@ fun Wheel(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(label(i), style = style)
+                // One line, so a wide value like 2028 is never wrapped and cut off.
+                Text(label(i), style = style, softWrap = false, maxLines = 1)
             }
         }
     }

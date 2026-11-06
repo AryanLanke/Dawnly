@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.5 (6 Nov)
+- Tap a value on any wheel to scroll it to the middle: AM to PM, 7 to 8, a month, a year. Swiping still works.
+- The year on the date wheel is no longer cut off (2028 showed as 202); the wheels are one line each and the year wheel is wider.
+
 ## 1.7.4 (6 Nov)
 - Set an alarm for a **Custom date**: Today, Tomorrow or Custom date. A custom date is picked on the date wheels first, then the time. Any day but today is kept by Dawnly as a one-day alarm that rings (the Clock app can't take a date).
 - Changing between Today, Tomorrow, Custom date and the date and time wheels now slides across.

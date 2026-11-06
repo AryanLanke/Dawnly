@@ -75,9 +75,9 @@ fun DateWheel(label: String, date: LocalDate, today: LocalDate, onDone: (LocalDa
     val months = remember { java.time.Month.entries.map { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) } }
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         WheelCircle(label) {
-            Wheel(31, day - 1, 70.dp, digits, { i -> "${i + 1}" }) { day = it + 1 }
-            Wheel(12, month - 1, 96.dp, digits, { i -> months[i] }) { month = it + 1 }
-            Wheel(6, year - firstYear, 110.dp, digits, { i -> "${firstYear + i}" }) { year = firstYear + it }
+            Wheel(31, day - 1, 62.dp, digits, { i -> "${i + 1}" }) { day = it + 1 }
+            Wheel(12, month - 1, 90.dp, digits, { i -> months[i] }) { month = it + 1 }
+            Wheel(6, year - firstYear, 126.dp, digits, { i -> "${firstYear + i}" }) { year = firstYear + it }
         }
         GlassButton(
             stringResource(R.string.reminder_done),

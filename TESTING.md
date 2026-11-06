@@ -251,3 +251,5 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **11.6 Custom date:** in the alarm wheel pick Custom date, set a date 3 days away, then 8:00 am. **Expect:** the date wheels slide away and the time wheels slide in; toast "Alarm set for 8:00 am on <date>"; Reminders lists "Alarm" on that date; it rings that day.
 - [ ] **11.7 Sliding:** switch between Today, Tomorrow and Custom date. **Expect:** the pill slides between the choices, and the wheels slide when the date and time wheels swap.
 - [ ] **11.8 Past date:** pick a date in the past. **Expect:** "That date has already passed." and no alarm.
+- [ ] **11.9 Tap a wheel value:** on the time wheels with 7 in the middle, tap the 8 below it, then the 6 above it; then tap PM next to AM. **Expect:** each one scrolls to the middle by itself, with a tick.
+- [ ] **11.10 Year not cut off:** on the date wheels, scroll the year to 2028 and 2030. **Expect:** all four digits show.
