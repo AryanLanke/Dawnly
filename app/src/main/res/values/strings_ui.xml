@@ -23,6 +23,11 @@
     <string name="alarm_set_toast">Alarm set for %1$s in %2$s</string>
     <string name="alarm_set_opened_clock">Finish setting it in %1$s</string>
     <string name="alarm_set_no_clock">No Clock app on this phone can set alarms</string>
+    <string name="alarm_today">Today</string>
+    <string name="alarm_tomorrow">Tomorrow</string>
+    <string name="alarm_tomorrow_name">Alarm</string>
+    <string name="alarm_set_tomorrow_toast">Alarm set for %1$s tomorrow. Dawnly will ring it.</string>
+    <string name="alarm_time_passed">That time has already passed today. Choose Tomorrow.</string>
     <string name="home_tap_to_change">Tap to open in Clock</string>
     <string name="home_open_clock_description">Open the Clock app</string>
     <string name="home_day_today">Today</string>

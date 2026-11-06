@@ -15,11 +15,14 @@ import com.dawnly.app.domain.alarm.AlarmTimes
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.domain.reminder.ReminderSchedule
+import com.dawnly.app.notify.ClockReturn
 import com.dawnly.app.notify.Notify
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
 import com.dawnly.app.service.WatchSession
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -83,18 +86,28 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
     }
 
     /**
-     * Sets an alarm for [time] in the Clock app. Google Clock shows its own screen while it does, so
-     * once the alarm is in (the next alarm changes, or a few seconds pass) Dawnly comes back in
-     * front and says so in a toast. The ring updates by itself.
+     * Sets an alarm for [time]. Today goes to the Clock app: Google Clock shows its own screen while
+     * it does, so once the alarm is in (the next alarm changes, or a few seconds pass) Dawnly comes
+     * back in front and says so. Tomorrow can't be asked of the Clock app (it only takes a time), so
+     * Dawnly keeps it as a reminder for that one day, which rings like an alarm.
      */
-    fun setAlarm(activity: Activity, time: LocalTime) {
+    fun setAlarm(activity: Activity, time: LocalTime, tomorrow: Boolean) {
+        if (tomorrow) {
+            setForTomorrow(activity, time)
+            return
+        }
+        if (AlarmTimes.nextAt(time, LocalDateTime.now()).toLocalDate() != LocalDate.now()) {
+            Toast.makeText(activity, R.string.alarm_time_passed, Toast.LENGTH_LONG).show()
+            return
+        }
         val clockApp = ClockApp(activity)
         val before = app.nextAlarms.current()
         val set = clockApp.setAlarm(activity, time)
         if (set == null) {
-            val message = clockApp.openClock(activity, null)?.let { activity.getString(R.string.alarm_set_opened_clock, it.label) }
-                ?: activity.getString(R.string.alarm_set_no_clock)
-            Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
+            clockApp.openClock(activity, null)?.let {
+                ClockReturn.watch(app, it.packageName)
+                Toast.makeText(activity, activity.getString(R.string.alarm_set_opened_clock, it.label), Toast.LENGTH_LONG).show()
+            } ?: Toast.makeText(activity, R.string.alarm_set_no_clock, Toast.LENGTH_LONG).show()
             return
         }
         val context = activity.applicationContext
@@ -113,9 +126,29 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
         }
     }
 
+    /** A one-day reminder that rings like an alarm: it's set for tomorrow and then finishes. */
+    private fun setForTomorrow(activity: Activity, time: LocalTime) {
+        val day = LocalDate.now().plusDays(1)
+        val reminder = Reminder(
+            id = System.currentTimeMillis(),
+            name = activity.getString(R.string.alarm_tomorrow_name),
+            schedule = ReminderSchedule.Daily(time),
+            firstDay = day,
+            lastDay = day,
+            ring = true,
+        )
+        app.scope.launch {
+            app.reminders.save(reminder)
+            ReminderScheduler.schedule(activity.applicationContext, reminder)
+        }
+        val at = day.atTime(time).atZone(ZoneId.systemDefault()).toInstant()
+        Toast.makeText(activity, activity.getString(R.string.alarm_set_tomorrow_toast, Notify.time(activity, at)), Toast.LENGTH_LONG).show()
+    }
+
     /** Changing or deleting an alarm happens in the Clock app, with its own controls. */
     fun openClock(activity: Activity) {
         ClockApp(activity).openClock(activity, app.nextAlarms.current()?.ownerPackage)
+            ?.let { ClockReturn.watch(app, it.packageName) }
     }
 
     fun clearDismissResult() {

@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.3 (6 Nov)
+- Set an alarm for **Today** or **Tomorrow**: a choice above the wheels. Today goes to the Clock app, which takes only a time; if that time has already passed, Dawnly asks you to choose Tomorrow. Tomorrow is kept by Dawnly as a one-day reminder that rings like an alarm, since the Clock app can't be asked for one specific date. It's listed under Reminders as "Alarm".
+- After the Clock app is left (Back or Home), Dawnly comes back to the front by itself. This needs Usage access, which is optional; without it Dawnly stays where Android leaves it.
+
 ## 1.7.2 (6 Nov)
 - Simpler alarms: tapping the ring on an alarm opens the Clock app ("Tap to open in Clock"), where you change or delete it with its own controls. Dawnly's own Change and Delete are gone: Google Clock showed its screen for every change anyway, and the switch-off-then-set trick could half-fail.
 - After setting an alarm, Dawnly comes back in front by itself once the Clock app has it.

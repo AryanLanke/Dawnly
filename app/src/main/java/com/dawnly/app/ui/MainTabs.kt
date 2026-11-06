@@ -179,8 +179,8 @@ internal fun MainTabs(
                                 onClose = { editing = null },
                             )
                             is AlarmPick -> AlarmWheel(
-                                onDone = { time ->
-                                    activity?.let { home.setAlarm(it, time) }
+                                onDone = { time, tomorrow ->
+                                    activity?.let { home.setAlarm(it, time, tomorrow) }
                                     editing = null
                                 },
                                 onClose = { editing = null },

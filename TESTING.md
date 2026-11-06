@@ -240,3 +240,11 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **10.18 Set an alarm, back by itself:** set one from the wheels. **Expect:** the Clock app may flash up, then Dawnly is back in front with "Alarm set for ...", with no flute.
 - [ ] **10.19 Open in Clock:** with an alarm on Today ("Tap to open in Clock"), tap the ring. **Expect:** the Clock app's alarm list opens; change or delete the alarm there, press Back. **Expect:** Dawnly, with no flute, showing the new next alarm.
 - [ ] **10.20 Flute from the icon:** close Dawnly and open it from its icon. **Expect:** the flute plays.
+
+## 1.7.3: Today, Tomorrow and coming back
+
+- [ ] **11.1 Tomorrow:** set an alarm for 7:30 am with Tomorrow chosen. **Expect:** toast "Alarm set for 7:30 am tomorrow. Dawnly will ring it."; Reminders lists "Alarm" for tomorrow only; it rings tomorrow at 7:30 with the full-screen ring.
+- [ ] **11.2 Today with a passed time:** choose Today and a time already past. **Expect:** "That time has already passed today. Choose Tomorrow." and no alarm is set.
+- [ ] **11.3 Back from the Clock app:** tap an alarm on Today. The Clock app opens. Press Back. **Expect:** Dawnly comes back to the front, with no flute. (Needs Usage access on, in Settings.)
+- [ ] **11.4 Home from the Clock app:** the same, but press Home. **Expect:** Dawnly comes back.
+- [ ] **11.5 Without Usage access:** turn Usage access off for Dawnly. Repeat 11.3. **Expect:** Back goes to where Android sends it; nothing breaks.
