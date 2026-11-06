@@ -114,7 +114,7 @@ fun DawnlyRoot(main: MainViewModel, home: HomeViewModel, settings: SettingsViewM
     }
     SystemBarsFollow(dark)
 
-    // Switching light and dark sweeps the new look in from the top-right corner.
+    // Switching light and dark sweeps the new look in from a corner (light from the top-right, dark from the bottom-left).
     val context = LocalContext.current
     val still = remember(context) { context.prefersReducedMotion() }
     ThemeSweep(dark = dark, still = still) { shownDark ->

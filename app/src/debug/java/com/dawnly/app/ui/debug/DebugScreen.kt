@@ -71,7 +71,7 @@ private data class DebugState(
 
 /**
  * Dev-only screen with live wake-signal values, to test detection on a phone. Opened from the
- * "Dawnly debug" launcher icon in debug builds; Phase 5 may also link to it from Settings.
+ * "Dawnly debug" launcher icon in debug builds.
  * It can also change which signals count and their goals, so detection can be tried with short
  * goals.
  */

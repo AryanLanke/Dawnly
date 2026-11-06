@@ -56,7 +56,7 @@ fun SettingsScreen(
     onRequestPermission: (AppPermission, (Boolean) -> Unit) -> Unit,
     onOpenOemBattery: () -> Unit,
     contentPadding: PaddingValues,
-    onPickWindow: () -> Unit = {},
+    onPickWindow: () -> Unit,
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val learning by viewModel.learning.collectAsStateWithLifecycle()
@@ -137,7 +137,7 @@ private fun SettingsContent(
     oemBattery: OemBattery?,
     deniedSign: Sign?,
     onWindowChange: (Duration) -> Unit,
-    onPickWindow: () -> Unit = {},
+    onPickWindow: () -> Unit,
     onSignalsChange: (WakeSignalSettings) -> Unit,
     onSignNeedsPermission: (Sign) -> Unit,
     onAppearanceChange: (Appearance) -> Unit,
@@ -253,6 +253,7 @@ private fun SettingsPreview(dark: Boolean, window: Duration, oem: OemBattery?) {
             permissions = PermissionState(setOf(AppPermission.Notifications, AppPermission.ActivityRecognition)),
             oemBattery = oem,
             deniedSign = null,
+            onPickWindow = {},
             onWindowChange = {},
             onSignalsChange = {},
             onSignNeedsPermission = {},

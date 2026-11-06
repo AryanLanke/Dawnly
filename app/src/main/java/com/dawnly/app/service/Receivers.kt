@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 /** Our own check alarm, set by [WatchScheduler]: the window opens, or the alarm is due. */
 class WatchAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        reconcileAsync(context, fromCheckAlarm = true)
+        reconcileAsync(context, fromCheckAlarm = true, resetReminders = false)
     }
 }
 
@@ -23,18 +23,18 @@ class WatchAlarmReceiver : BroadcastReceiver() {
 class SystemEventsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.i("SystemEventsReceiver", "Received ${intent.action}")
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            context.dawnly.scope.launch { ReminderScheduler.sync(context) }
-        }
-        reconcileAsync(context, fromCheckAlarm = false)
+        val cleared = intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED
+        reconcileAsync(context, fromCheckAlarm = false, resetReminders = cleared)
     }
 }
 
-private fun BroadcastReceiver.reconcileAsync(context: Context, fromCheckAlarm: Boolean) {
+/** Runs inside [goAsync], so the process isn't killed before the reminders are set again. */
+private fun BroadcastReceiver.reconcileAsync(context: Context, fromCheckAlarm: Boolean, resetReminders: Boolean) {
     val pending = goAsync()
     val app = context.dawnly
     app.scope.launch {
         try {
+            if (resetReminders) ReminderScheduler.sync(context)
             app.watchScheduler.reconcile(fromCheckAlarm)
         } finally {
             pending.finish()

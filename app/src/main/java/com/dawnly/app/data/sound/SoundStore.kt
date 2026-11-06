@@ -11,10 +11,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.soundStore by preferencesDataStore(name = "sound")
 
-/**
- * The user's choice of prompt sound. Its own store because `SettingsRepository` is frozen during
- * the parallel phases; it can fold into settings later.
- */
+/** The user's choice of prompt sound, in its own small store. */
 class SoundStore(context: Context) {
     private val store = context.applicationContext.soundStore
 

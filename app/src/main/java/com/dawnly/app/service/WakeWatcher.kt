@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -168,7 +169,8 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                     lastSavedAt = now
                 }
                 if (awakeNow) {
-                    app.learning.asked(Instant.now(), score.shares)
+                    // Nothing is recorded while the user has learning off.
+                    if (app.settings.learn.first()) app.learning.asked(Instant.now(), score.shares)
                     onAwake(signals, score.musicTippedIt)
                 }
             }

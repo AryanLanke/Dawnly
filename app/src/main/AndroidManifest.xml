@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Alarms are cleared on reboot, so the window has to be scheduled again. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Steps signal (Phase 3). Declared early so onboarding (Phase 5) can request it. -->
+    <!-- Steps signal: onboarding asks for it. -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <!-- "Apps opened" signal: Usage access, granted by the user in system settings. Read only during
          the watch window, and only which app came to the front. -->
@@ -53,6 +53,8 @@
     <application
         android:name=".DawnlyApp"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
@@ -95,7 +97,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Phase 4: the prompt's "Dismiss alarm" button opens this straight from the notification
+        <!-- The prompt's "Dismiss alarm" button opens this straight from the notification
              (not a trampoline). No UI: it checks the alarm, then forwards to the Clock app. -->
         <activity
             android:name=".notify.DismissAlarmActivity"
@@ -105,7 +107,7 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- Phase 4: the prompt's "Not yet" button. -->
+        <!-- The prompt's "Not yet" button. -->
         <receiver
             android:name=".notify.NotYetReceiver"
             android:exported="false" />

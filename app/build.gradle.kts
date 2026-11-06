@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// The release key's location and passwords, kept out of git (see progress.md, Phase 7).
+// The release key's location and passwords, kept out of git (see design/README.md).
 // Without this file, as on CI, release builds come out unsigned.
 val keystoreFile: File = rootProject.file("keystore.properties")
 val keystore = Properties().apply { if (keystoreFile.exists()) keystoreFile.inputStream().use(::load) }

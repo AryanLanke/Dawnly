@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * The hand-off from wake detection (Phase 3) to the notification (Phase 4).
+ * The hand-off from wake detection to the notification.
  * `WatchService` calls [onUserAwake] at most once per watch window, when the wake score says
  * the user is up.
  *
@@ -43,7 +43,7 @@ object AwakeNotifier {
 
     /**
      * Android fixes a channel's sound once it exists, so each sound gets its own channel:
-     * `awake_<sound>`. [useSound] swaps them. "awake" was the silent Phase 4 channel.
+     * `awake_<sound>`. [useSound] swaps them. "awake" was the first, silent channel.
      */
     private const val CHANNEL_PREFIX = "awake_"
     private const val OLD_CHANNEL = "awake"

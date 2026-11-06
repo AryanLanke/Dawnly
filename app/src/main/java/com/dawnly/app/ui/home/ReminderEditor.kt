@@ -65,7 +65,6 @@ import com.dawnly.app.ui.glass.GlassSurface
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
 import com.dawnly.app.ui.theme.DawnlyTheme
-import androidx.compose.material3.ExperimentalMaterial3Api
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -91,7 +90,6 @@ private enum class EditorPage { At, From, Until, Interval, Sound, DateA, DateB }
  * a time turns the card into a glass circle like Today's alarm, with big digits on wheels.
  * [initial] null makes a new one.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ReminderEditor(
     initial: Reminder?,

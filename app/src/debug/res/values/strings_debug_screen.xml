@@ -1,5 +1,5 @@
 <resources>
-    <!-- Wake detection debug screen (Phase 3). Dev-only, so plain wording is fine. -->
+    <!-- Wake detection debug screen. Dev-only, so plain wording is fine. -->
     <string name="debug_title">Wake detection</string>
     <string name="debug_watch_window">Watch window</string>
     <string name="debug_state">State</string>

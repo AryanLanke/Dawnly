@@ -45,7 +45,7 @@ object ReminderScheduler {
         reminder.sound?.let { key -> AlertSound.entries.firstOrNull { it.name == key } } ?: DEFAULT_SOUND
 
     /** Removes the old channel that used the phone's own sound; the new ones are made as needed. */
-    fun createChannel(context: Context) {
+    fun deleteOldChannel(context: Context) {
         NotificationManagerCompat.from(context).deleteNotificationChannel(OLD_CHANNEL)
     }
 

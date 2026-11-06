@@ -3,5 +3,5 @@
         <item name="android:windowBackground">@color/wall</item>
     </style>
 
-    <color name="wall">#0A0B12</color>
+    <color name="wall">#030306</color>
 </resources>

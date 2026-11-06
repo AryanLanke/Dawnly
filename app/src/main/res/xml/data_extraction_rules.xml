@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backups keep the user's settings, reminders and what Dawnly learned. They leave out state that
+     belongs to one phone: the armed alarm, the wake readings, the Clock app's dismiss form and
+     the reminders' alarm ids. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="clock_dismiss.xml" />
+        <exclude domain="sharedpref" path="reminder_alarms.xml" />
+        <exclude domain="file" path="datastore/watch_state.preferences_pb" />
+        <exclude domain="file" path="datastore/wake_progress.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="clock_dismiss.xml" />
+        <exclude domain="sharedpref" path="reminder_alarms.xml" />
+        <exclude domain="file" path="datastore/watch_state.preferences_pb" />
+        <exclude domain="file" path="datastore/wake_progress.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

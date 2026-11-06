@@ -28,7 +28,7 @@ class DawnlyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         WatchNotifications.createChannels(this)
-        ReminderScheduler.createChannel(this)
+        ReminderScheduler.deleteOldChannel(this)
     }
 }
 

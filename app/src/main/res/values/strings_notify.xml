@@ -1,7 +1,7 @@
 <resources>
-    <!-- Phase 4: the "Up already?" prompt. -->
+    <!-- the "Up already?" prompt. -->
     <string name="channel_awake">Up before your alarm</string>
-    <string name="channel_awake_description">Asks whether to dismiss your alarm when you\'re up before it. Dawnly only dismisses it on its own if you turn on Dismiss automatically.</string>
+    <string name="channel_awake_description">Asks whether to dismiss your alarm when you\'re up before it. Dawnly only dismisses it on its own if you choose Warn first or Right away.</string>
     <string name="awake_title">Up already?</string>
     <string name="awake_text">Looks like you\'re awake. Dismiss your %1$s alarm?</string>
     <!-- Opt-in auto-dismiss: the warning shown for a minute before dismissing. -->
