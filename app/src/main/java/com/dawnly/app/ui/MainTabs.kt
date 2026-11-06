@@ -2,6 +2,7 @@ package com.dawnly.app.ui
 
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -43,6 +44,7 @@ import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.glass.GlassTabBar
 import com.dawnly.app.ui.glass.rememberHaptics
+import com.dawnly.app.ui.home.AlarmWheel
 import com.dawnly.app.ui.home.HomeScreen
 import com.dawnly.app.ui.home.HomeViewModel
 import com.dawnly.app.ui.home.ReminderEditor
@@ -67,6 +69,7 @@ internal fun MainTabs(
     val scope = rememberCoroutineScope()
     val haptic = rememberHaptics()
     val reduceMotion = LocalReduceMotion.current
+    val activity = LocalActivity.current
     fun goTo(page: Int) {
         scope.launch {
             if (reduceMotion) pager.scrollToPage(page)
@@ -115,6 +118,7 @@ internal fun MainTabs(
                         permissions = permissions.state,
                         onRequestPermission = { permissions.request(it) },
                         onEditReminder = { editing = ReminderEdit(it) },
+                        onSetAlarm = { editing = AlarmPick() },
                         contentPadding = padding,
                     )
                     else -> SettingsScreen(
@@ -174,6 +178,13 @@ internal fun MainTabs(
                                 onDelete = { home.deleteReminder(it); editing = null },
                                 onClose = { editing = null },
                             )
+                            is AlarmPick -> AlarmWheel(
+                                onDone = { time ->
+                                    activity?.let { home.setAlarm(it, time) }
+                                    editing = null
+                                },
+                                onClose = { editing = null },
+                            )
                             is WindowPick -> {
                                 val window = settings.uiState.collectAsStateWithLifecycle().value?.window ?: WatchWindow.DEFAULT
                                 WindowWheel(
@@ -201,4 +212,7 @@ private class ReminderEdit(val reminder: Reminder?) : Overlay
 
 /** The custom watching window's wheels. */
 private class WindowPick : Overlay
+
+/** Setting a new alarm in the Clock app, on the time wheels. */
+private class AlarmPick : Overlay
 private const val TODAY = 0

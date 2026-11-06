@@ -101,6 +101,7 @@ internal fun ReminderEditor(
     var from by remember { mutableStateOf((start as? ReminderSchedule.Every)?.from ?: ReminderSchedule.DAY_START) }
     var until by remember { mutableStateOf((start as? ReminderSchedule.Every)?.until ?: ReminderSchedule.DAY_END) }
     var sound by remember { mutableStateOf(initial?.let(ReminderSounds::of) ?: ReminderSounds.DEFAULT) }
+    var ring by remember { mutableStateOf(initial?.ring ?: false) }
     var picking by remember { mutableStateOf<EditorPage?>(null) }
     val today = LocalDate.now()
     var days by remember { mutableStateOf(ReminderDays.of(initial?.firstDay, initial?.lastDay, today)) }
@@ -273,6 +274,13 @@ internal fun ReminderEditor(
                             Modifier.fillMaxWidth(),
                         ) { picking = EditorPage.DateB }
                     }
+                    // A plain notification, or ringing like an alarm until Stop or Snooze.
+                    SectionLabel(stringResource(R.string.reminder_alert))
+                    GlassSegmented(
+                        options = listOf(stringResource(R.string.reminder_alert_notify), stringResource(R.string.reminder_alert_ring)),
+                        selected = if (ring) 1 else 0,
+                        onSelect = { ring = it == 1 },
+                    )
                     // Its own sound, so a reminder is never mistaken for the alarm's question.
                     ValueButton(stringResource(R.string.reminder_sound), stringResource(sound.label), Modifier.fillMaxWidth()) {
                         picking = EditorPage.Sound
@@ -297,6 +305,7 @@ internal fun ReminderEditor(
                                             sound = sound.name,
                                             firstDay = firstDay,
                                             lastDay = lastDay,
+                                            ring = ring,
                                         ),
                                     )
                                 }

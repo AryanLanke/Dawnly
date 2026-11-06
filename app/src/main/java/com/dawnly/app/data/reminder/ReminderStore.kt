@@ -53,6 +53,7 @@ class ReminderStore(context: Context) {
                         .put("name", r.name)
                         .put("why", r.why)
                         .put("on", r.on)
+                        .put("ring", r.ring)
                         .apply { r.sound?.let { put("sound", it) } }
                         .apply { r.firstDay?.let { put("firstDay", it.toString()) } }
                         .apply { r.lastDay?.let { put("lastDay", it.toString()) } }
@@ -90,6 +91,7 @@ class ReminderStore(context: Context) {
                         sound = o.optString("sound").takeIf { it.isNotEmpty() },
                         firstDay = o.optString("firstDay").takeIf { it.isNotEmpty() }?.let(LocalDate::parse),
                         lastDay = o.optString("lastDay").takeIf { it.isNotEmpty() }?.let(LocalDate::parse),
+                        ring = o.optBoolean("ring", false),
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Skipping a reminder that can't be read", e)

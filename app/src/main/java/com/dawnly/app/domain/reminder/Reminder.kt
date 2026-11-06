@@ -20,6 +20,8 @@ data class Reminder(
     /** The first and last day it comes; both null is every day. */
     val firstDay: LocalDate? = null,
     val lastDay: LocalDate? = null,
+    /** Rings like an alarm (full screen, its sound repeating until Stop or Snooze) instead of a notification. */
+    val ring: Boolean = false,
 )
 
 sealed interface ReminderSchedule {

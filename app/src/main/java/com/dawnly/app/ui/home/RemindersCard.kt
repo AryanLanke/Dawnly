@@ -3,6 +3,7 @@ package com.dawnly.app.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -47,6 +48,14 @@ internal fun RemindersCard(
                     divider = index > 0,
                     modifier = Modifier.clickable(role = Role.Button) { onEdit(reminder) },
                 ) {
+                    if (reminder.ring) {
+                        Icon(
+                            GlassIcons.AlarmClock,
+                            contentDescription = stringResource(R.string.reminder_rings_description),
+                            tint = DawnlyTheme.colors.textSoft,
+                            modifier = Modifier.padding(end = 10.dp).size(18.dp),
+                        )
+                    }
                     GlassSwitch(reminder.on, { onToggle(reminder, it) })
                 }
             }

@@ -1,18 +1,25 @@
 package com.dawnly.app.ui.home
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
+import com.dawnly.app.R
+import com.dawnly.app.data.alarm.ClockApp
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.notify.Notify
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
 import com.dawnly.app.service.WatchSession
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -66,6 +73,23 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
         val result = QuietDismiss.dismiss(activity, app.nextAlarms.current(), backToDawnly = true)
         _dismissResult.value = result.takeUnless { it is DismissResult.Requested }
         app.scope.launch { app.watchScheduler.reconcile() }
+    }
+
+    /**
+     * Sets an alarm for [time] in the Clock app and says so in a toast. The ring updates by itself
+     * once the Clock app has it (the next alarm changes).
+     */
+    fun setAlarm(activity: Activity, time: LocalTime) {
+        val clockApp = ClockApp(activity)
+        val set = clockApp.setAlarm(activity, time)
+        val message = if (set != null) {
+            val at = LocalDate.now().atTime(time).atZone(ZoneId.systemDefault()).toInstant()
+            activity.getString(R.string.alarm_set_toast, Notify.time(activity, at), set.label)
+        } else {
+            clockApp.openClock(activity, null)?.let { activity.getString(R.string.alarm_set_opened_clock, it.label) }
+                ?: activity.getString(R.string.alarm_set_no_clock)
+        }
+        Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
     fun clearDismissResult() {

@@ -217,3 +217,22 @@ Friends' phones, 2026-11-03 (fixed in code, not yet tested). Install from a file
 - [ ] **9.12 Wrong texts fixed:** Android's notification settings for "Up before your alarm" mention **Warn first or Right away**; the Notifications reason in More options says Dawnly only dismisses on its own if you choose one of those; Right away's line says the sound plays forwards.
 - [ ] **9.13 Backups:** after restoring to a new phone, reminders and settings are there, and no stale watch window or alarm carries over.
 
+
+## 1.7.0: ringing reminders and setting alarms
+
+- [ ] **10.1 Ring like alarm, unlocked:** a reminder set to Ring like alarm, 2 minutes away, with Dawnly closed. **Expect:** a full-screen ring (or a pop-up on top of the app you're in) with the name, the why, Stop and Snooze 10 min. The sound plays, fades, pauses, and plays again, starting soft and getting louder. The phone vibrates.
+- [ ] **10.2 Ring like alarm, locked:** the same with the screen off and locked. **Expect:** the screen turns on and the ring shows over the lock screen.
+- [ ] **10.3 Stop:** tap Stop. **Expect:** sound and vibration stop at once, the screen closes, and the reminder's next time is still set.
+- [ ] **10.4 Snooze:** tap Snooze 10 min. **Expect:** it rings again 10 minutes later, and its regular next time hasn't moved.
+- [ ] **10.5 From the notification:** pull down the shade while it rings and use Snooze or Stop there. **Expect:** same as 10.3 and 10.4.
+- [ ] **10.6 Nobody answers:** let it ring. **Expect:** it stops after 5 minutes and leaves "Missed: <name>".
+- [ ] **10.7 Back button:** press Back on the ring screen. **Expect:** it keeps ringing; only Stop or Snooze ends it.
+- [ ] **10.8 Silent mode and Do Not Disturb:** with the ringer on silent, it still rings (it's on the alarm volume). With Do Not Disturb set to allow alarms, it rings too.
+- [ ] **10.9 Notification stays a notification:** a reminder left on Notification. **Expect:** plays once, as before.
+- [ ] **10.10 Old reminders:** after updating from 1.6.6, existing reminders show Notification in the editor.
+- [ ] **10.11 Turned off while snoozed:** snooze a ringing reminder, then switch it off on Today. **Expect:** it doesn't ring 10 minutes later.
+- [ ] **10.12 Set an alarm, none yet:** with no alarm, tap the ring, pick 7:30 am, Done. **Expect:** a toast "Alarm set for 7:30 am in Clock"; the alarm is in the Clock app's list; Today shows it.
+- [ ] **10.13 Add alarm:** with an alarm already set, tap Add alarm and set another, earlier one. **Expect:** it shows in the Clock app, and Today switches to it if it's the next one.
+- [ ] **10.14 Close without setting:** open the wheels and tap around them or press Back. **Expect:** no alarm is set.
+- [ ] **10.15 24-hour phone:** with 24-hour time, the wheels show 0 to 23 and the alarm lands at the right hour.
+- [ ] **10.16 Other Clock apps:** on Samsung or Xiaomi, setting an alarm either sets it quietly or opens the Clock app's own screen to finish it.

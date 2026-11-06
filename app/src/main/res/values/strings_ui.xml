@@ -16,7 +16,13 @@
 
     <!-- Home -->
     <string name="home_no_alarm">No alarm yet</string>
-    <string name="home_no_alarm_hint">Set one in your Clock app and Dawnly will keep watch</string>
+    <string name="home_no_alarm_hint">Tap to set an alarm</string>
+    <string name="home_set_alarm_description">Set an alarm</string>
+    <string name="home_add_alarm">Add alarm</string>
+    <string name="alarm_pick_label">Alarm</string>
+    <string name="alarm_set_toast">Alarm set for %1$s in %2$s</string>
+    <string name="alarm_set_opened_clock">Finish setting it in %1$s</string>
+    <string name="alarm_set_no_clock">No Clock app on this phone can set alarms</string>
     <string name="home_day_today">Today</string>
     <string name="home_day_tomorrow">Tomorrow</string>
     <string name="home_waiting">On watch from %1$s</string>
@@ -84,6 +90,12 @@
     <string name="reminder_delete">Delete reminder</string>
     <string name="reminder_done">Done</string>
     <string name="reminder_sound">Sound</string>
+    <string name="reminder_alert">How it comes</string>
+    <string name="reminder_alert_notify">Notification</string>
+    <string name="reminder_alert_ring">Ring like alarm</string>
+    <string name="reminder_rings_description">Rings like an alarm</string>
+    <string name="ring_stop">Stop</string>
+    <string name="ring_snooze">Snooze %1$d min</string>
     <string name="reminder_custom">Custom</string>
     <string name="reminder_days">Which days</string>
     <string name="reminder_days_every_day">Every day</string>

@@ -27,6 +27,9 @@
     <!-- The user's own reminders from Today. -->
     <string name="channel_reminders_sound">Your reminders: %1$s</string>
     <string name="channel_reminders_description">The reminders you set on Today, like drinking water.</string>
+    <string name="channel_reminder_ring">Reminders that ring</string>
+    <string name="channel_reminder_ring_description">Reminders set to ring like an alarm. Dawnly plays their sound itself, repeating until you stop or snooze it.</string>
+    <string name="ring_missed">Missed: %1$s</string>
 
     <!-- When the Clock app left the alarm on, even after every form of the request. -->
     <string name="dismiss_failed_title">Your alarm is still on</string>

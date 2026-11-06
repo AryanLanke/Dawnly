@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.0 (6 Nov)
+- **Reminders can ring like an alarm.** In the editor, How it comes: Notification, or Ring like alarm. A ringing reminder fills the screen (even locked) and plays its sound again and again, each play fading out before the next, starting soft and getting louder. Stop, or Snooze 10 min. After 5 minutes it stops by itself and leaves a "Missed" notification. If Android won't let it take over the screen, the notification's sound repeats instead.
+- **Set an alarm from Dawnly.** With no alarm, tap the ring ("Tap to set an alarm"); with one, tap **Add alarm**. Pick the time on the glass wheels and Dawnly sets it in your Clock app, so it shows there and rings with the Clock's own sound.
+
 ## 1.6.6 (6 Nov)
 - Learning from you records nothing while it's switched off (before, it kept a history anyway).
 - After a reboot or an app update, reminders are set again before Android can stop the app.

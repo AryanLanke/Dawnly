@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Needed for AlarmClock.ACTION_DISMISS_ALARM. A normal permission, granted at install. -->
+    <!-- Needed for AlarmClock.ACTION_DISMISS_ALARM and ACTION_SET_ALARM (setting an alarm in the
+         Clock app from Today). A normal permission, granted at install. -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <!-- Starts the watch window on time. "Alarms & reminders" in settings; off by default on Android 14+. -->
@@ -29,6 +30,9 @@
          from a file): a full-screen notification opens the dismiss straight away with the phone
          locked, and asks for one tap while it's in use. Granted at install. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Reminders that ring like an alarm: they vibrate, and keep the phone awake while ringing. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
          screen apps so opening them doesn't count as opening an app. Launcher apps: after a
@@ -39,6 +43,9 @@
         </intent>
         <intent>
             <action android:name="android.intent.action.SHOW_ALARMS" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SET_ALARM" />
         </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -116,6 +123,25 @@
         <receiver
             android:name=".notify.ReminderReceiver"
             android:exported="false" />
+
+        <!-- A reminder set to ring like an alarm: plays its sound until Stop or Snooze. -->
+        <service
+            android:name=".notify.ReminderRingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Rings a reminder the user chose to ring like an alarm, playing its sound until the user stops or snoozes it, for at most five minutes." />
+        </service>
+
+        <!-- The ringing reminder's screen, shown over the lock screen. -->
+        <activity
+            android:name=".notify.ReminderRingActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Dawnly" />
 
         <!-- Opt-in auto-dismiss: our own alarm, when the one-minute warning runs out. -->
         <receiver

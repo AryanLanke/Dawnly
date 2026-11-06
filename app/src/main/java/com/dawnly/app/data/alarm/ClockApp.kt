@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.AlarmClock
 import android.util.Log
 import java.time.Instant
+import java.time.LocalTime
 import java.time.ZoneId
 
 /** An installed app, named the way the user sees it. */
@@ -66,6 +67,18 @@ class ClockApp(context: Context) {
         return launcher.tryStart(intent)
     }
 
+    /**
+     * Sets an alarm for [time] in the Clock app, so it shows there like any alarm and rings with
+     * the Clock's own sound. Returns the Clock app that set it, or null if none can. Dawnly then
+     * sees it as the next alarm and watches before it as usual.
+     */
+    fun setAlarm(launcher: Context, time: LocalTime): AppRef? {
+        val intent = setAlarmIntent(time)
+        val handler = resolve(intent) ?: return null
+        if (launcher !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return if (launcher.tryStart(intent)) handler else null
+    }
+
     /** Opens the alarm list, or else the app that owns the alarm. Returns the app opened. */
     fun openClock(launcher: Context, ownerPackage: String?): AppRef? {
         val candidates = listOfNotNull(
@@ -112,6 +125,12 @@ class ClockApp(context: Context) {
 
     companion object {
         private const val TAG = "ClockApp"
+
+        /** A new alarm at [time], set without opening the Clock app's screen. */
+        fun setAlarmIntent(time: LocalTime): Intent = Intent(AlarmClock.ACTION_SET_ALARM)
+            .putExtra(AlarmClock.EXTRA_HOUR, time.hour)
+            .putExtra(AlarmClock.EXTRA_MINUTES, time.minute)
+            .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
 
         /**
          * `EXTRA_SKIP_UI` is documented only for setting alarms, and Google Clock shows its alarm

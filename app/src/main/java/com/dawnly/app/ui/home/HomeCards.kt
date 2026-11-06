@@ -5,11 +5,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,9 +21,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -49,18 +53,25 @@ import kotlin.math.roundToInt
 // The cards and pieces the Home screen is built from.
 
 @Composable
-internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Modifier) {
+internal fun AlarmRing(status: HomeStatus, now: Instant, modifier: Modifier = Modifier, onSetAlarm: () -> Unit = {}) {
     val progress = (status as? HomeStatus.Watching)?.progress
     val description = progress?.let {
         stringResource(R.string.home_progress_description, (it * 100).roundToInt())
     }
     val watching = status as? HomeStatus.Watching
+    // No alarm yet: the whole ring is a button that opens the wheels to set one.
+    val setLabel = stringResource(R.string.home_set_alarm_description)
+    val tappable = if (status == HomeStatus.NoAlarm) {
+        Modifier.clip(CircleShape).clickable(role = Role.Button, onClickLabel = setLabel, onClick = onSetAlarm)
+    } else {
+        Modifier
+    }
     ProgressRing(
         startedAt = watching?.startedAt,
         endsAt = watching?.alarmAt,
         modifier = modifier.then(
             if (description != null) Modifier.semantics { contentDescription = description } else Modifier,
-        ),
+        ).then(tappable),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             val alarmAt = when (status) {

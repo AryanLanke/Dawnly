@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.alarm.DismissResult
 import com.dawnly.app.domain.reminder.Reminder
+import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.PermissionState
@@ -41,6 +42,7 @@ fun HomeScreen(
     permissions: PermissionState,
     onRequestPermission: (AppPermission) -> Unit,
     onEditReminder: (Reminder?) -> Unit,
+    onSetAlarm: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,6 +60,7 @@ fun HomeScreen(
         onClearDismissResult = viewModel::clearDismissResult,
         onRequestPermission = onRequestPermission,
         contentPadding = contentPadding,
+        onSetAlarm = onSetAlarm,
     )
 }
 
@@ -74,6 +77,7 @@ internal fun HomeContent(
     onRequestPermission: (AppPermission) -> Unit,
     contentPadding: PaddingValues,
     now: Instant = Instant.now(),
+    onSetAlarm: () -> Unit = {},
 ) {
     val status = state.status
     if (status == HomeStatus.Loading) return
@@ -88,7 +92,11 @@ internal fun HomeContent(
     ) {
         Spacer(Modifier.height(20.dp))
         SpringIn(order = 0) {
-            AlarmRing(status, now, Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp))
+            AlarmRing(status, now, Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp), onSetAlarm)
+        }
+        // With an alarm already set, another one is still a tap away.
+        if (status != HomeStatus.NoAlarm) {
+            SpringIn(order = 0) { AccentPill(stringResource(R.string.home_add_alarm), onSetAlarm) }
         }
         SpringIn(order = 0) {
             Text(

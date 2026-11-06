@@ -6,15 +6,23 @@ import android.content.Intent
 import com.dawnly.app.dawnly
 import com.dawnly.app.service.launchAsync
 
-/** A reminder is due: show it, then set its next time. */
+/**
+ * A reminder is due: ring it or show it, then set its next time. A snoozed one rings again
+ * without moving its next time, which is still set.
+ */
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getLongExtra(ReminderScheduler.EXTRA_ID, -1L)
+        val snoozed = intent.getBooleanExtra(ReminderScheduler.EXTRA_SNOOZE, false)
         launchAsync(context) {
             val reminder = context.dawnly.reminders.current().firstOrNull { it.id == id } ?: return@launchAsync
             if (!reminder.on) return@launchAsync
-            ReminderScheduler.show(context, reminder)
-            ReminderScheduler.schedule(context, reminder)
+            when {
+                !reminder.ring -> ReminderScheduler.show(context, reminder)
+                // Android may refuse, e.g. after an inexact alarm: then a notification whose sound repeats.
+                !ReminderRingService.start(context, reminder) -> ReminderScheduler.show(context, reminder, insistent = true)
+            }
+            if (!snoozed) ReminderScheduler.schedule(context, reminder)
         }
     }
 }

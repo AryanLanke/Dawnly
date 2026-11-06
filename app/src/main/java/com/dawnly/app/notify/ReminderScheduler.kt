@@ -14,6 +14,7 @@ import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.dawnly
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderTimes
+import com.dawnly.app.domain.reminder.SnoozeTime
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -25,6 +26,10 @@ import java.time.ZoneId
 object ReminderScheduler {
     private const val TAG = "Reminders"
     internal const val EXTRA_ID = "com.dawnly.app.extra.REMINDER_ID"
+
+    /** On a snoozed reminder's one-off alarm: ring again, but leave its regular next time alone. */
+    internal const val EXTRA_SNOOZE = "com.dawnly.app.extra.REMINDER_SNOOZE"
+    private const val ACTION_SNOOZED = "com.dawnly.app.action.REMINDER_SNOOZED"
 
     /** Before 1.3.0 every reminder used this one channel, with the phone's own sound. */
     private const val OLD_CHANNEL = "reminders"
@@ -80,8 +85,19 @@ object ReminderScheduler {
             return
         }
         val at = next.atZone(zone).toInstant().toEpochMilli()
+        setExact(context, at, pending(context, reminder.id))
+        Log.i(TAG, "\"${reminder.name}\" next at ${java.time.Instant.ofEpochMilli(at)}")
+    }
+
+    /** Rings reminder [id] again [minutes] from now, without touching its regular next time. */
+    fun snooze(context: Context, id: Long, minutes: Int) {
+        val at = SnoozeTime.after(System.currentTimeMillis(), minutes)
+        setExact(context, at, snoozePending(context, id))
+        Log.i(TAG, "Reminder $id snoozed until ${java.time.Instant.ofEpochMilli(at)}")
+    }
+
+    private fun setExact(context: Context, at: Long, intent: PendingIntent) {
         val alarms = context.getSystemService(AlarmManager::class.java)
-        val intent = pending(context, reminder.id)
         try {
             if (alarms.canScheduleExactAlarmsCompat()) {
                 alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
@@ -91,14 +107,36 @@ object ReminderScheduler {
         } catch (e: SecurityException) {
             alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
         }
-        Log.i(TAG, "\"${reminder.name}\" next at ${java.time.Instant.ofEpochMilli(at)}")
     }
 
     private fun cancel(context: Context, id: Long) {
-        context.getSystemService(AlarmManager::class.java).cancel(pending(context, id))
+        val alarms = context.getSystemService(AlarmManager::class.java)
+        alarms.cancel(pending(context, id))
+        alarms.cancel(snoozePending(context, id))
     }
 
-    internal fun show(context: Context, reminder: Reminder) {
+    /** A ringing reminder nobody stopped: left as a quiet notification, so it isn't lost. */
+    internal fun showMissed(context: Context, ringing: Ringing) {
+        val builder = NotificationCompat.Builder(context, ReminderRingService.channel(context))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.ring_missed, ringing.name))
+            .setContentIntent(Notify.openApp(context))
+            .setAutoCancel(true)
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        if (ringing.why.isNotBlank()) builder.setContentText(ringing.why)
+        try {
+            NotificationManagerCompat.from(context).notify(notificationId(ringing.id), builder.build())
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Notifications are off, so the missed reminder wasn't shown", e)
+        }
+    }
+
+    /**
+     * The plain notification. [insistent] repeats its sound until it's seen: for a reminder that
+     * should have rung but Android wouldn't let it take over the screen.
+     */
+    internal fun show(context: Context, reminder: Reminder, insistent: Boolean = false) {
         val builder = NotificationCompat.Builder(context, channelFor(context, ReminderSounds.of(reminder)))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(reminder.name)
@@ -109,7 +147,9 @@ object ReminderScheduler {
             builder.setContentText(reminder.why).setStyle(NotificationCompat.BigTextStyle().bigText(reminder.why))
         }
         try {
-            NotificationManagerCompat.from(context).notify(notificationId(reminder.id), builder.build())
+            val notification = builder.build()
+            if (insistent) notification.flags = notification.flags or android.app.Notification.FLAG_INSISTENT
+            NotificationManagerCompat.from(context).notify(notificationId(reminder.id), notification)
         } catch (e: SecurityException) {
             Log.w(TAG, "Notifications are off, so \"${reminder.name}\" wasn't shown", e)
         }
@@ -119,6 +159,15 @@ object ReminderScheduler {
         context,
         requestCode(id),
         Intent(context, ReminderReceiver::class.java).putExtra(EXTRA_ID, id),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    private fun snoozePending(context: Context, id: Long): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        requestCode(id),
+        // Its own action, so it's a different alarm from the reminder's regular one.
+        Intent(context, ReminderReceiver::class.java).setAction(ACTION_SNOOZED)
+            .putExtra(EXTRA_ID, id).putExtra(EXTRA_SNOOZE, true),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
