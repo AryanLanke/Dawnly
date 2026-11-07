@@ -5,7 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * The whole palette, taken from the CSS variables in design/mockups.html. One accent, a few
+ * The whole palette, taken from the CSS variables in the original design mockups. One accent, a few
  * neutrals, everything in the blue family.
  */
 @Immutable

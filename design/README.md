@@ -2,7 +2,6 @@
 
 | Path | What it is |
 |------|------------|
-| `mockups.html` | The original UI mockups: clear glass over a morning sky (light) or a night sky (dark). The app has moved on since (reminders, learning and more options are not in them). Open in a browser; it has a light/dark toggle. |
 | `app-icon/` | The app icon, "Sunny Egg": a fried egg with a white of blue glass. `egg.svg`, a 512px PNG, and `preview.html`, which shows it the way a launcher does. |
 | `app-icon/generator/` | Python that draws the icon (`icon.py`) and renders it with headless Chrome (`build.py`). No packages needed. |
 | `sounds/` | The notification sound masters and the script that makes the app's sounds from them (below). |

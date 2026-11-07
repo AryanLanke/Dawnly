@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import com.dawnly.app.ui.glass.NoPress
 
 /**
- * The glass design system from design/mockups.html. Material 3 is only the base: screens read
+ * The glass design system from the original design mockups. Material 3 is only the base: screens read
  * [DawnlyTheme.colors] and draw their own glass components from `ui/glass`.
  */
 @Composable
