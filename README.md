@@ -81,7 +81,7 @@ app/src/main/java/com/dawnly/app/
 | Architecture | MVVM, single module, `ui` / `data` / `domain` / `service` / `notify` packages |
 | Storage | Jetpack DataStore (Preferences), a little SharedPreferences |
 | Background work | `AlarmManager` exact alarms, a foreground service, dynamically registered receivers, sensors |
-| Tests | 148 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
+| Tests | 151 JUnit 4 unit tests: planner, wake tracking and scoring, learning, reminder times, the dismiss guard, return plan and UI state |
 | Build | Gradle 9.8 with a version catalog, AGP 9.4, R8 for release |
 | CI | GitHub Actions: unit tests, debug build and lint on every push and pull request |
 | Platform | minSdk 26 (Android 8.0), target and compile SDK 37 |
@@ -116,7 +116,7 @@ Tested on a Nothing Phone (2a), Android 16, with Google Clock. Dawnly reads and 
 
 ## Changelog and privacy
 
-What changed in each version is in [CHANGELOG.md](CHANGELOG.md), The privacy policy is [docs/privacy-policy.md](docs/privacy-policy.md).
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md). The privacy policy is [docs/privacy-policy.md](docs/privacy-policy.md).
 
 ## Licence
 
