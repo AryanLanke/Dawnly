@@ -22,11 +22,10 @@ import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.theme.DawnlyTheme
 
-/** Where feedback goes: the developer's inbox (the user's choice, 2026-11-03). */
-private const val FEEDBACK_EMAIL = "redischarmender@gmail.com"
-private const val GMAIL = "com.google.android.gm"
+/** Where feedback goes: a new issue on the public project page. */
+private const val FEEDBACK_URL = "https://github.com/AryanLanke/Dawnly/issues/new"
 
-/** The Settings row that opens Gmail with a feedback email ready to write. */
+/** The Settings row that opens a new GitHub issue with the app version and phone filled in. */
 @Composable
 internal fun FeedbackRow() {
     val context = LocalContext.current
@@ -47,8 +46,8 @@ internal fun FeedbackRow() {
 }
 
 /**
- * A new email to [FEEDBACK_EMAIL] in Gmail, or in whatever email app the phone has. The app version
- * and phone go at the bottom, so a report says which phone it's about.
+ * A new GitHub issue in the browser, with the app version and phone in the body, so a report says
+ * which phone it's about.
  */
 private fun openFeedback(context: Context) {
     val version = try {
@@ -62,17 +61,13 @@ private fun openFeedback(context: Context) {
         "${Build.MANUFACTURER} ${Build.MODEL}",
         Build.VERSION.RELEASE,
     )
-    val email = Intent(Intent.ACTION_SENDTO, "mailto:$FEEDBACK_EMAIL".toUri())
-        .putExtra(Intent.EXTRA_EMAIL, arrayOf(FEEDBACK_EMAIL))
-        .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.feedback_subject))
-        .putExtra(Intent.EXTRA_TEXT, "\n\n$about")
-    val opened = listOf(Intent(email).setPackage(GMAIL), email).any { intent ->
-        try {
-            context.startActivity(intent)
-            true
-        } catch (e: ActivityNotFoundException) {
-            false
-        }
+    val url = FEEDBACK_URL.toUri().buildUpon()
+        .appendQueryParameter("title", context.getString(R.string.feedback_subject))
+        .appendQueryParameter("body", "\n\n$about")
+        .build()
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, url))
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, context.getString(R.string.feedback_no_app, FEEDBACK_URL), Toast.LENGTH_LONG).show()
     }
-    if (!opened) Toast.makeText(context, context.getString(R.string.feedback_no_app, FEEDBACK_EMAIL), Toast.LENGTH_LONG).show()
 }

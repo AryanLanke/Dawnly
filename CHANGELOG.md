@@ -2,6 +2,10 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.8.0 (7 Nov)
+- The project is public on GitHub. Feedback opens a new GitHub issue in the browser (with the app version and phone filled in) instead of an email.
+- The project's internal notes, testing log and old design mockups are removed from the repository.
+
 ## 1.7.9 (6 Nov)
 - Code audit fixes:
 - A reminder whose time has already passed (a Today reminder set for an earlier time, say) is no longer saved silently. Dawnly says so and asks you to choose a later day or Tomorrow.

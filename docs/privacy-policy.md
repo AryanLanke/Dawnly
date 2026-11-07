@@ -27,7 +27,7 @@ It adds these signs up on your phone to decide whether you're awake. The reading
 Nothing. Dawnly has no internet access: Android doesn't let it connect to anything. It has no accounts, ads, analytics or tracking, and it shares nothing with anyone, including the developer.
 
 Two things to know:
-- **Feedback** in Settings opens your own email app with a draft addressed to the developer. The draft includes the Dawnly version, your phone's make and model, and the Android version. Nothing is sent unless you press send.
+- **Feedback** in Settings opens a new GitHub issue in your browser. The issue includes the Dawnly version, your phone's make and model, and the Android version. Nothing is sent unless you press Submit new issue on GitHub.
 - **Android backups.** If you have backups turned on, Android may include Dawnly's settings, reminders and learned history in your phone's own backup. Readings and anything specific to one phone are left out.
 
 ## Permissions

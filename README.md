@@ -56,7 +56,7 @@ Today also has reminders: a name, an optional "why", and a time. A reminder come
 - **Appearance:** Light, Dark, System, or **Clock** (the default: night from 7 pm to 6 am). Switching sweeps the new look in from a corner (light from the top-right, dark from the bottom-left).
 - **Sound:** 17 bundled sounds plus the phone's own, with a preview.
 - **More options:** which signs count, sensitivity (Low, Medium, High), Learning from you, and the permissions, with a count of those that still need allowing.
-- **Feedback** opens your email app with a draft that includes the app version and phone model. Dawnly sends nothing itself.
+- **Feedback** opens a new [GitHub issue](https://github.com/AryanLanke/Dawnly/issues/new) in your browser with the app version and phone model filled in. Dawnly sends nothing itself.
 
 ### Architecture
 
