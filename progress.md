@@ -82,7 +82,7 @@ Tested on a Nothing Phone (2a), Android 16, Google Clock:
 
 ## Release facts
 - **What the key is for.** The release key signs every build. Android only installs an update over an app signed with the same key, and Google's 2027 registration of apps is tied to the key's fingerprint. If it is lost, the app on testers' phones can't be updated and would need uninstalling.
-- **Location.** `C:\Users\aryan\dawnly-keys\dawnly-release.jks` (PKCS12, RSA 4096, alias `dawnly`, valid to 2054). The password is in the git-ignored `keystore.properties` at the repo root. The only copy is on this PC; **back it up somewhere else**.
+- **Location.** `C:\Users\aryan\dawnly-keys\dawnly-release.jks` (PKCS12, RSA 4096, alias `dawnly`, valid to 2054). The password is in the git-ignored `keystore.properties` at the repo root. Keep a backup of it somewhere safe.
 - **SHA-256.** `DC:6D:70:4D:EA:FD:FF:B7:6B:32:2B:87:D0:1F:88:C1:0D:32:1E:AA:21:6D:CE:9F:28:49:89:72:F3:4E:0E:BE`
 - **Google registration.** A free "limited distribution" developer account registered `com.aryanlanke.dawnly` on 3 Nov. Since 30 Sep 2026 unregistered apps can't be installed on certified phones in Brazil, Indonesia, Singapore and Thailand; the rest of the world follows in 2027. adb installs are never affected.
 - **Stores.** [docs/app-stores.md](docs/app-stores.md) (Xiaomi GetApps needs a registered company; Samsung needs commercial seller status) and [docs/play-internal-testing.md](docs/play-internal-testing.md).
