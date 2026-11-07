@@ -102,10 +102,19 @@ class ReminderRingService : Service() {
         handler.postDelayed({ finish(missed = true) }, TIMEOUT_MS)
     }
 
-    /** Plays [uri] once, then again after [GAP_MS], until stopped. */
-    private fun play(uri: Uri) {
+    /**
+     * Plays [uri] once, then again after [GAP_MS], until stopped. If the sound can't be played (a
+     * missing file, say), plays Dawnly's default instead, once, so the ring isn't silent.
+     */
+    private fun play(uri: Uri, isFallback: Boolean = false) {
         val mp = MediaPlayer()
         player = mp
+        fun fallBack(reason: String, cause: Throwable?) {
+            Log.w(TAG, "Couldn't play $uri ($reason)", cause)
+            if (isFallback) return
+            mp.release()
+            play(ReminderSounds.DEFAULT.uri(this), isFallback = true)
+        }
         try {
             mp.setAudioAttributes(ALARM_AUDIO)
             mp.setDataSource(this, uri)
@@ -115,12 +124,12 @@ class ReminderRingService : Service() {
                 handler.postDelayed({ if (player === mp) mp.start() }, GAP_MS)
             }
             mp.setOnErrorListener { _, what, extra ->
-                Log.w(TAG, "Sound failed ($what, $extra)")
+                fallBack("error $what, $extra", null)
                 true
             }
             mp.prepareAsync()
         } catch (e: Exception) {
-            Log.w(TAG, "Couldn't play $uri", e)
+            fallBack("setup", e)
         }
     }
 

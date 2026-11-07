@@ -1,5 +1,6 @@
 package com.dawnly.app.ui.home
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
@@ -41,6 +43,7 @@ import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
+import com.dawnly.app.domain.reminder.ReminderTimes
 import com.dawnly.app.ui.format.clock
 import com.dawnly.app.ui.format.formatDuration
 import com.dawnly.app.ui.glass.CheckBadge
@@ -59,6 +62,7 @@ import com.dawnly.app.ui.glass.ValueButton
 import com.dawnly.app.ui.settings.rememberSoundPreview
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -104,6 +108,7 @@ internal fun ReminderEditor(
     var ring by remember { mutableStateOf(initial?.ring ?: false) }
     var picking by remember { mutableStateOf<EditorPage?>(null) }
     val today = LocalDate.now()
+    val context = LocalContext.current
     var days by remember { mutableStateOf(ReminderDays.of(initial?.firstDay, initial?.lastDay, today)) }
     var date by remember { mutableStateOf(initial?.firstDay?.takeIf { it >= today } ?: today) }
     var dateTo by remember { mutableStateOf(initial?.lastDay?.takeIf { it >= date } ?: date.plusDays(6)) }
@@ -295,19 +300,23 @@ internal fun ReminderEditor(
                                 } else {
                                     val schedule = if (every) ReminderSchedule.Every(minutes, from, until) else ReminderSchedule.Daily(at)
                                     val (firstDay, lastDay) = days.span(today, date, dateTo)
-                                    onSave(
-                                        Reminder(
-                                            id = initial?.id ?: System.currentTimeMillis(),
-                                            name = name.trim(),
-                                            why = why.trim(),
-                                            schedule = schedule,
-                                            on = initial?.on ?: true,
-                                            sound = sound.name,
-                                            firstDay = firstDay,
-                                            lastDay = lastDay,
-                                            ring = ring,
-                                        ),
+                                    val reminder = Reminder(
+                                        id = initial?.id ?: System.currentTimeMillis(),
+                                        name = name.trim(),
+                                        why = why.trim(),
+                                        schedule = schedule,
+                                        on = initial?.on ?: true,
+                                        sound = sound.name,
+                                        firstDay = firstDay,
+                                        lastDay = lastDay,
+                                        ring = ring,
                                     )
+                                    // A reminder for today (or one day) whose time has passed would never come: say so instead.
+                                    if (ReminderTimes.hasTimeLeft(reminder, LocalDateTime.now())) {
+                                        onSave(reminder)
+                                    } else {
+                                        Toast.makeText(context, R.string.reminder_time_passed, Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             },
                             Modifier.weight(1f),

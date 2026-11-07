@@ -57,7 +57,11 @@ object ReminderScheduler {
         return id
     }
 
-    /** Cancels every reminder's alarm and sets the ones that are on for their next time. */
+    /**
+     * Cancels every reminder's alarm and sets the ones that are on for their next time. A reminder
+     * with no time left (a one-day one after its day, or a range after its last day) is removed
+     * from the list, unless a snooze of it is still to ring: that one needs the record.
+     */
     suspend fun sync(context: Context) {
         val reminders = context.dawnly.reminders.current()
         val known = context.getSharedPreferences(KNOWN, Context.MODE_PRIVATE)
@@ -65,8 +69,22 @@ object ReminderScheduler {
         known.getStringSet(KNOWN_IDS, emptySet()).orEmpty().mapNotNull { it.toLongOrNull() }
             .filter { id -> reminders.none { it.id == id } }
             .forEach { cancel(context, it) }
-        for (reminder in reminders) schedule(context, reminder)
-        known.edit().putStringSet(KNOWN_IDS, reminders.map { it.id.toString() }.toSet()).apply()
+        val now = LocalDateTime.now()
+        val kept = reminders.filter { reminder ->
+            when {
+                ReminderTimes.hasTimeLeft(reminder, now) -> {
+                    schedule(context, reminder)
+                    true
+                }
+                hasSnooze(context, reminder.id) -> true
+                else -> {
+                    cancel(context, reminder.id)
+                    context.dawnly.reminders.delete(reminder.id)
+                    false
+                }
+            }
+        }
+        known.edit().putStringSet(KNOWN_IDS, kept.map { it.id.toString() }.toSet()).apply()
     }
 
     /** Sets [reminder]'s next alarm, or cancels it when it's off. */
@@ -170,6 +188,14 @@ object ReminderScheduler {
             .putExtra(EXTRA_ID, id).putExtra(EXTRA_SNOOZE, true),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
+
+    /** Whether reminder [id] has a snooze still to ring (FLAG_NO_CREATE finds it only while it's pending). */
+    private fun hasSnooze(context: Context, id: Long): Boolean = PendingIntent.getBroadcast(
+        context,
+        requestCode(id),
+        Intent(context, ReminderReceiver::class.java).setAction(ACTION_SNOOZED),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE,
+    ) != null
 
     /** One alarm and one notification per reminder, kept apart from Dawnly's own (ids 1 to 4). */
     private fun requestCode(id: Long) = (id % 1_000_000_000L).toInt()

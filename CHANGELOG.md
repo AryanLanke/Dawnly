@@ -2,6 +2,13 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.7.9 (6 Nov)
+- Code audit fixes:
+- A reminder whose time has already passed (a Today reminder set for an earlier time, say) is no longer saved silently. Dawnly says so and asks you to choose a later day or Tomorrow.
+- Reminders that have finished (a one-day one after its day, or a range after its last day) leave the Reminders list the next time Dawnly opens. One still waiting to ring again after a snooze stays until then.
+- If a reminder's sound can't be played, Dawnly plays the default alarm sound instead, so the ring isn't silent.
+- Three more automated tests (151 in all).
+
 ## 1.7.8 (6 Nov)
 - Haptics only while sliding: taps on the Light / Dark / System choices, the tabs, switches, buttons, the Today ring, and wheel values are silent. Swiping between Today and Settings is silent.
 - A press and hold on a segmented choice or the tab bar gives a short buzz when it lets you slide, then a tick as the finger crosses each option. Dragging a wheel ticks as each value passes the middle.

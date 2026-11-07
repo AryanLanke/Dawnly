@@ -61,6 +61,13 @@ object ReminderTimes {
         return if (lastDay != null && time.toLocalDate().isAfter(lastDay)) null else time
     }
 
+    /**
+     * Whether [reminder] still has a time to come, from [now]. False once its last day has passed,
+     * or for a one-day reminder whose time is already behind us: nothing would ever ring.
+     */
+    fun hasTimeLeft(reminder: Reminder, now: LocalDateTime): Boolean =
+        next(reminder.schedule, now.plusSeconds(1), reminder.firstDay, reminder.lastDay) != null
+
     private fun nextEveryDay(schedule: ReminderSchedule, after: LocalDateTime): LocalDateTime = when (schedule) {
         is ReminderSchedule.Daily -> {
             val today = after.toLocalDate().atTime(schedule.at)

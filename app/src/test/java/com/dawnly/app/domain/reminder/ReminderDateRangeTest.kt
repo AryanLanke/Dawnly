@@ -4,7 +4,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Reminders that come only on some days: [ReminderTimes.next] with a first and last day. */
@@ -61,5 +63,30 @@ class ReminderDateRangeTest {
     @Test
     fun `no days at all behaves like before`() {
         assertEquals(at(4, 21), ReminderTimes.next(nine, at(3, 21)))
+    }
+
+    private fun reminder(schedule: ReminderSchedule, first: Int?, last: Int?) = Reminder(
+        id = 1,
+        name = "Test",
+        schedule = schedule,
+        firstDay = first?.let(::day),
+        lastDay = last?.let(::day),
+    )
+
+    @Test
+    fun `a one-day reminder whose time has passed has no time left`() {
+        assertFalse(ReminderTimes.hasTimeLeft(reminder(nine, 6, 6), at(6, 22)))
+        assertTrue(ReminderTimes.hasTimeLeft(reminder(nine, 6, 6), at(6, 20)))
+    }
+
+    @Test
+    fun `a window still open today has time left`() {
+        assertTrue(ReminderTimes.hasTimeLeft(reminder(water, 6, 6), at(6, 9, 10)))
+        assertFalse(ReminderTimes.hasTimeLeft(reminder(water, 6, 6), at(6, 22, 30)))
+    }
+
+    @Test
+    fun `a reminder with no days is never finished`() {
+        assertTrue(ReminderTimes.hasTimeLeft(reminder(nine, null, null), at(30, 23)))
     }
 }

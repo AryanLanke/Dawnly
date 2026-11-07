@@ -89,6 +89,7 @@
     <string name="reminder_name">Name</string>
     <string name="reminder_name_hint">Drink water</string>
     <string name="reminder_name_needed">Give it a name</string>
+    <string name="reminder_time_passed">That time has already passed. Choose a later day, or Tomorrow.</string>
     <string name="reminder_why">Why (optional)</string>
     <string name="reminder_why_hint">Stay fresh all day</string>
     <string name="reminder_kind_time">At a time</string>
