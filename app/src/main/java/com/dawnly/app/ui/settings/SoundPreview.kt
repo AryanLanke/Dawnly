@@ -28,17 +28,24 @@ class SoundPreview(private val context: Context) {
 
     fun play(sound: AlertSound) {
         stop()
+        val created = MediaPlayer()
         player = try {
-            MediaPlayer().apply {
+            created.apply {
                 setAudioAttributes(Notify.audio)
                 setDataSource(context, sound.uri(context))
                 setOnPreparedListener { it.start() }
                 setOnCompletionListener { stop() }
+                setOnErrorListener { _, what, extra ->
+                    Log.w(TAG, "Couldn't play $sound ($what, $extra)")
+                    stop()
+                    true
+                }
                 prepareAsync()
             }
         } catch (e: Exception) {
             // A missing or unreadable phone sound shouldn't crash Settings.
             Log.w(TAG, "Couldn't preview $sound", e)
+            created.release()
             null
         }
     }

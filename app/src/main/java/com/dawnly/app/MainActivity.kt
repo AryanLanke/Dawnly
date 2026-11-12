@@ -21,6 +21,9 @@ class MainActivity : ComponentActivity() {
         /** Brings the Dawnly screen that's already open back in front, rather than a new one. */
         fun backToFront(context: android.content.Context): Intent = Intent(context, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        /** True until the first screen of this process is created. */
+        private var newProcess = true
     }
 
     private val main: MainViewModel by viewModels { MainViewModel.factory(dawnly) }
@@ -37,10 +40,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         preferFastestRefreshRate()
-        // Once per opening, not again when the screen turns.
+        // Once per opening, not again when the screen turns. A fresh process counts as an opening
+        // even with saved state: HyperOS kills Dawnly in the background and the icon restores it.
         // Only when opened from its icon: not when it comes back from the Clock app, a
         // notification or a ringing reminder.
-        if (savedInstanceState == null && openedFromIcon(intent)) chime.play(AlertSound.Flute)
+        val freshOpening = savedInstanceState == null || newProcess
+        newProcess = false
+        if (freshOpening && openedFromIcon(intent)) chime.play(AlertSound.Flute)
         setContent {
             DawnlyRoot(main, home, settings)
         }

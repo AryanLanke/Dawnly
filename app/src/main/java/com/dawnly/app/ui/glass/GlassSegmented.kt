@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dawnly.app.ui.theme.DawnlyMotion
 import com.dawnly.app.ui.theme.DawnlyTheme
 import kotlin.math.roundToInt
@@ -97,7 +99,16 @@ fun GlassSegmented(
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                        // Shrinks to fit rather than cutting the word off with large system fonts.
+                        val style = MaterialTheme.typography.labelMedium
+                        Text(
+                            label,
+                            style = style,
+                            maxLines = 1,
+                            softWrap = false,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = style.fontSize),
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
                     }
                 }
             }

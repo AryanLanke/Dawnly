@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -78,10 +80,14 @@ internal val NAV_FADE_SOLID = 108.dp
 /** How tall the soft edge above the solid part is. */
 internal val NAV_FADE_EDGE = 40.dp
 
-/** Keeps clear of the status bar, cutouts and navigation bar, plus [bottomExtra]. */
+/**
+ * Keeps clear of the status bar, cutouts and navigation bar, plus [bottomExtra]. Not the keyboard:
+ * following it would re-lay out both tabs, and redo the frost behind the reminder editor, on every
+ * frame the keyboard slides.
+ */
 @Composable
 internal fun screenPadding(bottomExtra: Dp): PaddingValues {
-    val insets = WindowInsets.safeDrawing.asPaddingValues()
+    val insets = WindowInsets.systemBars.union(WindowInsets.displayCutout).asPaddingValues()
     val direction = LocalLayoutDirection.current
     return PaddingValues(
         start = insets.calculateStartPadding(direction),

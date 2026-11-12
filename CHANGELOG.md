@@ -2,6 +2,12 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.8.1 (12 Nov)
+- Dawnly's opening flute plays when you open it from its icon after the phone has closed it in the background. Phones like Xiaomi, Redmi and POCO do this often, and the flute stayed silent.
+- Choices like "Custom" under a reminder's repeat shrink to fit with large system font sizes, rather than being cut off.
+- The keyboard comes up smoothly for a reminder's name and why: the screens behind the editor no longer move and re-frost on every frame as it slides in.
+- A sound that fails to play is let go cleanly, so the next one can play.
+
 ## 1.8.0 (7 Nov)
 - The project is public on GitHub. Feedback opens a new GitHub issue in the browser (with the app version and phone filled in) instead of an email.
 - The project's internal notes, testing log and old design mockups are removed from the repository.
