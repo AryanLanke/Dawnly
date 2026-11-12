@@ -14,7 +14,7 @@ import kotlin.math.sqrt
  * Screen time only counts while the phone is unlocked: lighting up the lock screen to check the
  * time doesn't count.
  *
- * It also follows stretches of activity (screen in use, steps, movement, unplugging), so the score
+ * It also follows stretches of activity (screen in use, steps, movement, the charger, starting music), so the score
  * can tell activity that keeps going from one burst that stopped ([WakeSignals.keptGoing]).
  *
  * Not thread-safe; call it from one thread.
@@ -43,8 +43,13 @@ class WakeTracker(
 
     private var musicMillis = resumeFrom.musicTime.toMillis()
     private var lastMusicCheck: Long? = null
+    private var musicPlaying = false
+    // Music already on at the first check was put on to fall asleep to. After a restart with music
+    // already counted, it's the user's own music carrying on.
+    private var sleepMusic: Boolean? = if (musicMillis > 0) false else null
+    private var silentSince: Long? = null
 
-    private var unplugged = resumeFrom.unplugged
+    private var chargerChanged = resumeFrom.chargerChanged
 
     private var stretchStart: Long? = null
     private var lastActive: Long? = null
@@ -73,9 +78,9 @@ class WakeTracker(
         lastActive = maxOf(lastActive ?: now, now)
     }
 
-    /** The charger was unplugged. */
-    fun onUnplugged(now: Long) {
-        unplugged = true
+    /** The charger was plugged in or unplugged. */
+    fun onChargerChanged(now: Long) {
+        chargerChanged = true
         markActive(now)
     }
 
@@ -137,11 +142,33 @@ class WakeTracker(
         }
     }
 
-    /** Whether music is playing, checked every few seconds. The time since the last check counts. */
+    /**
+     * Whether music is playing, checked every few seconds. Only music the user started during the
+     * window counts, and starting it is activity: music already playing at the first check is sleep
+     * music, ignored until it has been off for [SLEEP_MUSIC_ENDED_MILLIS] (a pause between songs
+     * doesn't end it). The time since the last check counts.
+     */
     fun onMusicCheck(playing: Boolean, now: Long) {
         val last = lastMusicCheck
         lastMusicCheck = now
-        if (playing && last != null) musicMillis += (now - last).coerceIn(0, MAX_MUSIC_GAP_MILLIS)
+        if (last == null) {
+            if (sleepMusic == null) sleepMusic = playing
+            musicPlaying = playing
+            return
+        }
+        if (!playing) {
+            if (musicPlaying) silentSince = now
+            musicPlaying = false
+            val since = silentSince
+            if (since != null && now - since >= SLEEP_MUSIC_ENDED_MILLIS) sleepMusic = false
+            return
+        }
+        val started = !musicPlaying
+        musicPlaying = true
+        silentSince = null
+        if (sleepMusic == true) return
+        if (started) markActive(now)
+        else musicMillis += (now - last).coerceIn(0, MAX_MUSIC_GAP_MILLIS)
     }
 
     fun signals(now: Long): WakeSignals {
@@ -155,7 +182,7 @@ class WakeTracker(
             movingTime = Duration.ofSeconds(movingSeconds),
             movementAvailable = movementAvailable,
             musicTime = Duration.ofMillis(musicMillis),
-            unplugged = unplugged,
+            chargerChanged = chargerChanged,
             stretch = Duration.ofMillis(stretchMillis(now)),
             idle = latestActive(now)?.let { Duration.ofMillis((now - it).coerceAtLeast(0)) },
         )
@@ -197,5 +224,8 @@ class WakeTracker(
 
         /** A missed check (the process slept) doesn't count as a long stretch of music. */
         private const val MAX_MUSIC_GAP_MILLIS = 15_000L
+
+        /** Sleep music this long off has ended; music after that was started by someone awake. */
+        const val SLEEP_MUSIC_ENDED_MILLIS = 30_000L
     }
 }

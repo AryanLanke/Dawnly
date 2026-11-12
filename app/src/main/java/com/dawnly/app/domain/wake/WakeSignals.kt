@@ -24,13 +24,14 @@ data class WakeSignals(
     val movingTime: Duration = Duration.ZERO,
     /** False on a phone without an accelerometer. */
     val movementAvailable: Boolean = true,
-    /** Time music (or other media) was playing. Only counts together with movement. */
+    /** Time music (or other media) played that was started during the window, not sleep music. */
     val musicTime: Duration = Duration.ZERO,
     /**
-     * The charger was unplugged during the window. Most people charge overnight, so it's a strong
+     * The charger was plugged in or unplugged during the window: either takes a hand, and most
+     * people plug in at bedtime or after waking, not at 6 AM in their sleep. A strong
      * sign, but it only adds to the others: never enough on its own.
      */
-    val unplugged: Boolean = false,
+    val chargerChanged: Boolean = false,
     /**
      * How long the current stretch of activity has lasted: from its first sign to its latest. A
      * quiet gap of [QUIET_GAP] or more starts a new stretch. Not kept across a restart.
@@ -72,6 +73,8 @@ data class WakeSignalSettings(
     val useMusic: Boolean = true,
     /** No permission needed, so it's on by default. */
     val useCharger: Boolean = true,
+    /** How many different kinds of sign have to show before Dawnly counts the user as up. */
+    val signsNeeded: Int = 2,
 ) {
     /** At least one sign that can count on its own: music and the charger only add to the others. */
     val canNotice: Boolean get() = useScreenTime || usePhoneUse || useSteps || useMovement

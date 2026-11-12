@@ -6,7 +6,7 @@ import android.os.SystemClock
 internal sealed interface WakeEvent {
     data class Unlocked(val at: Long) : WakeEvent
     data class ScreenOff(val at: Long) : WakeEvent
-    data class Unplugged(val at: Long) : WakeEvent
+    data class ChargerChanged(val at: Long) : WakeEvent
     data class Steps(val totalSinceBoot: Float, val at: Long) : WakeEvent
     data object StepsStopped : WakeEvent
     data class StepsAvailable(val available: Boolean) : WakeEvent

@@ -93,7 +93,7 @@ data class HomeUiState(
             }
             if (settings.useCharger) {
                 // Shown as "Not yet" or "Spotted".
-                add(SignalRow(SignalKind.Charger, live?.unplugged?.let { if (it) 1 else 0 }, goal = 1))
+                add(SignalRow(SignalKind.Charger, live?.chargerChanged?.let { if (it) 1 else 0 }, goal = 1))
             }
             if (settings.useMusic) {
                 // Shown as "Not yet" or "Seen": playing for a minute counts.

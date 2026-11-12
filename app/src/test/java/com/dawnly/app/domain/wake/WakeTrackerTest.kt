@@ -133,13 +133,54 @@ class WakeTrackerTest {
     @Test
     fun `music time adds up between checks, not across long gaps`() {
         val tracker = WakeTracker()
-        tracker.onMusicCheck(playing = true, now = 0)
+        tracker.onMusicCheck(playing = false, now = 0)
         tracker.onMusicCheck(playing = true, now = 5 * second)
         tracker.onMusicCheck(playing = true, now = 10 * second)
-        tracker.onMusicCheck(playing = false, now = 15 * second)
+        tracker.onMusicCheck(playing = true, now = 15 * second)
         // The process slept for 10 minutes: only a short stretch counts.
         tracker.onMusicCheck(playing = true, now = 15 * second + 10 * minute)
         assertEquals(Duration.ofSeconds(25), tracker.signals(now = 0).musicTime)
+    }
+
+    @Test
+    fun `music already playing when watching starts is sleep music and doesn't count`() {
+        val tracker = WakeTracker()
+        for (i in 0..12) tracker.onMusicCheck(playing = true, now = i * 5 * second)
+        val signals = tracker.signals(now = minute)
+        assertEquals(Duration.ZERO, signals.musicTime)
+        assertEquals(null, signals.idle)
+    }
+
+    @Test
+    fun `a short pause in sleep music is still sleep music`() {
+        // The next track loading.
+        val tracker = WakeTracker()
+        tracker.onMusicCheck(playing = true, now = 0)
+        tracker.onMusicCheck(playing = false, now = 5 * second)
+        tracker.onMusicCheck(playing = true, now = 15 * second)
+        tracker.onMusicCheck(playing = true, now = 20 * second)
+        assertEquals(Duration.ZERO, tracker.signals(now = 20 * second).musicTime)
+    }
+
+    @Test
+    fun `music started after sleep music ended counts and is activity`() {
+        val tracker = WakeTracker()
+        tracker.onMusicCheck(playing = true, now = 0)
+        tracker.onMusicCheck(playing = false, now = 5 * second)
+        tracker.onMusicCheck(playing = false, now = 40 * second)
+        tracker.onMusicCheck(playing = true, now = 45 * second)
+        tracker.onMusicCheck(playing = true, now = 50 * second)
+        val signals = tracker.signals(now = 50 * second)
+        assertEquals(Duration.ofSeconds(5), signals.musicTime)
+        assertEquals(Duration.ofSeconds(5), signals.idle)
+    }
+
+    @Test
+    fun `music that already counted keeps counting after a restart`() {
+        val tracker = WakeTracker(resumeFrom = WakeSignals(musicTime = Duration.ofSeconds(90)))
+        tracker.onMusicCheck(playing = true, now = 0)
+        tracker.onMusicCheck(playing = true, now = 5 * second)
+        assertEquals(Duration.ofSeconds(95), tracker.signals(now = 5 * second).musicTime)
     }
 
     @Test
@@ -174,6 +215,7 @@ class WakeTrackerTest {
         assertFalse(WakeScore.of(tracker.signals(now = 30 * minute), settings).isAwake)
 
         tracker.onUnlocked(now = 30 * minute)
+        tracker.onChargerChanged(now = 31 * minute)
         assertTrue(WakeScore.of(tracker.signals(now = 35 * minute), settings).isAwake)
     }
 
@@ -225,12 +267,12 @@ class WakeTrackerTest {
     }
 
     @Test
-    fun `unplugging is seen and is activity`() {
+    fun `a charger change is seen and is activity`() {
         val tracker = WakeTracker()
-        tracker.onUnplugged(now = minute)
+        tracker.onChargerChanged(now = minute)
         val signals = tracker.signals(now = minute)
-        assertTrue(signals.unplugged)
+        assertTrue(signals.chargerChanged)
         assertEquals(Duration.ZERO, signals.idle)
-        assertTrue(WakeTracker(resumeFrom = signals).signals(now = 0).unplugged)
+        assertTrue(WakeTracker(resumeFrom = signals).signals(now = 0).chargerChanged)
     }
 }
