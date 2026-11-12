@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
@@ -57,6 +58,7 @@ fun SettingsScreen(
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val learning by viewModel.learning.collectAsStateWithLifecycle()
+    val awakeCheck by viewModel.awakeCheck.collectAsStateWithLifecycle()
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
@@ -122,6 +124,8 @@ fun SettingsScreen(
                 learning = learning,
                 onLearnChange = viewModel::setLearn,
                 onResetLearning = viewModel::resetLearning,
+                awakeCheck = awakeCheck,
+                onAwakeCheckChange = viewModel::setAwakeCheck,
             )
         }
     }
@@ -149,6 +153,8 @@ internal fun SettingsContent(
     learning: LearningUi = LearningUi.Start,
     onLearnChange: (Boolean) -> Unit = {},
     onResetLearning: () -> Unit = {},
+    awakeCheck: AwakeCheck = AwakeCheck.Off,
+    onAwakeCheckChange: (AwakeCheck) -> Unit = {},
 ) {
     Column(
         Modifier
@@ -165,13 +171,27 @@ internal fun SettingsContent(
         SpringIn(order = 0) { WindowSection(state.window, onWindowChange, onPickWindow) }
         Gap()
         SpringIn(order = 1) {
-            DismissModeSection(
-                mode = state.dismissMode,
-                overlayAllowed = AppPermission.Overlay in permissions,
-                fullScreenAllowed = AppPermission.FullScreen in permissions,
-                onChange = onDismissModeChange,
-                onAllowOverlay = onAllowOverlay,
-            )
+            Column {
+                DismissModeSection(
+                    mode = state.dismissMode,
+                    overlayAllowed = AppPermission.Overlay in permissions,
+                    fullScreenAllowed = AppPermission.FullScreen in permissions,
+                    onChange = onDismissModeChange,
+                    onAllowOverlay = onAllowOverlay,
+                )
+                // Only Dawnly's own dismisses get checked; with Ask me, the user tapped it themselves.
+                AnimatedVisibility(visible = state.dismissMode != DismissMode.Ask) {
+                    Column {
+                        Gap()
+                        AwakeCheckSection(
+                            check = awakeCheck,
+                            fullScreenAllowed = AppPermission.FullScreen in permissions,
+                            onChange = onAwakeCheckChange,
+                            onAllowFullScreen = { onRequestPermission(AppPermission.FullScreen) },
+                        )
+                    }
+                }
+            }
         }
         Gap()
         SpringIn(order = 2) { SoundRow(state.sound, onOpenSounds) }

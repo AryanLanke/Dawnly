@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
+import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.GlassSegmented
@@ -92,6 +93,55 @@ internal fun DismissModeSection(
         }
     }
 }
+
+/** The optional "Still up?" after Dawnly dismisses by itself. Off by default. */
+@Composable
+internal fun AwakeCheckSection(
+    check: AwakeCheck,
+    fullScreenAllowed: Boolean,
+    onChange: (AwakeCheck) -> Unit,
+    onAllowFullScreen: () -> Unit,
+) {
+    val checks = AwakeCheck.entries
+    Column {
+        SectionLabel(stringResource(R.string.settings_awake_check_label))
+        GlassSegmented(
+            options = checks.map { stringResource(it.label) },
+            selected = checks.indexOf(check),
+            onSelect = { onChange(checks[it]) },
+        )
+        Text(
+            stringResource(check.detail),
+            style = MaterialTheme.typography.bodySmall,
+            color = DawnlyTheme.colors.textSoft,
+            modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+        )
+        AnimatedVisibility(visible = check == AwakeCheck.FullScreen && !fullScreenAllowed) {
+            Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp)) {
+                Text(
+                    stringResource(R.string.awake_check_full_screen_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DawnlyTheme.colors.textSoft,
+                )
+                AccentPill(stringResource(R.string.common_allow), onAllowFullScreen, Modifier.padding(top = 10.dp))
+            }
+        }
+    }
+}
+
+private val AwakeCheck.label
+    get() = when (this) {
+        AwakeCheck.Off -> R.string.awake_check_off
+        AwakeCheck.Notification -> R.string.awake_check_notification
+        AwakeCheck.FullScreen -> R.string.awake_check_full_screen
+    }
+
+private val AwakeCheck.detail
+    get() = when (this) {
+        AwakeCheck.Off -> R.string.awake_check_off_detail
+        AwakeCheck.Notification -> R.string.awake_check_notification_detail
+        AwakeCheck.FullScreen -> R.string.awake_check_full_screen_detail
+    }
 
 private val DismissMode.label
     get() = when (this) {

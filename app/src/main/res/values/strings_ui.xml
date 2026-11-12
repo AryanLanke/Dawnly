@@ -189,6 +189,14 @@
     <string name="dismiss_mode_ask_detail">Dawnly asks, and you tap Dismiss alarm yourself.</string>
     <string name="dismiss_mode_warn_detail">Dawnly dismisses the alarm after a 1-minute warning you can stop. Works with the phone locked.</string>
     <string name="dismiss_mode_instant_detail">Dawnly dismisses the alarm straight away, with no warning. Works with the phone locked; you\'ll hear your sound played forwards.</string>
+    <string name="settings_awake_check_label">Double-check I\'m up</string>
+    <string name="awake_check_off">Off</string>
+    <string name="awake_check_notification">Notification</string>
+    <string name="awake_check_full_screen">Full screen</string>
+    <string name="awake_check_off_detail">Dawnly trusts the signs and stays quiet.</string>
+    <string name="awake_check_notification_detail">Around alarm time, a quick Still up? No answer in 2 minutes and your alarm rings after all.</string>
+    <string name="awake_check_full_screen_detail">The same, but Still up? fills the screen so it\'s hard to sleep through.</string>
+    <string name="awake_check_full_screen_note">Full screen needs Full-screen notifications. Without it, you get the notification instead.</string>
     <string name="settings_auto_dismiss_why">To open your Clock app while you\'re in another app, Dawnly needs Display over other apps. It never draws over your screen.</string>
     <string name="settings_auto_dismiss_tap_note">With the phone locked, Dawnly does it all by itself. While you\'re using the phone, it asks for one tap. To skip that tap too, allow Display over other apps.</string>
     <string name="settings_auto_dismiss_find">Allow opens a list of apps: tap Dawnly there and turn it on.</string>

@@ -54,9 +54,15 @@ object QuietDismiss {
     /**
      * [launcher] starts the Clock app, so it must be an activity. [backToDawnly] when the user
      * tapped dismiss in Dawnly itself; otherwise they go back to the app they were in. [isRetry]
-     * for the second try, after which there's no third.
+     * for the second try, after which there's no third. [auto] when Dawnly decided, not the user.
      */
-    fun dismiss(launcher: Activity, alarm: NextAlarm?, backToDawnly: Boolean, isRetry: Boolean = false): DismissResult {
+    fun dismiss(
+        launcher: Activity,
+        alarm: NextAlarm?,
+        backToDawnly: Boolean,
+        isRetry: Boolean = false,
+        auto: Boolean = false,
+    ): DismissResult {
         val requestedAt = System.currentTimeMillis()
         val clock = ClockApp(launcher)
         val memory = DismissMemory(launcher)
@@ -64,7 +70,7 @@ object QuietDismiss {
         val order = DismissRequest.order(preferred, haveTime = alarm != null)
         val result = clock.dismissNextAlarm(launcher, alarm?.ownerPackage, order.first(), alarm?.triggerAt)
         if (result is DismissResult.Requested && alarm != null) {
-            val attempt = Attempt(alarm.triggerAt, result.handler, order.drop(1), requestedAt, backToDawnly, isRetry)
+            val attempt = Attempt(alarm.triggerAt, result.handler, order.drop(1), requestedAt, backToDawnly, isRetry, auto)
             keepTrying(launcher.applicationContext, attempt, result.request)
         }
         return result
@@ -77,6 +83,7 @@ object QuietDismiss {
         val requestedAt: Long,
         val backToDawnly: Boolean,
         val isRetry: Boolean,
+        val auto: Boolean,
     )
 
     /** Waits for the alarm to move after [first]; if it doesn't, sends the other forms in turn. */
@@ -91,6 +98,7 @@ object QuietDismiss {
                     DismissMemory(context).remember(attempt.clock.packageName, sent)
                     // They were up: Dawnly learns from it (if it had asked).
                     context.dawnly.learning.answer(Answer.Up, Instant.now())
+                    if (attempt.auto) StillUpCheck.schedule(context, attempt.alarmAt)
                     returnToUser(context, attempt)
                     return@launch
                 }

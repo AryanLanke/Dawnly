@@ -54,7 +54,13 @@ class ReminderRingService : Service() {
         when (intent?.action) {
             ACTION_STOP -> finish(missed = false)
             ACTION_SNOOZE -> {
-                current.value?.let { ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES) }
+                current.value?.let {
+                    if (it.id == StillUpCheck.RING_ID) {
+                        StillUpCheck.snooze(this, SNOOZE_MINUTES)
+                    } else {
+                        ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES)
+                    }
+                }
                 finish(missed = false)
             }
             else -> {
@@ -257,18 +263,22 @@ class ReminderRingService : Service() {
         val ringing: StateFlow<Ringing?> = current.asStateFlow()
 
         /** Starts ringing [reminder]. False if Android wouldn't allow it, so the caller can notify instead. */
-        fun start(context: Context, reminder: Reminder): Boolean = try {
+        fun start(context: Context, reminder: Reminder): Boolean =
+            start(context, reminder.id, reminder.name, reminder.why, ReminderSounds.of(reminder))
+
+        /** Rings anything, not only a reminder: [id] comes back to Snooze. */
+        fun start(context: Context, id: Long, name: String, why: String, sound: AlertSound): Boolean = try {
             val intent = Intent(context, ReminderRingService::class.java)
                 .setAction(ACTION_RING)
-                .putExtra(EXTRA_ID, reminder.id)
-                .putExtra(EXTRA_NAME, reminder.name)
-                .putExtra(EXTRA_WHY, reminder.why)
-                .putExtra(EXTRA_SOUND, ReminderSounds.of(reminder).name)
+                .putExtra(EXTRA_ID, id)
+                .putExtra(EXTRA_NAME, name)
+                .putExtra(EXTRA_WHY, why)
+                .putExtra(EXTRA_SOUND, sound.name)
             ContextCompat.startForegroundService(context, intent)
             true
         } catch (e: Exception) {
             // ForegroundServiceStartNotAllowedException (Android 12+), e.g. after an inexact alarm.
-            Log.w(TAG, "Not allowed to ring \"${reminder.name}\"; showing a notification instead", e)
+            Log.w(TAG, "Not allowed to ring \"$name\"; showing a notification instead", e)
             false
         }
 

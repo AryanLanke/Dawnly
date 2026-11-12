@@ -35,6 +35,9 @@ enum class DismissMode {
     Instant,
 }
 
+/** After Dawnly turns an alarm off by itself, whether it checks the user didn't fall back asleep (see `StillUpCheck`). */
+enum class AwakeCheck { Off, Notification, FullScreen }
+
 /** The user's settings. */
 class SettingsRepository(context: Context) {
     private val store = context.applicationContext.settingsStore
@@ -114,6 +117,16 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    val awakeCheck: Flow<AwakeCheck> = store.safeData
+        .map { prefs ->
+            prefs[AWAKE_CHECK]?.let { name -> AwakeCheck.entries.firstOrNull { it.name == name } } ?: AwakeCheck.Off
+        }
+        .distinctUntilChanged()
+
+    suspend fun setAwakeCheck(check: AwakeCheck) {
+        store.edit { it[AWAKE_CHECK] = check.name }
+    }
+
     /** Learning from the user's answers (see `Learning`). On until they turn it off. */
     val learn: Flow<Boolean> = store.safeData
         .map { it[LEARN] ?: true }
@@ -150,6 +163,7 @@ class SettingsRepository(context: Context) {
         val SIGNS_NEEDED = intPreferencesKey("signs_needed")
         val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
+        val AWAKE_CHECK = stringPreferencesKey("awake_check")
         val APPEARANCE = stringPreferencesKey("appearance")
         val LEARN = booleanPreferencesKey("learn")
     }

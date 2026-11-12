@@ -147,6 +147,19 @@
         <receiver
             android:name=".notify.AutoDismissReceiver"
             android:exported="false" />
+
+        <!-- Opt-in "Still up?" after an auto-dismiss: asks, then rings if nobody answers. -->
+        <receiver
+            android:name=".notify.StillUpReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".notify.StillUpActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Dawnly" />
     </application>
 
 </manifest>

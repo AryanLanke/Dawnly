@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.data.sound.SoundStore
@@ -54,6 +55,13 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
     val learning: StateFlow<LearningUi> = combine(app.settings.learn, app.learning.mornings) { on, mornings ->
         LearningUi(on, Learning.learn(mornings, ZoneId.systemDefault()))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LearningUi.Start)
+
+    val awakeCheck: StateFlow<AwakeCheck> = app.settings.awakeCheck
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AwakeCheck.Off)
+
+    fun setAwakeCheck(check: AwakeCheck) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAwakeCheck(check) }
+    }
 
     fun setLearn(on: Boolean) {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setLearn(on) }

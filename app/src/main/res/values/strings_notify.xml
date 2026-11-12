@@ -31,6 +31,16 @@
     <string name="channel_reminder_ring_description">Reminders set to ring like an alarm. Dawnly plays their sound itself, repeating until you stop or snooze it.</string>
     <string name="ring_missed">Missed: %1$s</string>
 
+    <!-- The optional "Still up?" check after Dawnly turned an alarm off by itself. -->
+    <string name="still_up_title">Still up?</string>
+    <string name="still_up_text">Dawnly turned off your %1$s alarm. Tap I\'m up, or it rings in %2$d minutes.</string>
+    <string name="still_up_screen_text">Just checking you didn\'t drift back off. No answer in %1$d minutes and your alarm rings.</string>
+    <string name="still_up_action">I\'m up</string>
+    <string name="still_up_ring_name">Rise and shine</string>
+    <string name="still_up_ring_why">You didn\'t answer Still up?, so here\'s your alarm after all.</string>
+    <string name="channel_still_up">Still up? check</string>
+    <string name="channel_still_up_description">Asks once after Dawnly turns off your alarm, in case you fell back asleep. No answer and the alarm rings.</string>
+
     <!-- When the Clock app left the alarm on, even after every form of the request. -->
     <string name="dismiss_failed_title">Your alarm is still on</string>
     <string name="dismiss_failed_text">%1$s didn\'t turn off your %2$s alarm. Tap to turn it off in %1$s.</string>
