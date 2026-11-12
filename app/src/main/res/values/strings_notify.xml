@@ -40,6 +40,12 @@
     <string name="still_up_ring_why">You didn\'t answer Still up?, so here\'s your alarm after all.</string>
     <string name="channel_still_up">Still up? check</string>
     <string name="channel_still_up_description">Asks once after Dawnly turns off your alarm, in case you fell back asleep. No answer and the alarm rings.</string>
+    <string name="channel_wake_music">Wake to music</string>
+    <string name="channel_wake_music_description">Says when music played instead of your alarm. Silent, so it doesn\'t talk over the song.</string>
+    <string name="wake_music_done_title">Good morning, music\'s on</string>
+    <string name="wake_music_done_text">Your %1$s alarm is off. The music is doing the waking today.</string>
+    <string name="wake_music_tap_text">Music\'s on. Tap to turn off your %1$s alarm.</string>
+    <string name="wake_music_reminder_text">Music\'s playing for this reminder.</string>
 
     <!-- When the Clock app left the alarm on, even after every form of the request. -->
     <string name="dismiss_failed_title">Your alarm is still on</string>

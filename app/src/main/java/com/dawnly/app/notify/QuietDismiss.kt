@@ -54,14 +54,14 @@ object QuietDismiss {
     /**
      * [launcher] starts the Clock app, so it must be an activity. [backToDawnly] when the user
      * tapped dismiss in Dawnly itself; otherwise they go back to the app they were in. [isRetry]
-     * for the second try, after which there's no third. [auto] when Dawnly decided, not the user.
+     * for the second try, after which there's no third.
      */
     fun dismiss(
         launcher: Activity,
         alarm: NextAlarm?,
         backToDawnly: Boolean,
         isRetry: Boolean = false,
-        auto: Boolean = false,
+        by: DismissBy = DismissBy.User,
     ): DismissResult {
         val requestedAt = System.currentTimeMillis()
         val clock = ClockApp(launcher)
@@ -70,7 +70,7 @@ object QuietDismiss {
         val order = DismissRequest.order(preferred, haveTime = alarm != null)
         val result = clock.dismissNextAlarm(launcher, alarm?.ownerPackage, order.first(), alarm?.triggerAt)
         if (result is DismissResult.Requested && alarm != null) {
-            val attempt = Attempt(alarm.triggerAt, result.handler, order.drop(1), requestedAt, backToDawnly, isRetry, auto)
+            val attempt = Attempt(alarm.triggerAt, result.handler, order.drop(1), requestedAt, backToDawnly, isRetry, by)
             keepTrying(launcher.applicationContext, attempt, result.request)
         }
         return result
@@ -83,7 +83,7 @@ object QuietDismiss {
         val requestedAt: Long,
         val backToDawnly: Boolean,
         val isRetry: Boolean,
-        val auto: Boolean,
+        val by: DismissBy,
     )
 
     /** Waits for the alarm to move after [first]; if it doesn't, sends the other forms in turn. */
@@ -96,9 +96,9 @@ object QuietDismiss {
                 if (moved(context, attempt.alarmAt)) {
                     Log.i(TAG, "${attempt.clock.packageName} dismissed the alarm at ${attempt.alarmAt} ($sent)")
                     DismissMemory(context).remember(attempt.clock.packageName, sent)
-                    // They were up: Dawnly learns from it (if it had asked).
-                    context.dawnly.learning.answer(Answer.Up, Instant.now())
-                    if (attempt.auto) StillUpCheck.schedule(context, attempt.alarmAt)
+                    // They were up: Dawnly learns from it (if it had asked). Music says nothing about that.
+                    if (attempt.by != DismissBy.Music) context.dawnly.learning.answer(Answer.Up, Instant.now())
+                    if (attempt.by == DismissBy.Dawnly) StillUpCheck.schedule(context, attempt.alarmAt)
                     returnToUser(context, attempt)
                     return@launch
                 }
@@ -132,7 +132,11 @@ object QuietDismiss {
         withContext(Dispatchers.Main) {
             goBack(context, target)
             DismissFailedNotice.cancel(context)
-            DismissedNotice.post(context, attempt.alarmAt, forward)
+            if (attempt.by == DismissBy.Music) {
+                WakeMusic.postPlaying(context, attempt.alarmAt)
+            } else {
+                DismissedNotice.post(context, attempt.alarmAt, forward)
+            }
         }
     }
 

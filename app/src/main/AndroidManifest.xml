@@ -33,11 +33,16 @@
     <!-- Reminders that ring like an alarm: they vibrate, and keep the phone awake while ringing. -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Wake to music: only tried online, so a song that can't stream doesn't stand in for the alarm. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Android 11+ package visibility: lets us find and name the Clock app, and find the home
          screen apps so opening them doesn't count as opening an app. Launcher apps: after a
          dismiss, the user goes back to the app they were in (QuietDismiss). -->
     <queries>
+        <!-- Wake to music: whether the chosen app is installed. -->
+        <package android:name="com.spotify.music" />
+        <package android:name="com.google.android.apps.youtube.music" />
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />
         </intent>
@@ -115,6 +120,10 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- The prompt's "Not yet" button. -->
+        <receiver
+            android:name=".notify.WakeMusicReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".notify.NotYetReceiver"
             android:exported="false" />

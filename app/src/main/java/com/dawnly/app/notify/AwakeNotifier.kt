@@ -89,7 +89,7 @@ object AwakeNotifier {
     fun openDismiss(context: Context, alarmAt: Instant, retry: Boolean) {
         when (ClockReach.of(context)) {
             ClockReach.Anytime -> try {
-                context.startActivity(DismissAlarmActivity.intent(context, alarmAt, retry, auto = true))
+                context.startActivity(DismissAlarmActivity.intent(context, alarmAt, retry, by = DismissBy.Dawnly))
             } catch (e: RuntimeException) {
                 Log.w(TAG, "Couldn't open the dismiss; asking instead", e)
                 post(context, alarmAt)
@@ -113,8 +113,8 @@ object AwakeNotifier {
             return
         }
         val text = context.getString(R.string.auto_dismiss_tap_text, Notify.time(context, alarmAt))
-        val builder = prompt(context, alarmAt, text, retry, auto = true)
-            .setFullScreenIntent(dismissAlarm(context, alarmAt, retry, auto = true), true)
+        val builder = prompt(context, alarmAt, text, retry, by = DismissBy.Dawnly)
+            .setFullScreenIntent(dismissAlarm(context, alarmAt, retry, by = DismissBy.Dawnly), true)
             .setAutoCancel(true)
         val untilAlarm = Duration.between(Instant.now(), alarmAt)
         if (!untilAlarm.isNegative) builder.setTimeoutAfter(untilAlarm.toMillis())
@@ -216,7 +216,7 @@ object AwakeNotifier {
         alarmAt: Instant,
         text: String,
         retry: Boolean = false,
-        auto: Boolean = false,
+        by: DismissBy = DismissBy.User,
     ): NotificationCompat.Builder =
         NotificationCompat.Builder(context, currentChannel(context))
             .setSmallIcon(R.drawable.ic_notification)
@@ -225,7 +225,7 @@ object AwakeNotifier {
             // The whole question when expanded; one line cuts it off on most phones.
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(Notify.openApp(context))
-            .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt, retry, auto))
+            .addAction(0, context.getString(R.string.action_dismiss_alarm), dismissAlarm(context, alarmAt, retry, by))
             .addAction(0, context.getString(R.string.action_not_yet), notYet(context))
             .addExtras(Bundle().apply { putLong(EXTRA_ALARM_AT, alarmAt.toEpochMilli()) })
             .setOnlyAlertOnce(true)
@@ -268,10 +268,10 @@ object AwakeNotifier {
     }
 
     /** Straight to an activity, not through a receiver: Android 12+ blocks notification trampolines. */
-    private fun dismissAlarm(context: Context, alarmAt: Instant, retry: Boolean = false, auto: Boolean = false): PendingIntent = PendingIntent.getActivity(
+    private fun dismissAlarm(context: Context, alarmAt: Instant, retry: Boolean = false, by: DismissBy = DismissBy.User): PendingIntent = PendingIntent.getActivity(
         context,
         0,
-        DismissAlarmActivity.intent(context, alarmAt, retry, auto),
+        DismissAlarmActivity.intent(context, alarmAt, retry, by),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

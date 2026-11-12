@@ -199,7 +199,7 @@ object ReminderScheduler {
 
     /** One alarm and one notification per reminder, kept apart from Dawnly's own (ids 1 to 4). */
     private fun requestCode(id: Long) = (id % 1_000_000_000L).toInt()
-    private fun notificationId(id: Long) = 1_000 + (id % 1_000_000L).toInt()
+    internal fun notificationId(id: Long) = 1_000 + (id % 1_000_000L).toInt()
 
     private fun AlarmManager.canScheduleExactAlarmsCompat() =
         android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || canScheduleExactAlarms()

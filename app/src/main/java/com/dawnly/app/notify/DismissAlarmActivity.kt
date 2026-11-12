@@ -12,6 +12,17 @@ import com.dawnly.app.dawnly
 import com.dawnly.app.data.alarm.DismissResult
 import java.time.Instant
 
+/** Who decided to dismiss: what follows depends on it (learning, "Still up?", the notice). */
+enum class DismissBy {
+    User,
+
+    /** Dawnly saw the user up and dismissed by itself: the "Still up?" check may follow. */
+    Dawnly,
+
+    /** Music started instead of the alarm ([WakeMusic]): not a sign the user is up. */
+    Music,
+}
+
 /**
  * Opened by the prompt's "Dismiss alarm" button, and by [AutoDismissReceiver]. No UI of its own:
  * it checks the next alarm is still the one the prompt was about ([DismissGuard]), then asks the
@@ -32,12 +43,12 @@ class DismissAlarmActivity : Activity() {
         val promptAlarmAt = intent.getLongExtra(AwakeNotifier.EXTRA_ALARM_AT, 0L)
             .takeIf { it > 0L }?.let(Instant::ofEpochMilli)
         val isRetry = intent.getBooleanExtra(AwakeNotifier.EXTRA_RETRY, false)
-        val auto = intent.getBooleanExtra(EXTRA_AUTO, false)
+        val by = DismissBy.entries.firstOrNull { it.name == intent.getStringExtra(EXTRA_BY) } ?: DismissBy.User
         val next = dawnly.nextAlarms.current()
         val check = DismissGuard.check(promptAlarmAt, next?.triggerAt, Instant.now())
         Log.i(TAG, "Prompt for $promptAlarmAt, next alarm ${next?.triggerAt}: $check")
         when (check) {
-            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false, isRetry = isRetry, auto = auto)) {
+            DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false, isRetry = isRetry, by = by)) {
                 // The Clock app dismisses it, then the user goes back to the app they were in.
                 is DismissResult.Requested -> Unit
                 is DismissResult.OpenedClock -> toast(R.string.dismiss_opened_clock, result.clock.label)
@@ -56,15 +67,14 @@ class DismissAlarmActivity : Activity() {
     companion object {
         private const val TAG = "DismissAlarmActivity"
 
-        /** Dawnly decided to dismiss, not the user: the "Still up?" check may follow. */
-        private const val EXTRA_AUTO = "com.dawnly.app.extra.AUTO_DISMISS"
+        private const val EXTRA_BY = "com.dawnly.app.extra.DISMISS_BY"
 
         /** [retry] for the second try after the Clock app left the alarm on ([DismissRetry]). */
-        fun intent(context: Context, alarmAt: Instant, retry: Boolean = false, auto: Boolean = false): Intent =
+        fun intent(context: Context, alarmAt: Instant, retry: Boolean = false, by: DismissBy = DismissBy.User): Intent =
             Intent(context, DismissAlarmActivity::class.java)
                 .putExtra(AwakeNotifier.EXTRA_ALARM_AT, alarmAt.toEpochMilli())
                 .putExtra(AwakeNotifier.EXTRA_RETRY, retry)
-                .putExtra(EXTRA_AUTO, auto)
+                .putExtra(EXTRA_BY, by.name)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }

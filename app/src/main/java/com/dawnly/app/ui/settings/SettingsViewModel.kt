@@ -8,6 +8,7 @@ import com.dawnly.app.DawnlyApp
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
+import com.dawnly.app.data.settings.WakeMusicApp
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.data.sound.SoundStore
 import com.dawnly.app.domain.learn.Learned
@@ -61,6 +62,23 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
 
     fun setAwakeCheck(check: AwakeCheck) {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setAwakeCheck(check) }
+    }
+
+    val wakeMusic: StateFlow<WakeMusicApp> = app.settings.wakeMusic
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WakeMusicApp.Off)
+
+    val wakeMusicReminders: StateFlow<Boolean> = app.settings.wakeMusicReminders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    fun setWakeMusic(choice: WakeMusicApp) {
+        app.scope.launch(Dispatchers.Main.immediate) {
+            app.settings.setWakeMusic(choice)
+            withContext(Dispatchers.Default) { app.watchScheduler.reconcile() }
+        }
+    }
+
+    fun setWakeMusicReminders(on: Boolean) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setWakeMusicReminders(on) }
     }
 
     fun setLearn(on: Boolean) {

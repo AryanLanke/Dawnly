@@ -38,6 +38,14 @@ enum class DismissMode {
 /** After Dawnly turns an alarm off by itself, whether it checks the user didn't fall back asleep (see `StillUpCheck`). */
 enum class AwakeCheck { Off, Notification, FullScreen }
 
+/** Which app plays music instead of the alarm (see `WakeMusic`). [AnyApp] resumes whatever played last. */
+enum class WakeMusicApp(val packageName: String?) {
+    Off(null),
+    Spotify("com.spotify.music"),
+    YouTubeMusic("com.google.android.apps.youtube.music"),
+    AnyApp(null),
+}
+
 /** The user's settings. */
 class SettingsRepository(context: Context) {
     private val store = context.applicationContext.settingsStore
@@ -127,6 +135,25 @@ class SettingsRepository(context: Context) {
         store.edit { it[AWAKE_CHECK] = check.name }
     }
 
+    val wakeMusic: Flow<WakeMusicApp> = store.safeData
+        .map { prefs ->
+            prefs[WAKE_MUSIC]?.let { name -> WakeMusicApp.entries.firstOrNull { it.name == name } } ?: WakeMusicApp.Off
+        }
+        .distinctUntilChanged()
+
+    suspend fun setWakeMusic(app: WakeMusicApp) {
+        store.edit { it[WAKE_MUSIC] = app.name }
+    }
+
+    /** Whether ringing reminders also try music first, with [wakeMusic] on. */
+    val wakeMusicReminders: Flow<Boolean> = store.safeData
+        .map { it[WAKE_MUSIC_REMINDERS] ?: true }
+        .distinctUntilChanged()
+
+    suspend fun setWakeMusicReminders(on: Boolean) {
+        store.edit { it[WAKE_MUSIC_REMINDERS] = on }
+    }
+
     /** Learning from the user's answers (see `Learning`). On until they turn it off. */
     val learn: Flow<Boolean> = store.safeData
         .map { it[LEARN] ?: true }
@@ -164,6 +191,8 @@ class SettingsRepository(context: Context) {
         val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
         val AWAKE_CHECK = stringPreferencesKey("awake_check")
+        val WAKE_MUSIC = stringPreferencesKey("wake_music")
+        val WAKE_MUSIC_REMINDERS = booleanPreferencesKey("wake_music_reminders")
         val APPEARANCE = stringPreferencesKey("appearance")
         val LEARN = booleanPreferencesKey("learn")
     }

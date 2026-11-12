@@ -35,6 +35,7 @@ import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
+import com.dawnly.app.data.settings.WakeMusicApp
 import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
 import com.dawnly.app.ui.glass.GlassSegmented
@@ -59,6 +60,8 @@ fun SettingsScreen(
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val learning by viewModel.learning.collectAsStateWithLifecycle()
     val awakeCheck by viewModel.awakeCheck.collectAsStateWithLifecycle()
+    val wakeMusic by viewModel.wakeMusic.collectAsStateWithLifecycle()
+    val wakeMusicReminders by viewModel.wakeMusicReminders.collectAsStateWithLifecycle()
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
@@ -126,6 +129,10 @@ fun SettingsScreen(
                 onResetLearning = viewModel::resetLearning,
                 awakeCheck = awakeCheck,
                 onAwakeCheckChange = viewModel::setAwakeCheck,
+                wakeMusic = wakeMusic,
+                onWakeMusicChange = viewModel::setWakeMusic,
+                wakeMusicReminders = wakeMusicReminders,
+                onWakeMusicRemindersChange = viewModel::setWakeMusicReminders,
             )
         }
     }
@@ -155,6 +162,10 @@ internal fun SettingsContent(
     onResetLearning: () -> Unit = {},
     awakeCheck: AwakeCheck = AwakeCheck.Off,
     onAwakeCheckChange: (AwakeCheck) -> Unit = {},
+    wakeMusic: WakeMusicApp = WakeMusicApp.Off,
+    onWakeMusicChange: (WakeMusicApp) -> Unit = {},
+    wakeMusicReminders: Boolean = true,
+    onWakeMusicRemindersChange: (Boolean) -> Unit = {},
 ) {
     Column(
         Modifier
@@ -194,7 +205,20 @@ internal fun SettingsContent(
             }
         }
         Gap()
-        SpringIn(order = 2) { SoundRow(state.sound, onOpenSounds) }
+        SpringIn(order = 2) {
+            Column {
+                SoundRow(state.sound, onOpenSounds)
+                Gap()
+                WakeMusicSection(
+                    choice = wakeMusic,
+                    forReminders = wakeMusicReminders,
+                    canDismiss = AppPermission.Overlay in permissions || AppPermission.FullScreen in permissions,
+                    onChange = onWakeMusicChange,
+                    onRemindersChange = onWakeMusicRemindersChange,
+                    onAllowFullScreen = { onRequestPermission(AppPermission.FullScreen) },
+                )
+            }
+        }
         Gap()
         SpringIn(order = 3) {
             Column {

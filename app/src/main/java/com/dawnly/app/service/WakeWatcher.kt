@@ -27,6 +27,7 @@ import com.dawnly.app.domain.wake.WakeScore
 import com.dawnly.app.domain.wake.WakeSignals
 import com.dawnly.app.domain.wake.WakeTracker
 import com.dawnly.app.notify.AwakeNotifier
+import com.dawnly.app.notify.WakeMusic
 import com.dawnly.app.system.AppUsage
 import java.time.Duration
 import java.time.Instant
@@ -133,7 +134,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                         tracker.onAcceleration(event.x, event.y, event.z, event.timestampNanos, event.at)
                         return@collect
                     }
-                    WakeEvent.Tick -> tracker.onMusicCheck(audio.isMusicActive, SystemClock.elapsedRealtime())
+                    WakeEvent.Tick -> tracker.onMusicCheck(audio.isMusicActive && !WakeMusic.isOurs(), SystemClock.elapsedRealtime())
                 }
                 val now = SystemClock.elapsedRealtime()
                 val signals = tracker.signals(now)

@@ -19,6 +19,7 @@ class ReminderReceiver : BroadcastReceiver() {
             if (!reminder.on) return@launchAsync
             when {
                 !reminder.ring -> ReminderScheduler.show(context, reminder)
+                WakeMusic.playForReminder(context, reminder) -> Unit
                 // Android may refuse, e.g. after an inexact alarm: then a notification whose sound repeats.
                 !ReminderRingService.start(context, reminder) -> ReminderScheduler.show(context, reminder, insistent = true)
             }
