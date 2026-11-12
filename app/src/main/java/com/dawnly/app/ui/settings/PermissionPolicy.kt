@@ -8,12 +8,14 @@ import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.PermissionState
 
 /**
- * The permissions Settings lists. Usage access only matters with the apps-opened sign on, and
- * Display over other apps only when Dawnly dismisses by itself, e.g. if either was taken back since.
+ * The permissions Settings lists. Physical activity only matters with the steps sign on, usage
+ * access with apps opened, and Display over other apps only when Dawnly dismisses by itself, e.g.
+ * if one was taken back since.
  */
 internal fun shownPermissions(dismissMode: DismissMode, signals: WakeSignalSettings): List<AppPermission> =
     AppPermission.entries.filter {
         it.isApplicable && when (it) {
+            AppPermission.ActivityRecognition -> signals.useSteps
             AppPermission.UsageAccess -> signals.usePhoneUse
             AppPermission.Overlay, AppPermission.FullScreen -> dismissMode != DismissMode.Ask
             else -> it.askedUpFront

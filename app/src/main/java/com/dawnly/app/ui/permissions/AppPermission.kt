@@ -53,11 +53,13 @@ enum class AppPermission {
     ;
 
     /**
-     * Asked in onboarding and always listed in Settings. The two Android can lock aren't:
-     * [UsageAccess] only matters with the apps-opened sign on, [Overlay] only with auto-dismiss on.
+     * Asked in onboarding and always listed in Settings: only what Dawnly can't work without (and
+     * the battery steps brand phones need). The rest are asked when the feature that needs them is
+     * turned on: [ActivityRecognition] with the steps sign, [UsageAccess] with apps opened,
+     * [Overlay] and [FullScreen] with auto-dismiss.
      */
     val askedUpFront: Boolean
-        get() = this != Overlay && this != UsageAccess && this != FullScreen
+        get() = this == Notifications || this == ExactAlarms || this == Battery
 
     /** False on Android versions where this permission doesn't exist (it's granted already). */
     val isApplicable: Boolean

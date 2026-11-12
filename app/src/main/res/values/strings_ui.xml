@@ -233,16 +233,10 @@
     <string name="onboarding_welcome_lead">Dawnly watches for signs you\'re awake, only before your alarm.</string>
     <string name="onboarding_exact_title">Start right on time</string>
     <string name="onboarding_exact_lead">Without this, Android can start watching up to an hour late and miss you getting up.</string>
-    <string name="onboarding_activity_title">Count your steps</string>
-    <string name="onboarding_activity_lead">Walking around is one of the clearest signs you\'re up.</string>
-    <string name="onboarding_usage_title">Notice real phone use</string>
-    <string name="onboarding_usage_lead">A screen can stay on while you doze. Opening apps takes someone awake.</string>
     <string name="onboarding_battery_title">Keep Dawnly running</string>
     <string name="onboarding_battery_lead">Some phones stop apps in the background. Dawnly only runs before your alarm.</string>
     <string name="onboarding_allow_notifications">Allow notifications</string>
     <string name="onboarding_allow_exact_alarms">Allow alarms &amp; reminders</string>
-    <string name="onboarding_allow_activity">Allow physical activity</string>
-    <string name="onboarding_allow_usage">Allow usage access</string>
     <string name="onboarding_allow_battery">Allow background use</string>
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_not_now">Not now</string>

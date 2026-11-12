@@ -30,7 +30,6 @@ import com.dawnly.app.ui.permissions.PermissionsController
 import com.dawnly.app.ui.permissions.RestrictedSettingsHelp
 import com.dawnly.app.ui.permissions.rememberPermissionsController
 import com.dawnly.app.ui.settings.SettingsViewModel
-import com.dawnly.app.ui.settings.Sign
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.clockSaysNight
 import com.dawnly.app.ui.theme.prefersReducedMotion
@@ -91,13 +90,7 @@ private fun Onboarding(main: MainViewModel, permissions: PermissionsController, 
         steps = steps,
         permissions = permissions.state,
         oemBattery = oemBattery,
-        onAllow = { permission, onDone ->
-            permissions.request(permission) { granted ->
-                if (granted && permission == AppPermission.ActivityRecognition) main.useSign(Sign.Steps)
-                if (granted && permission == AppPermission.UsageAccess) main.useSign(Sign.PhoneUse)
-                onDone()
-            }
-        },
+        onAllow = { permission, onDone -> permissions.request(permission) { onDone() } },
         onOpenOemBattery = { oemBattery?.let(permissions::openBatterySettings) },
         onFinished = main::completeOnboarding,
         contentPadding = screenPadding(bottomExtra = 0.dp),
