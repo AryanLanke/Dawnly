@@ -42,6 +42,7 @@ import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.OemBattery
 import com.dawnly.app.ui.permissions.PermissionState
+import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 
 @Composable
@@ -207,6 +208,22 @@ internal fun SettingsContent(
                         options = levels.map { stringResource(it.label) },
                         selected = levels.indexOf(Sensitivity.of(state.signals)),
                         onSelect = { onSignalsChange(levels[it].applyTo(state.signals)) },
+                    )
+                }
+                Gap()
+                Column {
+                    SectionLabel(stringResource(R.string.settings_signs_needed_label))
+                    val counts = listOf(1, 2, 3)
+                    GlassSegmented(
+                        options = counts.map { it.toString() },
+                        selected = counts.indexOf(state.signals.signsNeeded).coerceAtLeast(0),
+                        onSelect = { onSignalsChange(state.signals.copy(signsNeeded = counts[it])) },
+                    )
+                    Text(
+                        stringResource(R.string.settings_signs_needed_detail),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DawnlyTheme.colors.textSoft,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp),
                     )
                 }
                 Gap()

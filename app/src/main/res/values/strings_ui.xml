@@ -46,7 +46,7 @@
     <string name="home_signal_apps">Apps opened</string>
     <string name="home_signal_steps">Steps</string>
     <string name="home_signal_movement">Movement</string>
-    <string name="home_signal_charger">Charger unplugged</string>
+    <string name="home_signal_charger">Charger plugged or unplugged</string>
     <string name="home_signal_music">Music playing</string>
     <string name="home_signal_not_yet">Not yet</string>
     <string name="home_signal_minutes_of">%1$d of %2$d min</string>
@@ -169,10 +169,10 @@
         <item quantity="one">Moving for at least %1$d minute</item>
         <item quantity="other">Moving for at least %1$d minutes</item>
     </plurals>
-    <string name="settings_charger">Charger unplugged</string>
-    <string name="settings_charger_detail">Adds to the other signs, never enough on its own</string>
+    <string name="settings_charger">Charger plugged or unplugged</string>
+    <string name="settings_charger_detail">Grabbing the cable counts. Never enough on its own</string>
     <string name="settings_music">Music playing</string>
-    <string name="settings_music_detail">Counts only with movement, and then Dawnly always asks first</string>
+    <string name="settings_music_detail">Music you start after waking counts. Sleep music doesn\'t</string>
     <string name="settings_signals_min">Keep at least one on. Music and the charger alone don\'t count.</string>
     <string name="settings_steps_denied">Allow Physical activity to count steps.</string>
     <string name="settings_apps_denied">Allow Usage access to count apps opened.</string>
@@ -180,6 +180,8 @@
     <string name="sensitivity_low">Low</string>
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>
+    <string name="settings_signs_needed_label">Signs needed</string>
+    <string name="settings_signs_needed_detail">How many different signs before Dawnly believes you\'re up</string>
     <string name="settings_dismiss_label">When you\'re up</string>
     <string name="dismiss_mode_ask">Ask me</string>
     <string name="dismiss_mode_warn">Warn first</string>
