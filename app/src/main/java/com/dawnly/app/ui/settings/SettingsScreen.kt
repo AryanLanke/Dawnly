@@ -6,7 +6,6 @@ import com.dawnly.app.notify.TestLabActivity
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassSwitch
-import com.dawnly.app.ui.glass.GlassButton
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -299,9 +298,13 @@ internal fun SettingsContent(
         }
         Gap()
         val context = LocalContext.current
-        GlassButton(stringResource(R.string.test_lab_title), {
-            context.startActivity(Intent(context, TestLabActivity::class.java))
-        })
+        AlarmReadinessSection(
+            permissions = permissions,
+            oemBattery = oemBattery,
+            onRequestPermission = onRequestPermission,
+            onOpenOemBattery = onOpenOemBattery,
+            onOpenTestLab = { context.startActivity(Intent(context, TestLabActivity::class.java)) },
+        )
         Gap()
         SpringIn(order = 5) { FeedbackRow() }
         Spacer(Modifier.height(12.dp))
