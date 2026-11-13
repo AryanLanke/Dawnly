@@ -130,12 +130,17 @@ fun TimeToolsScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.tab_tools), style = MaterialTheme.typography.headlineMedium)
+        Text(
+            stringResource(R.string.tab_tools),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.fillMaxWidth().padding(start = 6.dp),
+        )
         Text(
             stringResource(R.string.time_tools_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = DawnlyTheme.colors.textSoft,
-            textAlign = TextAlign.Center,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth().padding(start = 6.dp),
         )
         if (AppPermission.ExactAlarms !in permissions) {
             PermissionCard(R.string.time_exact_title, R.string.time_exact_body) { onRequestPermission(AppPermission.ExactAlarms) }
