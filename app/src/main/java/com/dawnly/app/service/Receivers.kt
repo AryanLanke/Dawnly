@@ -30,6 +30,7 @@ class SystemEventsReceiver : BroadcastReceiver() {
 /** Runs inside [goAsync], so the process isn't killed before the reminders are set again. */
 private fun BroadcastReceiver.reconcileAsync(context: Context, fromCheckAlarm: Boolean, resetReminders: Boolean) {
     launchAsync(context) {
+        com.dawnly.app.notify.TimerController.sync(context)
         if (resetReminders) ReminderScheduler.sync(context)
         context.dawnly.watchScheduler.reconcile(fromCheckAlarm)
     }

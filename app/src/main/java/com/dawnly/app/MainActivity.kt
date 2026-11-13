@@ -7,6 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.ui.DawnlyRoot
@@ -46,7 +49,12 @@ class MainActivity : ComponentActivity() {
         // notification or a ringing reminder.
         val freshOpening = savedInstanceState == null || newProcess
         newProcess = false
-        if (freshOpening && openedFromIcon(intent)) chime.play(AlertSound.Flute)
+        if (freshOpening && openedFromIcon(intent)) {
+            lifecycleScope.launch {
+                val on = dawnly.settings.startupSound.first()
+                if (on && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) chime.play(AlertSound.Flute)
+            }
+        }
         setContent {
             DawnlyRoot(main, home, settings)
         }
@@ -80,5 +88,6 @@ class MainActivity : ComponentActivity() {
         // Covers a fresh install (no broadcast has arrived yet) and returning from permission settings.
         dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
         dawnly.scope.launch { ReminderScheduler.sync(this@MainActivity) }
+        com.dawnly.app.notify.TimerController.sync(this)
     }
 }

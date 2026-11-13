@@ -34,6 +34,16 @@ class WakeMusicPlanTest {
     }
 
     @Test
+    fun `test results explain why playback was skipped`() {
+        assertEquals(MusicResult.Off, WakeMusicPlan.blockedBy(WakeMusicApp.Off, true, true, false, true))
+        assertEquals(MusicResult.Offline, WakeMusicPlan.blockedBy(WakeMusicApp.Spotify, false, true, false, true))
+        assertEquals(MusicResult.NotInstalled, WakeMusicPlan.blockedBy(WakeMusicApp.Spotify, true, false, false, true))
+        assertEquals(MusicResult.AlreadyPlaying, WakeMusicPlan.blockedBy(WakeMusicApp.Spotify, true, true, true, true))
+        assertEquals(MusicResult.CannotDismiss, WakeMusicPlan.blockedBy(WakeMusicApp.Spotify, true, true, false, false))
+        assertEquals(null, WakeMusicPlan.blockedBy(WakeMusicApp.AnyApp, true, true, false, true))
+    }
+
+    @Test
     fun `raises a quiet phone to half volume`() {
         assertEquals(8, WakeMusicPlan.minVolume(15))
         assertEquals(13, WakeMusicPlan.minVolume(25))

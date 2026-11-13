@@ -81,6 +81,13 @@ class SettingsViewModel(private val app: DawnlyApp) : ViewModel() {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setWakeMusicReminders(on) }
     }
 
+    val startupSound: StateFlow<Boolean> = app.settings.startupSound
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    fun setStartupSound(on: Boolean) {
+        app.scope.launch(Dispatchers.Main.immediate) { app.settings.setStartupSound(on) }
+    }
+
     fun setLearn(on: Boolean) {
         app.scope.launch(Dispatchers.Main.immediate) { app.settings.setLearn(on) }
     }

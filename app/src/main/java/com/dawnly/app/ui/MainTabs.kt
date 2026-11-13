@@ -52,6 +52,7 @@ import com.dawnly.app.ui.settings.SettingsViewModel
 import com.dawnly.app.ui.settings.WindowWheel
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.LocalReduceMotion
+import com.dawnly.app.ui.time.TimeToolsScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -61,7 +62,7 @@ internal fun MainTabs(
     permissions: PermissionsController,
     oemBattery: OemBattery?,
 ) {
-    val pager = rememberPagerState(initialPage = TODAY) { 2 }
+    val pager = rememberPagerState(initialPage = TODAY) { 3 }
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReduceMotion.current
     val activity = LocalActivity.current
@@ -100,8 +101,7 @@ internal fun MainTabs(
     }
     Box(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize().then(frosted)) {
-            // Today and Settings side by side: the pages follow the finger, and the other one stays
-            // composed so a swipe starts without a hitch.
+            // Today, Tools and Settings: keep the neighboring pages composed for a smooth swipe.
             HorizontalPager(state = pager, beyondViewportPageCount = 1, modifier = Modifier.fillMaxSize()) { page ->
                 when (page) {
                     TODAY -> HomeScreen(
@@ -110,6 +110,11 @@ internal fun MainTabs(
                         onRequestPermission = { permissions.request(it) },
                         onEditReminder = { editing = ReminderEdit(it) },
                         onSetAlarm = { editing = AlarmPick() },
+                        contentPadding = padding,
+                    )
+                    TOOLS -> TimeToolsScreen(
+                        permissions = permissions.state,
+                        onRequestPermission = { permissions.request(it) },
                         contentPadding = padding,
                     )
                     else -> SettingsScreen(
@@ -132,14 +137,14 @@ internal fun MainTabs(
                     .padding(bottom = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Only on Today: it fades out as Settings slides in, following the finger.
+                // Only on Today: it fades out as Tools slides in, following the finger.
                 FunnyLine(
                     shown = { 1f - (pager.currentPage + pager.currentPageOffsetFraction).coerceIn(0f, 1f) },
                     tappable = pager.targetPage == TODAY,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 GlassTabBar(
-                    tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_settings)),
+                    tabs = listOf(stringResource(R.string.tab_today), stringResource(R.string.tab_tools), stringResource(R.string.tab_settings)),
                     selected = pager.targetPage,
                     position = { pager.currentPage + pager.currentPageOffsetFraction },
                     onSelect = ::goTo,
@@ -207,3 +212,4 @@ private class WindowPick : Overlay
 /** Setting a new alarm in the Clock app, on the time wheels. */
 private class AlarmPick : Overlay
 private const val TODAY = 0
+private const val TOOLS = 1

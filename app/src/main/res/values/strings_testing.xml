@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="startup_sound_title">Opening sound</string>
+    <string name="startup_sound_detail">Play the flute when you open Dawnly. Alarm and reminder sounds are separate.</string>
+    <string name="test_lab_title">Try it now</string>
+    <string name="test_lab_detail">Short tests, without changing your Clock alarms. Sound tests stop after 10 seconds. Use Tools to test a short timer or the stopwatch.</string>
+    <string name="test_alarm_sound">Test alarm sound</string>
+    <string name="test_reminder_sound">Test reminder sound</string>
+    <string name="test_music">Test wake music</string>
+    <string name="test_offline">Test offline fallback</string>
+    <string name="test_offline_detail">Simulates no internet without turning off Wi-Fi or mobile data. The test alarm should ring instead.</string>
+    <string name="test_stop">Stop test</string>
+    <string name="test_back">Back to Settings</string>
+    <string name="test_ring_title">Sound check</string>
+    <string name="test_ring_detail">Only a test. Stops after 10 seconds.</string>
+    <string name="test_starting">Checking playback…</string>
+    <string name="test_started">Playback detected. Listen to confirm the right app and volume.</string>
+    <string name="test_finished">Test finished.</string>
+    <string name="test_stopped">Test stopped.</string>
+    <string name="test_off">Choose a music app in Settings first.</string>
+    <string name="test_no_network">No internet. The test alarm will ring instead.</string>
+    <string name="test_no_app">That app is not installed. The test alarm will ring instead.</string>
+    <string name="test_already_playing">Something is already playing. Pause it before testing; Dawnly left it alone.</string>
+    <string name="test_no_permission">Dawnly cannot dismiss the Clock alarm with the current permissions.</string>
+    <string name="test_busy">Another alarm or music test is active. Stop it before trying again.</string>
+    <string name="test_no_playback">No playback detected. The test alarm will ring instead. Open your music app, play a track once, then pause it and try again.</string>
+    <string name="test_unavailable">The music app could not start. The test alarm will ring instead.</string>
+    <string name="test_ring_failed">Android did not allow the test to ring.</string>
+    <string name="test_ring_running">Test sound is running. Listen to confirm; it stops after 10 seconds.</string>
+</resources>

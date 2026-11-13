@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.annotation.MainThread
 import com.dawnly.app.MainActivity
 import com.dawnly.app.data.alarm.AppRef
 import com.dawnly.app.data.alarm.ClockApp
@@ -19,7 +20,9 @@ import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.system.AppUsage
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,11 +54,25 @@ object QuietDismiss {
     /** How far back to look for the app the user was in. A locked phone can sit for hours. */
     private const val LOOKBACK_MS = 24 * 60 * 60 * 1000L
 
+    /** Accessed on Main, like the user's manual Clock actions. */
+    private var pending: Job? = null
+
+    /** Manual Clock editing wins over any dismiss return, further requests, or scheduled retry. */
+    @MainThread
+    fun cancelPending(context: Context) {
+        pending?.cancel()
+        pending = null
+        // Retries already handed to AlarmManager share the auto-dismiss pending intent.
+        AwakeNotifier.cancel(context)
+        DismissFailedNotice.cancel(context)
+    }
+
     /**
      * [launcher] starts the Clock app, so it must be an activity. [backToDawnly] when the user
      * tapped dismiss in Dawnly itself; otherwise they go back to the app they were in. [isRetry]
      * for the second try, after which there's no third.
      */
+    @MainThread
     fun dismiss(
         launcher: Activity,
         alarm: NextAlarm?,
@@ -63,6 +80,9 @@ object QuietDismiss {
         isRetry: Boolean = false,
         by: DismissBy = DismissBy.User,
     ): DismissResult {
+        // Only the newest dismiss may retry or bring another app to the front, even on fallback.
+        pending?.cancel()
+        pending = null
         val requestedAt = System.currentTimeMillis()
         val clock = ClockApp(launcher)
         val memory = DismissMemory(launcher)
@@ -87,13 +107,16 @@ object QuietDismiss {
     )
 
     /** Waits for the alarm to move after [first]; if it doesn't, sends the other forms in turn. */
+    @MainThread
     private fun keepTrying(context: Context, attempt: Attempt, first: DismissRequest) {
         val app = context.dawnly
-        app.scope.launch {
+        pending = app.scope.launch {
             var sent = first
             val left = attempt.otherForms.toMutableList()
             while (true) {
-                if (moved(context, attempt.alarmAt)) {
+                val alarmMoved = moved(context, attempt.alarmAt)
+                ensureActive()
+                if (alarmMoved) {
                     Log.i(TAG, "${attempt.clock.packageName} dismissed the alarm at ${attempt.alarmAt} ($sent)")
                     DismissMemory(context).remember(attempt.clock.packageName, sent)
                     // They were up: Dawnly learns from it (if it had asked). Music says nothing about that.
@@ -104,12 +127,21 @@ object QuietDismiss {
                 }
                 val next = left.removeFirstOrNull() ?: break
                 Log.i(TAG, "${attempt.clock.packageName} left the alarm on after $sent; trying $next")
-                if (withContext(Dispatchers.Main) { ClockApp(context).send(context, next, attempt.alarmAt) }) sent = next
+                val delivered = withContext(Dispatchers.Main) {
+                    ensureActive()
+                    ClockApp(context).send(context, next, attempt.alarmAt)
+                }
+                if (delivered) sent = next
             }
-            Log.i(TAG, "The alarm at ${attempt.alarmAt} didn't move after any request; leaving the Clock app open")
-            val retryAt = DismissRetry.retryAt(Instant.now(), attempt.alarmAt, attempt.isRetry)
-                ?.takeIf { AwakeNotifier.scheduleRetry(context, attempt.alarmAt, it) }
-            DismissFailedNotice.post(context, attempt.alarmAt, attempt.clock.label, retryAt)
+            // Serialize this with cancelPending: cancellation is not a failed dismiss and must not
+            // enqueue a retry after the user has taken over the Clock app.
+            withContext(Dispatchers.Main) {
+                ensureActive()
+                Log.i(TAG, "The alarm at ${attempt.alarmAt} didn't move after any request; leaving the Clock app open")
+                val retryAt = DismissRetry.retryAt(Instant.now(), attempt.alarmAt, attempt.isRetry)
+                    ?.takeIf { AwakeNotifier.scheduleRetry(context, attempt.alarmAt, it) }
+                DismissFailedNotice.post(context, attempt.alarmAt, attempt.clock.label, retryAt)
+            }
         }
     }
 
@@ -130,6 +162,7 @@ object QuietDismiss {
         val forward = context.dawnly.settings.dismissMode.first() == DismissMode.Instant
         delay(SETTLE_MS)
         withContext(Dispatchers.Main) {
+            ensureActive()
             goBack(context, target)
             DismissFailedNotice.cancel(context)
             if (attempt.by == DismissBy.Music) {

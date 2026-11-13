@@ -163,6 +163,14 @@ class SettingsRepository(context: Context) {
         store.edit { it[LEARN] = on }
     }
 
+    val startupSound: Flow<Boolean> = store.safeData
+        .map { it[STARTUP_SOUND] ?: true }
+        .distinctUntilChanged()
+
+    suspend fun setStartupSound(on: Boolean) {
+        store.edit { it[STARTUP_SOUND] = on }
+    }
+
     val appearance: Flow<Appearance> = store.safeData
         .map { prefs ->
             prefs[APPEARANCE]?.let { name -> Appearance.entries.firstOrNull { it.name == name } }
@@ -193,6 +201,7 @@ class SettingsRepository(context: Context) {
         val AWAKE_CHECK = stringPreferencesKey("awake_check")
         val WAKE_MUSIC = stringPreferencesKey("wake_music")
         val WAKE_MUSIC_REMINDERS = booleanPreferencesKey("wake_music_reminders")
+        val STARTUP_SOUND = booleanPreferencesKey("startup_sound")
         val APPEARANCE = stringPreferencesKey("appearance")
         val LEARN = booleanPreferencesKey("learn")
     }

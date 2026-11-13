@@ -21,12 +21,15 @@ import com.dawnly.app.R
 import com.dawnly.app.data.settings.WakeMusicApp
 import com.dawnly.app.dawnly
 import com.dawnly.app.domain.reminder.Reminder
-import com.dawnly.app.service.launchAsync
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.ceil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+
+enum class MusicResult { Started, Off, Offline, NotInstalled, AlreadyPlaying, CannotDismiss, Busy, NoPlayback, Unavailable }
 
 /** Whether and when music plays instead of an alarm. Pure, so it's unit tested. */
 object WakeMusicPlan {
@@ -43,7 +46,16 @@ object WakeMusicPlan {
      * be told apart), and for an alarm, a way to turn the Clock alarm off once it plays.
      */
     fun shouldTry(choice: WakeMusicApp, online: Boolean, installed: Boolean, alreadyPlaying: Boolean, canDismiss: Boolean): Boolean =
-        choice != WakeMusicApp.Off && online && installed && !alreadyPlaying && canDismiss
+        blockedBy(choice, online, installed, alreadyPlaying, canDismiss) == null
+
+    fun blockedBy(choice: WakeMusicApp, online: Boolean, installed: Boolean, alreadyPlaying: Boolean, canDismiss: Boolean): MusicResult? = when {
+        choice == WakeMusicApp.Off -> MusicResult.Off
+        !online -> MusicResult.Offline
+        !installed -> MusicResult.NotInstalled
+        alreadyPlaying -> MusicResult.AlreadyPlaying
+        !canDismiss -> MusicResult.CannotDismiss
+        else -> null
+    }
 
     /** Media volume Dawnly raises a quiet phone to, so the music can wake anyone. */
     fun minVolume(max: Int): Int = ceil(max * 0.5).toInt()
@@ -72,6 +84,7 @@ object WakeMusic {
 
     @Volatile
     private var startedAt = 0L
+    private val playback = Mutex()
 
     /** True while music playing could be the music Dawnly put on. */
     fun isOurs(): Boolean = startedAt != 0L && SystemClock.elapsedRealtime() - startedAt < OURS_MS
@@ -117,6 +130,9 @@ object WakeMusic {
             (reach == ClockReach.WhenLocked && NotificationManagerCompat.from(context).areNotificationsEnabled())
         val choice = app.settings.wakeMusic.first()
         if (!play(context, choice, canDismiss)) return
+        if (app.settings.wakeMusic.first() != choice ||
+            DismissGuard.check(alarmAt, app.nextAlarms.current()?.triggerAt, Instant.now()) != DismissCheck.Ok
+        ) return
         Log.i(TAG, "Music's on; turning off the alarm at $alarmAt")
         if (reach == ClockReach.Anytime) {
             try {
@@ -190,46 +206,86 @@ object WakeMusic {
         notify(context, NOTIFICATION_ID, builder)
     }
 
-    /** Asks [choice] to play and waits to hear it. False when it can't or didn't start. */
     private suspend fun play(context: Context, choice: WakeMusicApp, canDismiss: Boolean): Boolean {
-        val audio = context.getSystemService(AudioManager::class.java)
-        val online = isOnline(context)
-        val installed = isInstalled(context, choice)
-        val alreadyPlaying = audio.isMusicActive
-        if (!WakeMusicPlan.shouldTry(choice, online, installed, alreadyPlaying, canDismiss)) {
-            if (choice != WakeMusicApp.Off) {
-                Log.i(TAG, "No music ($choice): online=$online installed=$installed playing=$alreadyPlaying canDismiss=$canDismiss")
-            }
-            return false
+        if (!playback.tryLock()) return false
+        return try {
+            attempt(context, choice, canDismiss) == MusicResult.Started
+        } finally {
+            playback.unlock()
         }
-        raiseVolume(audio)
-        startedAt = SystemClock.elapsedRealtime()
-        val pkg = choice.packageName
-        pressPlay(context, audio, pkg)
-        val deadline = SystemClock.elapsedRealtime() + WakeMusicPlan.START_TIME.toMillis()
-        var pressedAgain = false
-        while (SystemClock.elapsedRealtime() < deadline) {
-            delay(POLL_MS)
-            if (audio.isMusicActive) {
-                Log.i(TAG, "Music started ($choice)")
-                return true
-            }
-            if (!pressedAgain && SystemClock.elapsedRealtime() - startedAt >= SECOND_PRESS_MS) {
-                pressedAgain = true
-                // Some apps only listen once they're open; Display over other apps may open them.
-                if (pkg != null && Settings.canDrawOverlays(context)) openApp(context, pkg)
-                pressPlay(context, audio, pkg)
-            }
-        }
-        startedAt = 0L
-        Log.i(TAG, "No music after ${WakeMusicPlan.START_TIME.seconds} s ($choice); the alarm rings")
-        return false
     }
 
-    /** A media "play" key: to [pkg] only, or to whichever app played last. */
-    private fun pressPlay(context: Context, audio: AudioManager, pkg: String?) {
+    suspend fun test(context: Context, choice: WakeMusicApp, offline: Boolean, onResult: (MusicResult) -> Unit) {
+        if (!playback.tryLock()) {
+            onResult(MusicResult.Busy)
+            return
+        }
+        val audio = context.getSystemService(AudioManager::class.java)
+        val before = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+        var played = false
+        try {
+            val result = attempt(context, choice, canDismiss = true, offline = offline)
+            played = result == MusicResult.Started
+            onResult(result)
+            if (played) delay(10_000L)
+        } finally {
+            try {
+                if (played) pressPlay(context, audio, choice.packageName, KeyEvent.KEYCODE_MEDIA_PAUSE)
+                audio.setStreamVolume(AudioManager.STREAM_MUSIC, before, 0)
+            } catch (e: RuntimeException) {
+                Log.w(TAG, "Could not restore music after test", e)
+            }
+            playback.unlock()
+        }
+    }
+
+    private suspend fun attempt(context: Context, choice: WakeMusicApp, canDismiss: Boolean, offline: Boolean = false): MusicResult {
+        val audio = context.getSystemService(AudioManager::class.java)
+        WakeMusicPlan.blockedBy(choice, !offline && isOnline(context), isInstalled(context, choice), audio.isMusicActive, canDismiss)
+            ?.let { return it }
+        val before = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+        var playing = false
+        var sent = false
+        try {
+            raiseVolume(audio)
+            startedAt = SystemClock.elapsedRealtime()
+            pressPlay(context, audio, choice.packageName)
+            sent = true
+            val deadline = startedAt + WakeMusicPlan.START_TIME.toMillis()
+            var pressedAgain = false
+            while (SystemClock.elapsedRealtime() < deadline) {
+                delay(POLL_MS)
+                if (audio.isMusicActive && isOnline(context)) {
+                    playing = true
+                    return MusicResult.Started
+                }
+                if (!pressedAgain && SystemClock.elapsedRealtime() - startedAt >= SECOND_PRESS_MS) {
+                    pressedAgain = true
+                    if (choice.packageName != null && Settings.canDrawOverlays(context)) openApp(context, choice.packageName)
+                    pressPlay(context, audio, choice.packageName)
+                }
+            }
+            return MusicResult.NoPlayback
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: RuntimeException) {
+            Log.w(TAG, "Music could not start; leaving the alarm on", e)
+            return MusicResult.Unavailable
+        } finally {
+            if (!playing) {
+                try {
+                    if (sent) pressPlay(context, audio, choice.packageName, KeyEvent.KEYCODE_MEDIA_PAUSE)
+                    audio.setStreamVolume(AudioManager.STREAM_MUSIC, before, 0)
+                } catch (e: RuntimeException) {
+                    Log.w(TAG, "Could not restore volume after music attempt", e)
+                }
+            }
+        }
+    }
+
+    private fun pressPlay(context: Context, audio: AudioManager, pkg: String?, keyCode: Int = KeyEvent.KEYCODE_MEDIA_PLAY) {
         for (action in listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP)) {
-            val key = KeyEvent(action, KeyEvent.KEYCODE_MEDIA_PLAY)
+            val key = KeyEvent(action, keyCode)
             if (pkg == null) {
                 audio.dispatchMediaKeyEvent(key)
             } else {
@@ -284,7 +340,7 @@ object WakeMusic {
     )
 
     /** High importance so the dismiss can open over the lock screen; silent, the music is the sound. */
-    private fun channel(context: Context): String {
+    internal fun channel(context: Context): String {
         val manager = NotificationManagerCompat.from(context)
         if (manager.getNotificationChannelCompat(CHANNEL) == null) {
             manager.createNotificationChannel(
@@ -306,6 +362,6 @@ object WakeMusic {
 class WakeMusicReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val alarmAt = WakeMusic.alarmAtOf(intent) ?: return
-        launchAsync(context) { WakeMusic.onAlarm(context, alarmAt) }
+        WakeMusicService.start(context, alarmAt)
     }
 }

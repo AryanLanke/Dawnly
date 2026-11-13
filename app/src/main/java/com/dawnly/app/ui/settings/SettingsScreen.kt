@@ -1,5 +1,12 @@
 package com.dawnly.app.ui.settings
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.dawnly.app.notify.TestLabActivity
+import com.dawnly.app.ui.glass.GlassList
+import com.dawnly.app.ui.glass.GlassRow
+import com.dawnly.app.ui.glass.GlassSwitch
+import com.dawnly.app.ui.glass.GlassButton
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -62,6 +69,7 @@ fun SettingsScreen(
     val awakeCheck by viewModel.awakeCheck.collectAsStateWithLifecycle()
     val wakeMusic by viewModel.wakeMusic.collectAsStateWithLifecycle()
     val wakeMusicReminders by viewModel.wakeMusicReminders.collectAsStateWithLifecycle()
+    val startupSound by viewModel.startupSound.collectAsStateWithLifecycle()
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
@@ -133,6 +141,8 @@ fun SettingsScreen(
                 onWakeMusicChange = viewModel::setWakeMusic,
                 wakeMusicReminders = wakeMusicReminders,
                 onWakeMusicRemindersChange = viewModel::setWakeMusicReminders,
+                startupSound = startupSound,
+                onStartupSoundChange = viewModel::setStartupSound,
             )
         }
     }
@@ -166,6 +176,8 @@ internal fun SettingsContent(
     onWakeMusicChange: (WakeMusicApp) -> Unit = {},
     wakeMusicReminders: Boolean = true,
     onWakeMusicRemindersChange: (Boolean) -> Unit = {},
+    startupSound: Boolean = true,
+    onStartupSoundChange: (Boolean) -> Unit = {},
 ) {
     Column(
         Modifier
@@ -208,6 +220,15 @@ internal fun SettingsContent(
         SpringIn(order = 2) {
             Column {
                 SoundRow(state.sound, onOpenSounds)
+                Gap()
+                GlassList {
+                    GlassRow(
+                        title = stringResource(R.string.startup_sound_title),
+                        subtitle = stringResource(R.string.startup_sound_detail),
+                    ) {
+                        GlassSwitch(startupSound, onStartupSoundChange)
+                    }
+                }
                 Gap()
                 WakeMusicSection(
                     choice = wakeMusic,
@@ -276,6 +297,11 @@ internal fun SettingsContent(
                 PermissionsSection(permissions, state.dismissMode, state.signals, oemBattery, onRequestPermission, onOpenOemBattery)
             }
         }
+        Gap()
+        val context = LocalContext.current
+        GlassButton(stringResource(R.string.test_lab_title), {
+            context.startActivity(Intent(context, TestLabActivity::class.java))
+        })
         Gap()
         SpringIn(order = 5) { FeedbackRow() }
         Spacer(Modifier.height(12.dp))

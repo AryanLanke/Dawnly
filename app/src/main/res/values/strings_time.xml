@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_tools">Tools</string>
+    <string name="time_tools_subtitle">A little time, well kept.</string>
+    <string name="time_timer">Timer</string>
+    <string name="time_stopwatch">Stopwatch</string>
+    <string name="time_hours">Hours</string>
+    <string name="time_minutes">Minutes</string>
+    <string name="time_seconds">Seconds</string>
+    <string name="time_start_timer">Start timer</string>
+    <string name="time_start_stopwatch">Start stopwatch</string>
+    <string name="time_pause">Pause</string>
+    <string name="time_resume">Resume</string>
+    <string name="time_reset">Reset</string>
+    <string name="time_running">Running</string>
+    <string name="time_paused">Paused</string>
+    <string name="time_timer_ready">Set hours, minutes and seconds.</string>
+    <string name="time_stopwatch_ready">Ready when you are.</string>
+    <string name="time_timer_finished">Time’s up.</string>
+    <string name="time_lap">Lap</string>
+    <string name="time_lap_number">Lap %1$d</string>
+    <string name="time_lap_split">Split %1$s</string>
+    <string name="time_lap_limit">%1$d laps saved. Reset to start a new set.</string>
+    <string name="time_allow">Allow</string>
+    <string name="time_exact_title">Let the timer ring on time</string>
+    <string name="time_exact_body">Allow Alarms &amp; reminders to start or resume a timer. It will ring even when Dawnly is in the background.</string>
+    <string name="time_notifications_title">Keep timer alerts visible</string>
+    <string name="time_notifications_body">Allow notifications so you can see when time is up, even if Android cannot open the ringing screen.</string>
+    <string name="time_invalid_duration">Choose a duration from 1 second to 99 hours, 59 minutes and 59 seconds.</string>
+    <string name="time_storage_error">Could not save the change. Please try again.</string>
+    <string name="time_schedule_error">Could not schedule the timer. It is paused; try Resume.</string>
+    <string name="time_reboot_paused">Paused after a phone restart, at the last saved time.</string>
+    <string name="time_reboot_note">Both keep time while you use other apps. After a phone restart, they pause at the last saved time; time while powered off is not counted.</string>
+    <string name="time_snooze_permission">Snooze is paused. Open Tools and allow Alarms &amp; reminders to resume it.</string>
+    <string name="time_channel_description">Timer completion alerts, including when the ringing screen cannot open.</string>
+</resources>

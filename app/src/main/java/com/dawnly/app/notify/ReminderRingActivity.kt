@@ -126,11 +126,13 @@ private fun RingScreen(ringing: Ringing, onStop: () -> Unit, onSnooze: () -> Uni
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PrimaryButton(stringResource(R.string.ring_stop), onStop, Modifier.fillMaxWidth())
-            GlassButton(
-                stringResource(R.string.ring_snooze, ReminderRingService.SNOOZE_MINUTES),
-                onSnooze,
-                Modifier.fillMaxWidth(),
-            )
+            if (ringing.id != ReminderRingService.TEST_ID) {
+                GlassButton(
+                    stringResource(R.string.ring_snooze, ReminderRingService.SNOOZE_MINUTES),
+                    onSnooze,
+                    Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

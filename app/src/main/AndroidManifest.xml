@@ -119,10 +119,27 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- The prompt's "Not yet" button. -->
         <receiver
             android:name=".notify.WakeMusicReceiver"
             android:exported="false" />
+
+        <service
+            android:name=".notify.WakeMusicService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Attempts opt-in wake music for at most fifteen seconds before a scheduled alarm, leaving the Clock alarm enabled if playback does not start." />
+        </service>
+
+        <receiver
+            android:name=".notify.TimerReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".notify.TestLabActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Dawnly" />
 
         <receiver
             android:name=".notify.NotYetReceiver"
