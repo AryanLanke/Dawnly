@@ -13,7 +13,6 @@ import com.dawnly.app.data.watch.ArmedAlarmStore
 import com.dawnly.app.domain.watch.WatchPlanner
 import com.dawnly.app.domain.watch.WatchState
 import com.dawnly.app.notify.AwakeNotifier
-import com.dawnly.app.notify.WakeMusic
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.delay
@@ -63,7 +62,6 @@ class WatchScheduler(
         val nextAlarmAt = nextAlarms.current()?.triggerAt
         // A "You're up early" prompt about any other alarm would dismiss the wrong one.
         AwakeNotifier.cancelIfStale(appContext, nextAlarmAt)
-        WakeMusic.schedule(appContext, nextAlarmAt)
         val state = WatchPlanner.decide(
             alarmAt = nextAlarmAt,
             window = settings.watchWindow.first(),

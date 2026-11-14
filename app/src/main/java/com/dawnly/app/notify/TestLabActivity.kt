@@ -24,7 +24,6 @@ import androidx.lifecycle.lifecycleScope
 import com.dawnly.app.R
 import com.dawnly.app.data.reminder.ReminderSounds
 import com.dawnly.app.data.sound.AlertSound
-import com.dawnly.app.dawnly
 import com.dawnly.app.ui.glass.FlowingBackground
 import com.dawnly.app.ui.glass.GlassButton
 import com.dawnly.app.ui.glass.PrimaryButton
@@ -32,7 +31,6 @@ import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.clockSaysNight
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class TestLabActivity : ComponentActivity() {
@@ -57,9 +55,6 @@ class TestLabActivity : ComponentActivity() {
                         if (!busy) {
                             GlassButton(stringResource(R.string.test_alarm_sound), { ring(AlertSound.PhoneDefault) })
                             GlassButton(stringResource(R.string.test_reminder_sound), { ring(ReminderSounds.DEFAULT) })
-                            GlassButton(stringResource(R.string.test_music), { music(offline = false) })
-                            GlassButton(stringResource(R.string.test_offline), { music(offline = true) })
-                            Text(stringResource(R.string.test_offline_detail), style = MaterialTheme.typography.bodySmall)
                         }
                         PrimaryButton(stringResource(R.string.test_stop), ::stopTest)
                         GlassButton(stringResource(R.string.test_back), { finish() })
@@ -91,38 +86,6 @@ class TestLabActivity : ComponentActivity() {
         }
     }
 
-    private fun music(offline: Boolean) {
-        if (busy) return
-        if (ReminderRingService.ringing.value != null) {
-            message = R.string.test_busy
-            return
-        }
-        busy = true
-        message = R.string.test_starting
-        test = lifecycleScope.launch {
-            try {
-                var result = MusicResult.Off
-                WakeMusic.test(this@TestLabActivity, dawnly.settings.wakeMusic.first(), offline) {
-                    result = it
-                    message = it.message
-                }
-                when (result) {
-                    MusicResult.Offline, MusicResult.NotInstalled, MusicResult.NoPlayback, MusicResult.Unavailable -> {
-                        if (ReminderRingService.test(this@TestLabActivity, AlertSound.PhoneDefault)) {
-                            delay(ReminderRingService.TEST_TIMEOUT_MS + 500L)
-                        } else {
-                            message = R.string.test_ring_failed
-                        }
-                    }
-                    MusicResult.Started -> message = R.string.test_finished
-                    else -> Unit
-                }
-            } finally {
-                busy = false
-            }
-        }
-    }
-
     private fun stopTest() {
         test?.cancel()
         test = null
@@ -135,16 +98,3 @@ class TestLabActivity : ComponentActivity() {
         super.onDestroy()
     }
 }
-
-private val MusicResult.message: Int
-    get() = when (this) {
-        MusicResult.Started -> R.string.test_started
-        MusicResult.Off -> R.string.test_off
-        MusicResult.Offline -> R.string.test_no_network
-        MusicResult.NotInstalled -> R.string.test_no_app
-        MusicResult.AlreadyPlaying -> R.string.test_already_playing
-        MusicResult.CannotDismiss -> R.string.test_no_permission
-        MusicResult.Busy -> R.string.test_busy
-        MusicResult.NoPlayback -> R.string.test_no_playback
-        MusicResult.Unavailable -> R.string.test_unavailable
-    }

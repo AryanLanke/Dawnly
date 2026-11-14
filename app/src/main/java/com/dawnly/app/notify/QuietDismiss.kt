@@ -119,8 +119,8 @@ object QuietDismiss {
                 if (alarmMoved) {
                     Log.i(TAG, "${attempt.clock.packageName} dismissed the alarm at ${attempt.alarmAt} ($sent)")
                     DismissMemory(context).remember(attempt.clock.packageName, sent)
-                    // They were up: Dawnly learns from it (if it had asked). Music says nothing about that.
-                    if (attempt.by != DismissBy.Music) context.dawnly.learning.answer(Answer.Up, Instant.now())
+                    // They were up: Dawnly learns from it (if it had asked).
+                    context.dawnly.learning.answer(Answer.Up, Instant.now())
                     if (attempt.by == DismissBy.Dawnly) StillUpCheck.schedule(context, attempt.alarmAt)
                     returnToUser(context, attempt)
                     return@launch
@@ -165,11 +165,7 @@ object QuietDismiss {
             ensureActive()
             goBack(context, target)
             DismissFailedNotice.cancel(context)
-            if (attempt.by == DismissBy.Music) {
-                WakeMusic.postPlaying(context, attempt.alarmAt)
-            } else {
-                DismissedNotice.post(context, attempt.alarmAt, forward)
-            }
+            DismissedNotice.post(context, attempt.alarmAt, forward)
         }
     }
 

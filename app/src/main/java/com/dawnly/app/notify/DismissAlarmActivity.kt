@@ -18,9 +18,6 @@ enum class DismissBy {
 
     /** Dawnly saw the user up and dismissed by itself: the "Still up?" check may follow. */
     Dawnly,
-
-    /** Music started instead of the alarm ([WakeMusic]): not a sign the user is up. */
-    Music,
 }
 
 /**

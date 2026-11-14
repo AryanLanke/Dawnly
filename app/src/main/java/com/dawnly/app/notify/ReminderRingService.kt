@@ -27,14 +27,6 @@ import com.dawnly.app.R
 import com.dawnly.app.data.reminder.ReminderSounds
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.reminder.Reminder
-import com.dawnly.app.dawnly
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,8 +47,6 @@ class ReminderRingService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var vibrator: Vibrator? = null
     private var startedAt = 0L
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var musicJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -108,28 +98,7 @@ class ReminderRingService : Service() {
                     stopSelf()
                     return START_NOT_STICKY
                 }
-                if (intent?.getBooleanExtra(EXTRA_TRY_MUSIC, false) == true) {
-                    wakeLock = getSystemService(PowerManager::class.java)
-                        .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "dawnly:musicStart")
-                        .apply { acquire(TIMEOUT_MS + 20_000L) }
-                    musicJob = scope.launch {
-                        try {
-                            val reminder = dawnly.reminders.current().firstOrNull { it.id == ringing.id }
-                            if (reminder != null && WakeMusic.playForReminder(this@ReminderRingService, reminder)) {
-                                finish(missed = false)
-                            } else {
-                                ring(sound)
-                            }
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: RuntimeException) {
-                            Log.w(TAG, "Music attempt failed; ringing instead", e)
-                            ring(sound)
-                        }
-                    }
-                } else {
-                    ring(sound)
-                }
+                ring(sound)
             }
         }
         return START_NOT_STICKY
@@ -221,8 +190,6 @@ class ReminderRingService : Service() {
     }
 
     private fun stopSound() {
-        musicJob?.cancel()
-        musicJob = null
         handler.removeCallbacksAndMessages(null)
         player?.let {
             try {
@@ -249,7 +216,6 @@ class ReminderRingService : Service() {
     }
 
     override fun onDestroy() {
-        scope.cancel()
         stopSound()
         current.value = null
         super.onDestroy()
@@ -289,7 +255,6 @@ class ReminderRingService : Service() {
         private const val EXTRA_SOUND = "com.dawnly.app.extra.RING_SOUND"
 
         private const val ACTION_STOP_TEST = "com.dawnly.app.action.STOP_TEST_RING"
-        private const val EXTRA_TRY_MUSIC = "com.dawnly.app.extra.TRY_MUSIC"
         const val TEST_ID = -3L
         const val TEST_TIMEOUT_MS = 10_000L
         const val SNOOZE_MINUTES = 10
@@ -315,7 +280,7 @@ class ReminderRingService : Service() {
 
         /** Starts ringing [reminder]. False if Android wouldn't allow it, so the caller can notify instead. */
         fun start(context: Context, reminder: Reminder): Boolean =
-            start(context, reminder.id, reminder.name, reminder.why, ReminderSounds.of(reminder), tryMusic = true)
+            start(context, reminder.id, reminder.name, reminder.why, ReminderSounds.of(reminder))
 
         fun test(context: Context, sound: AlertSound): Boolean = current.value == null && start(
             context, TEST_ID, context.getString(R.string.test_ring_title), context.getString(R.string.test_ring_detail), sound,
@@ -324,14 +289,13 @@ class ReminderRingService : Service() {
         fun stopTest(context: Context) = send(context, ACTION_STOP_TEST)
 
         /** Rings anything, not only a reminder: [id] comes back to Snooze. */
-        fun start(context: Context, id: Long, name: String, why: String, sound: AlertSound, tryMusic: Boolean = false): Boolean = try {
+        fun start(context: Context, id: Long, name: String, why: String, sound: AlertSound): Boolean = try {
             val intent = Intent(context, ReminderRingService::class.java)
                 .setAction(ACTION_RING)
                 .putExtra(EXTRA_ID, id)
                 .putExtra(EXTRA_NAME, name)
                 .putExtra(EXTRA_WHY, why)
                 .putExtra(EXTRA_SOUND, sound.name)
-                .putExtra(EXTRA_TRY_MUSIC, tryMusic)
             ContextCompat.startForegroundService(context, intent)
             true
         } catch (e: Exception) {
