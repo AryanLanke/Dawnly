@@ -123,6 +123,12 @@
             android:exported="false"
             android:theme="@style/Theme.Dawnly" />
 
+        <!-- Several timers at once, opened from the Tools tab. -->
+        <activity
+            android:name=".ui.time.TimerScreen"
+            android:exported="false"
+            android:theme="@style/Theme.Dawnly" />
+
         <receiver
             android:name=".notify.NotYetReceiver"
             android:exported="false" />

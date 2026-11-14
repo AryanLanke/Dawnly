@@ -10,41 +10,51 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.dawnly.app.R
+import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.data.time.TimeStore
 
 /** A durable completion notice also covers a foreground-service start that fails asynchronously. */
 internal object TimerNotifications {
-    private const val CHANNEL = "timer_finished"
-    // Same slot ReminderScheduler.showMissed uses for RING_ID, so missed and finished don't stack.
-    private const val NOTIFICATION_ID = 998
+    // Android fixes a channel's sound when it's made, so each tone gets its own: `timer_<sound>`.
+    private const val CHANNEL_PREFIX = "timer_"
+    private const val DEFAULT_CHANNEL = "timer_default"
+    // The single channel used before multiple timers; removed once the per-tone ones exist.
+    private const val OLD_CHANNEL = "timer_finished"
+    // Per-timer slot, so two finished timers don't overwrite each other. 998 was the old single slot.
+    private const val NOTIFICATION_ID_BASE = 998
 
-    fun showFinished(context: Context): Boolean = show(context, context.getString(R.string.time_timer_finished))
-    fun showPaused(context: Context): Boolean = show(context, context.getString(R.string.time_snooze_permission))
+    private val ALARM_AUDIO: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ALARM)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+
+    private fun notificationId(id: Long): Int = NOTIFICATION_ID_BASE + id.toInt()
+
+    fun showFinished(context: Context, id: Long, label: String): Boolean =
+        show(context, id, label, context.getString(R.string.time_timer_finished), resolveSound(context, id))
+
+    fun showPaused(context: Context, id: Long): Boolean =
+        show(context, id, context.getString(R.string.time_timer), context.getString(R.string.time_snooze_permission), resolveSound(context, id))
+
+    /** The timer's chosen tone, or null for the phone's default alarm sound. */
+    private fun resolveSound(context: Context, id: Long): AlertSound? {
+        val name = TimeStore.current(context).timer(id)?.sound ?: return null
+        val sound = AlertSound.entries.firstOrNull { it.name == name }
+        return if (sound == AlertSound.PhoneDefault) null else sound
+    }
 
     @SuppressLint("MissingPermission") // Checked via areNotificationsEnabled, and permission revocation is caught below.
-    private fun show(context: Context, text: String): Boolean = try {
+    private fun show(context: Context, id: Long, title: String, text: String, sound: AlertSound?): Boolean = try {
         val manager = NotificationManagerCompat.from(context)
-        if (manager.getNotificationChannelCompat(CHANNEL) == null) {
-            manager.createNotificationChannel(
-                NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_HIGH)
-                    .setName(context.getString(R.string.time_timer))
-                    .setDescription(context.getString(R.string.time_channel_description))
-                    .setSound(
-                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                        AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(),
-                    )
-                    .setVibrationEnabled(true)
-                    .build(),
-            )
-        }
-        if (!manager.areNotificationsEnabled() || manager.getNotificationChannelCompat(CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE) {
+        val channel = channelFor(context, manager, sound)
+        if (!manager.areNotificationsEnabled() || manager.getNotificationChannelCompat(channel)?.importance == NotificationManager.IMPORTANCE_NONE) {
             false
         } else {
             manager.notify(
-                NOTIFICATION_ID,
-                NotificationCompat.Builder(context, CHANNEL)
+                notificationId(id),
+                NotificationCompat.Builder(context, channel)
                     .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(context.getString(R.string.time_timer))
+                    .setContentTitle(title)
                     .setContentText(text)
                     .setContentIntent(Notify.openApp(context))
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -60,5 +70,22 @@ internal object TimerNotifications {
         false
     }
 
-    fun cancel(context: Context) = NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
+    private fun channelFor(context: Context, manager: NotificationManagerCompat, sound: AlertSound?): String {
+        val channelId = sound?.let { CHANNEL_PREFIX + it.name.lowercase() } ?: DEFAULT_CHANNEL
+        if (manager.getNotificationChannelCompat(OLD_CHANNEL) != null) manager.deleteNotificationChannel(OLD_CHANNEL)
+        if (manager.getNotificationChannelCompat(channelId) == null) {
+            val uri = sound?.uri(context) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            manager.createNotificationChannel(
+                NotificationChannelCompat.Builder(channelId, NotificationManagerCompat.IMPORTANCE_HIGH)
+                    .setName(context.getString(R.string.time_timer))
+                    .setDescription(context.getString(R.string.time_channel_description))
+                    .setSound(uri, ALARM_AUDIO)
+                    .setVibrationEnabled(true)
+                    .build(),
+            )
+        }
+        return channelId
+    }
+
+    fun cancel(context: Context, id: Long) = NotificationManagerCompat.from(context).cancel(notificationId(id))
 }

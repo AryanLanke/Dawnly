@@ -59,10 +59,11 @@ class ReminderRingService : Service() {
             }
             ACTION_SNOOZE -> {
                 current.value?.let {
-                    when (it.id) {
-                        TEST_ID -> Unit
-                        StillUpCheck.RING_ID -> StillUpCheck.snooze(this, SNOOZE_MINUTES)
-                        TimerController.RING_ID -> TimerController.snooze(this, SNOOZE_MINUTES)
+                    val timerId = TimerController.timerIdFromRing(it.id)
+                    when {
+                        it.id == TEST_ID -> Unit
+                        it.id == StillUpCheck.RING_ID -> StillUpCheck.snooze(this, SNOOZE_MINUTES)
+                        timerId != null -> TimerController.snooze(this, timerId, SNOOZE_MINUTES)
                         else -> ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES)
                     }
                 }
@@ -93,7 +94,7 @@ class ReminderRingService : Service() {
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Couldn't ring \"${ringing.name}\" in the foreground", e)
-                    if (ringing.id == TimerController.RING_ID) TimerNotifications.showFinished(this)
+                    TimerController.timerIdFromRing(ringing.id)?.let { TimerNotifications.showFinished(this, it, ringing.name) }
                     current.value = null
                     stopSelf()
                     return START_NOT_STICKY

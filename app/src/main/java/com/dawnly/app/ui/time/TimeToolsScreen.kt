@@ -1,6 +1,8 @@
 package com.dawnly.app.ui.time
 
+import android.content.Intent
 import android.os.SystemClock
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,9 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -28,7 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,7 +47,9 @@ import com.dawnly.app.R
 import com.dawnly.app.data.time.TimeStore
 import com.dawnly.app.domain.time.StopwatchState
 import com.dawnly.app.domain.time.TimerPhase
+import com.dawnly.app.domain.time.TimerState
 import com.dawnly.app.ui.glass.AccentPill
+import com.dawnly.app.ui.glass.GlassIcons
 import com.dawnly.app.ui.glass.GlassList
 import com.dawnly.app.ui.glass.GlassRow
 import com.dawnly.app.ui.glass.GlassShapes
@@ -62,25 +70,15 @@ fun TimeToolsScreen(
     onRequestPermission: (AppPermission) -> Unit,
     contentPadding: PaddingValues,
 ) {
-    val context = LocalContext.current.applicationContext
+    val activity = LocalContext.current
+    val context = activity.applicationContext
     val lifecycle = LocalLifecycleOwner.current
     val focus = LocalFocusManager.current
     val state by remember(context) { TimeStore.states(context) }.collectAsStateWithLifecycle()
     var now by remember { mutableStateOf(TimeStore.now(context)) }
     var error by rememberSaveable { mutableStateOf<Int?>(null) }
-    val timer = state.timer
     val stopwatch = state.stopwatch
 
-    fun result(value: TimerController.Result) {
-        error = when (value) {
-            TimerController.Result.Success -> null
-            TimerController.Result.InvalidDuration -> R.string.time_invalid_duration
-            TimerController.Result.ExactAlarmRequired -> R.string.time_exact_body
-            TimerController.Result.StorageError -> R.string.time_storage_error
-            TimerController.Result.SchedulingFailed -> R.string.time_schedule_error
-        }
-        if (value == TimerController.Result.ExactAlarmRequired) onRequestPermission(AppPermission.ExactAlarms)
-    }
     fun saved(success: Boolean) { error = if (success) null else R.string.time_storage_error }
 
     LifecycleResumeEffect(context) {
@@ -106,23 +104,9 @@ fun TimeToolsScreen(
             }
         }
     }
-    val remaining = timer.remaining(now)
-    LaunchedEffect(timer.generation, timer.phase, timer.completionPending, remaining == 0L) {
-        if (timer.completionPending || (timer.phase == TimerPhase.Running && remaining == 0L)) {
-            TimerController.sync(context)
-        }
-    }
-
-    // Draft input survives activity recreation; the chosen duration is also persisted on Start.
-    var hours by rememberSaveable { mutableStateOf((timer.durationMs / 3_600_000L).toString()) }
-    var minutes by rememberSaveable { mutableStateOf((timer.durationMs / 60_000L % 60).toString()) }
-    var seconds by rememberSaveable { mutableStateOf((timer.durationMs / 1000L % 60).toString()) }
-    fun restoreDuration() {
-        val duration = TimeStore.states(context).value.timer.durationMs
-        hours = (duration / 3_600_000L).toString()
-        minutes = (duration / 60_000L % 60).toString()
-        seconds = (duration / 1000L % 60).toString()
-    }
+    // Deliver any timer that finishes while this tab is open; the Timer screen does the same.
+    val anyDue = state.timers.any { it.completionPending || (it.phase == TimerPhase.Running && it.remaining(now) == 0L) }
+    LaunchedEffect(anyDue) { if (anyDue) TimerController.sync(context) }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding).padding(horizontal = 16.dp),
@@ -153,48 +137,19 @@ fun TimeToolsScreen(
         GlassList {
             GlassRow(
                 title = stringResource(R.string.time_timer),
-                subtitle = stringResource(when (timer.phase) {
-                    TimerPhase.Ready -> R.string.time_timer_ready
-                    TimerPhase.Running -> R.string.time_running
-                    TimerPhase.Paused -> if (timer.pausedAfterReboot) R.string.time_reboot_paused else R.string.time_paused
-                    TimerPhase.Finished -> R.string.time_timer_finished
-                }),
+                subtitle = timerSummary(state.timers),
+                modifier = Modifier.clickable(role = Role.Button) {
+                    activity.startActivity(Intent(activity, TimerScreen::class.java))
+                },
+                end = {
+                    Icon(
+                        GlassIcons.Chevron,
+                        contentDescription = null,
+                        tint = DawnlyTheme.colors.textSoft,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
             )
-            Column(
-                Modifier.padding(horizontal = ROW_INSET).padding(bottom = ROW_INSET),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (timer.phase == TimerPhase.Ready) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DurationField(hours, { hours = it }, R.string.time_hours, 99, Modifier.weight(1f))
-                        DurationField(minutes, { minutes = it }, R.string.time_minutes, 59, Modifier.weight(1f))
-                        DurationField(seconds, { seconds = it }, R.string.time_seconds, 59, Modifier.weight(1f))
-                    }
-                } else {
-                    TimeDisplay(timerText(remaining))
-                }
-                when (timer.phase) {
-                    TimerPhase.Ready -> PrimaryButton(stringResource(R.string.time_start_timer), onClick = {
-                        focus.clearFocus()
-                        val duration = ((hours.toLongOrNull() ?: 0L) * 3600 + (minutes.toLongOrNull() ?: 0L) * 60 + (seconds.toLongOrNull() ?: 0L)) * 1000
-                        result(TimerController.start(context, duration))
-                        now = TimeStore.now(context)
-                    })
-                    TimerPhase.Running -> PrimaryButton(stringResource(R.string.time_pause), onClick = {
-                        result(TimerController.pause(context)); now = TimeStore.now(context)
-                    })
-                    TimerPhase.Paused -> PrimaryButton(stringResource(R.string.time_resume), onClick = {
-                        result(TimerController.resume(context)); now = TimeStore.now(context)
-                    })
-                    TimerPhase.Finished -> PrimaryButton(stringResource(R.string.time_reset), onClick = {
-                        result(TimerController.reset(context)); restoreDuration()
-                    })
-                }
-                if (timer.phase == TimerPhase.Running || timer.phase == TimerPhase.Paused) {
-                    TextAction(stringResource(R.string.time_reset), onClick = { result(TimerController.reset(context)); restoreDuration() })
-                }
-            }
         }
 
         GlassList {
@@ -261,8 +216,19 @@ private fun PermissionCard(title: Int, body: Int, onAllow: () -> Unit) {
     }
 }
 
+/** The Tools tab's one-line summary of the timers kept on the dedicated Timer screen. */
 @Composable
-private fun DurationField(value: String, onChange: (String) -> Unit, label: Int, maximum: Int, modifier: Modifier) {
+private fun timerSummary(timers: List<TimerState>): String {
+    val running = timers.count { it.phase == TimerPhase.Running }
+    return when {
+        timers.isEmpty() -> stringResource(R.string.timers_none)
+        running > 0 -> stringResource(R.string.timers_running, running)
+        else -> pluralStringResource(R.plurals.timers_count, timers.size, timers.size)
+    }
+}
+
+@Composable
+internal fun DurationField(value: String, onChange: (String) -> Unit, label: Int, maximum: Int, modifier: Modifier) {
     OutlinedTextField(
         value = value,
         onValueChange = { input ->
@@ -286,7 +252,7 @@ private fun DurationField(value: String, onChange: (String) -> Unit, label: Int,
 }
 
 @Composable
-private fun TimeDisplay(text: String) {
+internal fun TimeDisplay(text: String) {
     Text(
         text,
         modifier = Modifier.fillMaxWidth(),

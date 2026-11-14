@@ -2,6 +2,7 @@ package com.dawnly.app.domain.time
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -185,11 +186,76 @@ class TimeStateTest {
     }
 
     @Test fun `timer and stopwatch run and reset independently`() {
-        val both = TimeToolsState(timer(), StopwatchState().start(at(10_000)))
+        val both = TimeToolsState(listOf(timer()), StopwatchState().start(at(10_000)))
         val finished = both.checkpoint(at(16_000))
-        assertEquals(TimerPhase.Finished, finished.timer.phase)
+        assertEquals(TimerPhase.Finished, finished.timers.single().phase)
         assertTrue(finished.stopwatch.running)
         assertEquals(6_000L, finished.stopwatch.elapsedMs)
-        assertEquals(finished.stopwatch, finished.copy(timer = finished.timer.reset()).stopwatch)
+        val reset = finished.update(1L) { it.reset() }
+        assertEquals(finished.stopwatch, reset.stopwatch)
+        assertEquals(TimerPhase.Ready, reset.timer(1L)!!.phase)
+    }
+
+    @Test fun `start and reset keep id label sound and ring`() {
+        val custom = TimerState(id = 7L, label = "Tea", sound = "Bubble", ringOnFinish = true)
+        val started = custom.start(5_000L, at(10_000L))
+        assertEquals(7L, started.id)
+        assertEquals("Tea", started.label)
+        assertEquals("Bubble", started.sound)
+        assertTrue(started.ringOnFinish)
+        val finished = started.checkpoint(at(15_000L))
+        assertTrue(finished.completionPending)
+        val reset = finished.reset()
+        assertEquals(7L, reset.id)
+        assertEquals("Tea", reset.label)
+        assertEquals("Bubble", reset.sound)
+        assertTrue(reset.ringOnFinish)
+        assertEquals(TimerPhase.Ready, reset.phase)
+        assertFalse(reset.completionPending)
+        // Restarting a finished timer clears the pending claim but keeps its identity.
+        val restarted = finished.start(2_000L, at(20_000L))
+        assertFalse(restarted.completionPending)
+        assertEquals(7L, restarted.id)
+        assertEquals("Tea", restarted.label)
+        assertEquals("Bubble", restarted.sound)
+        assertTrue(restarted.ringOnFinish)
+    }
+
+    @Test fun `multiple timers are found updated added and removed by id`() {
+        val a = TimerState(id = 1L, label = "A").start(5_000L, at(10_000L))
+        val b = TimerState(id = 2L, label = "B").start(9_000L, at(10_000L))
+        val state = TimeToolsState(listOf(a, b))
+        assertEquals("A", state.timer(1L)!!.label)
+        assertEquals("B", state.timer(2L)!!.label)
+        assertNull(state.timer(3L))
+        // A checkpoint advances every timer: A finishes, B keeps running.
+        val checked = state.checkpoint(at(16_000L))
+        assertEquals(TimerPhase.Finished, checked.timer(1L)!!.phase)
+        assertEquals(TimerPhase.Running, checked.timer(2L)!!.phase)
+        assertEquals(3_000L, checked.timer(2L)!!.remainingMs)
+        val renamed = checked.update(2L) { it.copy(label = "B2") }
+        assertEquals("B2", renamed.timer(2L)!!.label)
+        assertEquals("A", renamed.timer(1L)!!.label)
+        assertEquals(3L, renamed.nextId())
+        val added = renamed.add(TimerState(id = renamed.nextId(), label = "C"))
+        assertEquals(3, added.timers.size)
+        assertEquals("C", added.timer(3L)!!.label)
+        val removed = added.remove(1L)
+        assertEquals(2, removed.timers.size)
+        assertNull(removed.timer(1L))
+        assertEquals(4L, removed.nextId())
+    }
+
+    @Test fun `reboot pauses each running timer independently`() {
+        val running = TimerState(id = 1L).start(5_000L, at(10_000L)).checkpoint(at(12_000L))
+        val paused = TimerState(id = 2L).start(9_000L, at(10_000L)).pause(at(11_000L))
+        val rebooted = TimeToolsState(listOf(running, paused)).checkpoint(at(100L, 8))
+        assertEquals(TimerPhase.Paused, rebooted.timer(1L)!!.phase)
+        assertTrue(rebooted.timer(1L)!!.pausedAfterReboot)
+        assertEquals(3_000L, rebooted.timer(1L)!!.remainingMs)
+        // The manually paused timer is untouched by the reboot checkpoint.
+        assertEquals(TimerPhase.Paused, rebooted.timer(2L)!!.phase)
+        assertFalse(rebooted.timer(2L)!!.pausedAfterReboot)
+        assertEquals(8_000L, rebooted.timer(2L)!!.remainingMs)
     }
 }

@@ -10,19 +10,8 @@ import org.json.JSONObject
 /** A single preferences value makes transitions (including completion claims) atomic. */
 internal object TimeStateJson {
     fun encode(state: TimeToolsState): String = JSONObject().apply {
-        put("version", 1)
-        put("timer", JSONObject().apply {
-            with(state.timer) {
-                put("duration", durationMs)
-                put("remaining", remainingMs)
-                put("phase", phase.name)
-                put("anchor", anchorMs)
-                put("boot", bootCount)
-                put("generation", generation)
-                put("reboot", pausedAfterReboot)
-                put("pending", completionPending)
-            }
-        })
+        put("version", 2)
+        put("timers", JSONArray().apply { state.timers.forEach { put(timerJson(it)) } })
         put("stopwatch", JSONObject().apply {
             with(state.stopwatch) {
                 put("elapsed", elapsedMs)
@@ -37,12 +26,40 @@ internal object TimeStateJson {
 
     fun decode(json: String?): TimeToolsState {
         val root = try { JSONObject(json ?: return TimeToolsState()) } catch (_: Exception) { return TimeToolsState() }
-        if (root.optInt("version") != 1) return TimeToolsState()
-        return TimeToolsState(timer(root.optJSONObject("timer")), stopwatch(root.optJSONObject("stopwatch")))
+        val stopwatch = stopwatch(root.optJSONObject("stopwatch"))
+        return when (root.optInt("version")) {
+            2 -> {
+                val array = root.optJSONArray("timers") ?: return TimeToolsState(stopwatch = stopwatch)
+                val timers = List(array.length()) { timer(array.optJSONObject(it), (it + 1).toLong()) }
+                TimeToolsState(timers, stopwatch)
+            }
+            // Before multiple timers: the one saved timer becomes the first of the list, state intact.
+            1 -> TimeToolsState(listOf(timer(root.optJSONObject("timer"), 1L)), stopwatch)
+            else -> TimeToolsState()
+        }
     }
 
-    private fun timer(json: JSONObject?): TimerState = try {
+    private fun timerJson(timer: TimerState): JSONObject = JSONObject().apply {
+        with(timer) {
+            put("id", id)
+            put("label", label)
+            if (sound != null) put("sound", sound)
+            put("ring", ringOnFinish)
+            put("duration", durationMs)
+            put("remaining", remainingMs)
+            put("phase", phase.name)
+            put("anchor", anchorMs)
+            put("boot", bootCount)
+            put("generation", generation)
+            put("reboot", pausedAfterReboot)
+            put("pending", completionPending)
+        }
+    }
+
+    private fun timer(json: JSONObject?, fallbackId: Long): TimerState = try {
         requireNotNull(json)
+        val id = json.optLong("id", fallbackId)
+        require(id >= 1)
         val duration = json.getLong("duration")
         val remaining = json.getLong("remaining")
         val phase = TimerPhase.valueOf(json.getString("phase"))
@@ -55,8 +72,13 @@ internal object TimeStateJson {
         require(phase != TimerPhase.Ready || remaining == duration)
         require(phase != TimerPhase.Paused || remaining > 0L)
         require(!pending || phase == TimerPhase.Finished)
-        TimerState(duration, remaining, phase, anchor, json.optInt("boot", -1), generation, json.optBoolean("reboot"), pending)
-    } catch (_: Exception) { TimerState() }
+        val label = if (json.has("label")) json.getString("label") else "Timer"
+        val sound = if (json.has("sound") && !json.isNull("sound")) json.getString("sound") else null
+        TimerState(
+            duration, remaining, phase, anchor, json.optInt("boot", -1), generation,
+            json.optBoolean("reboot"), pending, id, label, sound, json.optBoolean("ring"),
+        )
+    } catch (_: Exception) { TimerState(id = fallbackId) }
 
     private fun stopwatch(json: JSONObject?): StopwatchState = try {
         requireNotNull(json)

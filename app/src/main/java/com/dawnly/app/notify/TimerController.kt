@@ -12,53 +12,98 @@ import com.dawnly.app.data.time.TimeStore
 import com.dawnly.app.domain.time.TimerPhase
 import com.dawnly.app.domain.time.TimerState
 
-/** One elapsed-realtime exact alarm, separate from Clock alarms and Dawnly's reminders. */
+/** One elapsed-realtime exact alarm per timer, separate from Clock alarms and Dawnly's reminders. */
 object TimerController {
-    const val RING_ID = -2L
     internal const val ACTION_EXPIRED = "com.dawnly.app.action.TIMER_EXPIRED"
     internal const val EXTRA_GENERATION = "com.dawnly.app.extra.TIMER_GENERATION"
-    private const val REQUEST_CODE = 200_002
+    internal const val EXTRA_ID = "com.dawnly.app.extra.TIMER_ID"
+    private const val REQUEST_CODE_BASE = 200_002
 
     enum class Result { Success, ExactAlarmRequired, InvalidDuration, StorageError, SchedulingFailed }
+
+    /** A distinct ring id per timer; negative so it never collides with reminders (positive) or tests. */
+    fun ringId(id: Long): Long = -(100L + id)
+
+    /** The timer behind a ring id, or null when the ring belongs to a reminder, test or still-up check. */
+    fun timerIdFromRing(ringId: Long): Long? = if (ringId <= -101L) -ringId - 100L else null
+
+    private fun requestCode(id: Long): Int = REQUEST_CODE_BASE + id.toInt()
 
     fun canScheduleExact(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
 
-    fun start(context: Context, durationMs: Long): Result = synchronized(TimeStore) {
+    /** Creates a new timer and starts it. The id is unique among the saved timers. */
+    fun add(context: Context, label: String, durationMs: Long, sound: String?, ringOnFinish: Boolean): Result = synchronized(TimeStore) {
         if (durationMs !in 1..TimerState.MAX_DURATION_MS) return@synchronized Result.InvalidDuration
         if (!canScheduleExact(context)) return@synchronized Result.ExactAlarmRequired
         val state = TimeStore.current(context)
-        val timer = state.timer.start(durationMs, TimeStore.now(context))
-        if (timer == state.timer) return@synchronized Result.Success
-        if (!TimeStore.save(context, state.copy(timer = timer))) return@synchronized Result.StorageError
-        clearCompletion(context)
+        val ready = TimerState(
+            durationMs = durationMs, remainingMs = durationMs,
+            id = state.nextId(), label = label, sound = sound, ringOnFinish = ringOnFinish,
+        )
+        val timer = ready.start(durationMs, TimeStore.now(context))
+        if (!TimeStore.save(context, state.add(timer))) return@synchronized Result.StorageError
         scheduleOrPause(context, timer)
     }
 
-    fun pause(context: Context): Result = synchronized(TimeStore) {
+    fun delete(context: Context, id: Long): Result = synchronized(TimeStore) {
         val state = TimeStore.current(context)
-        val timer = state.timer.pause(TimeStore.now(context))
-        if (!TimeStore.save(context, state.copy(timer = timer))) return@synchronized Result.StorageError
-        cancelAlarm(context)
-        deliverCompletion(context)
+        if (state.timer(id) == null) return@synchronized Result.Success
+        if (!TimeStore.save(context, state.remove(id))) return@synchronized Result.StorageError
+        cancelAlarm(context, id)
+        clearCompletion(context, id)
         Result.Success
     }
 
-    fun resume(context: Context): Result = synchronized(TimeStore) {
+    /** Changes a timer's name, tone or finish mode without disturbing its countdown. */
+    fun update(context: Context, id: Long, label: String, sound: String?, ringOnFinish: Boolean): Result = synchronized(TimeStore) {
+        val state = TimeStore.current(context)
+        val timer = state.timer(id) ?: return@synchronized Result.Success
+        val changed = timer.copy(label = label, sound = sound, ringOnFinish = ringOnFinish)
+        if (changed == timer) return@synchronized Result.Success
+        if (!TimeStore.save(context, state.update(id) { changed })) return@synchronized Result.StorageError
+        Result.Success
+    }
+
+    fun start(context: Context, id: Long, durationMs: Long): Result = synchronized(TimeStore) {
+        if (durationMs !in 1..TimerState.MAX_DURATION_MS) return@synchronized Result.InvalidDuration
         if (!canScheduleExact(context)) return@synchronized Result.ExactAlarmRequired
         val state = TimeStore.current(context)
-        val timer = state.timer.resume(TimeStore.now(context))
-        if (timer == state.timer) return@synchronized Result.Success
-        if (!TimeStore.save(context, state.copy(timer = timer))) return@synchronized Result.StorageError
+        val existing = state.timer(id) ?: return@synchronized Result.Success
+        val timer = existing.start(durationMs, TimeStore.now(context))
+        if (timer == existing) return@synchronized Result.Success
+        if (!TimeStore.save(context, state.update(id) { timer })) return@synchronized Result.StorageError
+        clearCompletion(context, id)
         scheduleOrPause(context, timer)
     }
 
-    fun reset(context: Context): Result = synchronized(TimeStore) {
+    fun pause(context: Context, id: Long): Result = synchronized(TimeStore) {
         val state = TimeStore.current(context)
+        val existing = state.timer(id) ?: return@synchronized Result.Success
+        val timer = existing.pause(TimeStore.now(context))
+        if (!TimeStore.save(context, state.update(id) { timer })) return@synchronized Result.StorageError
+        cancelAlarm(context, id)
+        deliverCompletion(context, id)
+        Result.Success
+    }
+
+    fun resume(context: Context, id: Long): Result = synchronized(TimeStore) {
+        if (!canScheduleExact(context)) return@synchronized Result.ExactAlarmRequired
+        val state = TimeStore.current(context)
+        val existing = state.timer(id) ?: return@synchronized Result.Success
+        val timer = existing.resume(TimeStore.now(context))
+        if (timer == existing) return@synchronized Result.Success
+        if (!TimeStore.save(context, state.update(id) { timer })) return@synchronized Result.StorageError
+        scheduleOrPause(context, timer)
+    }
+
+    fun reset(context: Context, id: Long): Result = synchronized(TimeStore) {
+        val state = TimeStore.current(context)
+        val existing = state.timer(id) ?: return@synchronized Result.Success
         // Invalidate delivery first, including an already queued broadcast, then cancel the OS alarm.
-        if (!TimeStore.save(context, state.copy(timer = state.timer.reset()))) return@synchronized Result.StorageError
-        cancelAlarm(context)
-        clearCompletion(context)
+        if (!TimeStore.save(context, state.update(id) { existing.reset() })) return@synchronized Result.StorageError
+        cancelAlarm(context, id)
+        clearCompletion(context, id)
         Result.Success
     }
 
@@ -66,34 +111,40 @@ object TimerController {
     fun sync(context: Context): Result = synchronized(TimeStore) {
         val state = TimeStore.current(context).checkpoint(TimeStore.now(context))
         if (!TimeStore.save(context, state)) return@synchronized Result.StorageError
-        if (state.timer.phase == TimerPhase.Running) {
-            scheduleOrPause(context, state.timer)
-        } else {
-            cancelAlarm(context)
-            deliverCompletion(context)
-            Result.Success
-        }
-    }
-
-    /** Called by ReminderRingService for RING_ID; a newer timer is never replaced by an old snooze. */
-    fun snooze(context: Context, minutes: Int): Result = synchronized(TimeStore) {
-        val duration = minutes.toLong() * 60_000L
-        if (duration !in 1..TimerState.MAX_DURATION_MS) return@synchronized Result.InvalidDuration
-        if (TimeStore.current(context).timer.phase != TimerPhase.Finished) return@synchronized Result.Success
-        val result = start(context, duration)
-        if (result == Result.ExactAlarmRequired) {
-            // The service will stop ringing after snooze. Keep the requested snooze visible, not lost.
-            val state = TimeStore.current(context)
-            val paused = state.timer.start(duration, TimeStore.now(context)).pause(TimeStore.now(context))
-            if (!TimeStore.save(context, state.copy(timer = paused))) return@synchronized Result.StorageError
-            cancelAlarm(context)
-            TimerNotifications.showPaused(context)
+        var result = Result.Success
+        for (timer in state.timers) {
+            val outcome = if (timer.phase == TimerPhase.Running) {
+                scheduleOrPause(context, timer)
+            } else {
+                cancelAlarm(context, timer.id)
+                deliverCompletion(context, timer.id)
+                Result.Success
+            }
+            if (outcome != Result.Success && result == Result.Success) result = outcome
         }
         result
     }
 
-    internal fun receive(context: Context, generation: Long) = synchronized(TimeStore) {
-        val timer = TimeStore.current(context).timer
+    /** Called by ReminderRingService for a timer's ring id; a newer timer is never replaced by an old snooze. */
+    fun snooze(context: Context, id: Long, minutes: Int): Result = synchronized(TimeStore) {
+        val duration = minutes.toLong() * 60_000L
+        if (duration !in 1..TimerState.MAX_DURATION_MS) return@synchronized Result.InvalidDuration
+        if (TimeStore.current(context).timer(id)?.phase != TimerPhase.Finished) return@synchronized Result.Success
+        val result = start(context, id, duration)
+        if (result == Result.ExactAlarmRequired) {
+            // The service will stop ringing after snooze. Keep the requested snooze visible, not lost.
+            val state = TimeStore.current(context)
+            val existing = state.timer(id) ?: return@synchronized Result.StorageError
+            val paused = existing.start(duration, TimeStore.now(context)).pause(TimeStore.now(context))
+            if (!TimeStore.save(context, state.update(id) { paused })) return@synchronized Result.StorageError
+            cancelAlarm(context, id)
+            TimerNotifications.showPaused(context, id)
+        }
+        result
+    }
+
+    internal fun receive(context: Context, id: Long, generation: Long) = synchronized(TimeStore) {
+        val timer = TimeStore.current(context).timer(id) ?: return@synchronized
         if (timer.generation != generation) return@synchronized
         val now = TimeStore.now(context)
         // Early broadcasts may rearm, but only a current, due generation may ring. A checkpoint may
@@ -113,7 +164,7 @@ object TimerController {
                 context.getSystemService(AlarmManager::class.java).setExactAndAllowWhileIdle(
                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     timer.anchorMs + timer.remainingMs,
-                    pending(context, timer.generation),
+                    pending(context, timer.id, timer.generation),
                 )
                 return Result.Success
             } catch (e: SecurityException) {
@@ -124,49 +175,53 @@ object TimerController {
             }
         }
         val state = TimeStore.current(context)
-        val paused = state.timer.pause(TimeStore.now(context))
-        if (!TimeStore.save(context, state.copy(timer = paused))) return Result.StorageError
-        cancelAlarm(context)
-        deliverCompletion(context)
+        val existing = state.timer(timer.id) ?: return result
+        val paused = existing.pause(TimeStore.now(context))
+        if (!TimeStore.save(context, state.update(timer.id) { paused })) return Result.StorageError
+        cancelAlarm(context, timer.id)
+        deliverCompletion(context, timer.id)
         return result
     }
 
-    private fun deliverCompletion(context: Context) {
-        val state = TimeStore.current(context)
-        if (state.timer.phase != TimerPhase.Finished || !state.timer.completionPending) return
+    private fun deliverCompletion(context: Context, id: Long) {
+        val timer = TimeStore.current(context).timer(id) ?: return
+        if (timer.phase != TimerPhase.Finished || !timer.completionPending) return
+        val sound = timer.sound?.let { name -> AlertSound.entries.firstOrNull { it.name == name } } ?: AlertSound.PhoneDefault
+        val label = timer.label
+        val finished = context.getString(R.string.time_timer_finished)
         // The ringing service owns the sound and its own notification; posting a second alert here
         // would double the sound and stack two notices. Only fall back to a notice if it can't ring.
-        val ringing = ReminderRingService.start(
-            context,
-            id = RING_ID,
-            name = context.getString(R.string.time_timer),
-            why = context.getString(R.string.time_timer_finished),
-            sound = AlertSound.PhoneDefault,
-        )
-        val alerted = ringing || TimerNotifications.showFinished(context)
+        val alerted = if (timer.ringOnFinish && ReminderRingService.ringing.value == null) {
+            ReminderRingService.start(context, ringId(id), label, finished, sound) ||
+                TimerNotifications.showFinished(context, id, label)
+        } else {
+            // Notification mode, or another timer already owns the ring: don't stack a second ring.
+            TimerNotifications.showFinished(context, id, label)
+        }
         if (alerted) {
-            TimeStore.save(context, state.copy(timer = state.timer.completionDelivered()))
+            TimeStore.save(context, TimeStore.current(context).update(id) { it.completionDelivered() })
         }
         // If both are blocked, Finished + completionPending remain durable; sync can retry later.
     }
 
-    private fun clearCompletion(context: Context) {
-        TimerNotifications.cancel(context)
-        if (ReminderRingService.ringing.value?.id == RING_ID) ReminderRingService.stop(context)
+    private fun clearCompletion(context: Context, id: Long) {
+        TimerNotifications.cancel(context, id)
+        if (ReminderRingService.ringing.value?.id == ringId(id)) ReminderRingService.stop(context)
     }
 
-    private fun intent(context: Context) = Intent(context, TimerReceiver::class.java).setAction(ACTION_EXPIRED)
+    private fun intent(context: Context, id: Long) =
+        Intent(context, TimerReceiver::class.java).setAction(ACTION_EXPIRED).putExtra(EXTRA_ID, id)
 
-    private fun pending(context: Context, generation: Long): PendingIntent = PendingIntent.getBroadcast(
+    private fun pending(context: Context, id: Long, generation: Long): PendingIntent = PendingIntent.getBroadcast(
         context,
-        REQUEST_CODE,
-        intent(context).putExtra(EXTRA_GENERATION, generation),
+        requestCode(id),
+        intent(context, id).putExtra(EXTRA_GENERATION, generation),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
-    private fun cancelAlarm(context: Context) {
+    private fun cancelAlarm(context: Context, id: Long) {
         val pending = PendingIntent.getBroadcast(
-            context, REQUEST_CODE, intent(context), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE,
+            context, requestCode(id), intent(context, id), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE,
         ) ?: return
         context.getSystemService(AlarmManager::class.java).cancel(pending)
         pending.cancel()

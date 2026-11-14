@@ -15,6 +15,11 @@ data class TimerState(
     val generation: Long = 0L,
     val pausedAfterReboot: Boolean = false,
     val completionPending: Boolean = false,
+    val id: Long = 1L,
+    val label: String = "Timer",
+    /** An [com.dawnly.app.data.sound.AlertSound] name; null means the phone's default alarm sound. */
+    val sound: String? = null,
+    val ringOnFinish: Boolean = false,
 ) {
     fun remaining(now: TimeReading): Long = if (phase == TimerPhase.Running && sameBoot(now)) {
         (remainingMs - (now.elapsedMs - anchorMs)).coerceAtLeast(0L)
@@ -49,7 +54,17 @@ data class TimerState(
     fun start(duration: Long, now: TimeReading): TimerState {
         require(duration in 1..MAX_DURATION_MS)
         if (phase == TimerPhase.Running || phase == TimerPhase.Paused) return this
-        return TimerState(duration, duration, TimerPhase.Running, now.elapsedMs, now.bootCount, generation + 1)
+        // copy keeps id/label/sound/ringOnFinish; the flags reset exactly as a fresh timer would.
+        return copy(
+            durationMs = duration,
+            remainingMs = duration,
+            phase = TimerPhase.Running,
+            anchorMs = now.elapsedMs,
+            bootCount = now.bootCount,
+            generation = generation + 1,
+            pausedAfterReboot = false,
+            completionPending = false,
+        )
     }
 
     fun pause(now: TimeReading): TimerState {
@@ -67,7 +82,15 @@ data class TimerState(
         pausedAfterReboot = false,
     ) else this
 
-    fun reset(): TimerState = TimerState(durationMs = durationMs, generation = generation + 1)
+    fun reset(): TimerState = copy(
+        remainingMs = durationMs,
+        phase = TimerPhase.Ready,
+        anchorMs = 0L,
+        bootCount = -1,
+        generation = generation + 1,
+        pausedAfterReboot = false,
+        completionPending = false,
+    )
 
     /** A canceled, replaced, early, duplicate, or pre-reboot delivery cannot complete this timer. */
     fun acceptsAlarm(deliveryGeneration: Long, now: TimeReading): Boolean =
@@ -124,6 +147,24 @@ data class StopwatchState(
     companion object { const val MAX_LAPS = 100 }
 }
 
-data class TimeToolsState(val timer: TimerState = TimerState(), val stopwatch: StopwatchState = StopwatchState()) {
-    fun checkpoint(now: TimeReading) = copy(timer = timer.checkpoint(now), stopwatch = stopwatch.checkpoint(now))
+data class TimeToolsState(
+    val timers: List<TimerState> = listOf(TimerState(id = 1L)),
+    val stopwatch: StopwatchState = StopwatchState(),
+) {
+    fun checkpoint(now: TimeReading) = copy(
+        timers = timers.map { it.checkpoint(now) },
+        stopwatch = stopwatch.checkpoint(now),
+    )
+
+    fun timer(id: Long): TimerState? = timers.firstOrNull { it.id == id }
+
+    fun update(id: Long, change: (TimerState) -> TimerState): TimeToolsState =
+        copy(timers = timers.map { if (it.id == id) change(it) else it })
+
+    fun add(timer: TimerState): TimeToolsState = copy(timers = timers + timer)
+
+    fun remove(id: Long): TimeToolsState = copy(timers = timers.filterNot { it.id == id })
+
+    /** A fresh id no current timer uses, so alarms and rings never collide. */
+    fun nextId(): Long = (timers.maxOfOrNull { it.id } ?: 0L) + 1L
 }
