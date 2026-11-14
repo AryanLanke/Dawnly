@@ -18,10 +18,11 @@ import java.util.Locale
 /** A clock time split for display: big digits, and a small AM/PM marker when the phone uses one. */
 data class ClockFace(val digits: String, val marker: String?)
 
-/** Times follow the phone's 12/24-hour setting and locale. */
+/** Times follow the phone's 12/24-hour setting and locale. [zone] shows it elsewhere, like a world clock city. */
 @Composable
 @ReadOnlyComposable
-fun formatTime(instant: Instant): String = pattern(instant, if (is24Hour()) "Hm" else "hm", locale())
+fun formatTime(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String =
+    pattern(instant, if (is24Hour()) "Hm" else "hm", locale(), zone)
 
 /** A time of day (a reminder's, a usual wake-up time) as the phone shows it. */
 @Composable
@@ -78,7 +79,7 @@ private fun is24Hour() = DateFormat.is24HourFormat(LocalContext.current)
 @ReadOnlyComposable
 private fun locale(): Locale = LocalConfiguration.current.locales[0]
 
-private fun pattern(instant: Instant, skeleton: String, locale: Locale): String {
+private fun pattern(instant: Instant, skeleton: String, locale: Locale, zone: ZoneId = ZoneId.systemDefault()): String {
     val pattern = DateFormat.getBestDateTimePattern(locale, skeleton)
-    return DateTimeFormatter.ofPattern(pattern, locale).format(instant.atZone(ZoneId.systemDefault()))
+    return DateTimeFormatter.ofPattern(pattern, locale).format(instant.atZone(zone))
 }

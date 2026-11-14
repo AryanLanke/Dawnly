@@ -82,6 +82,9 @@ internal fun HomeContent(
     onOpenClock: () -> Unit = {},
 ) {
     val status = state.status
+    // One heartbeat for Today's clocks. Only the clocks read it, so the rest of the screen
+    // doesn't recompose each second.
+    val clock = rememberTodayClock()
     if (status == HomeStatus.Loading) return
     Column(
         modifier = Modifier
@@ -93,6 +96,7 @@ internal fun HomeContent(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Spacer(Modifier.height(20.dp))
+        SpringIn(order = 0) { LiveClock(clock) }
         SpringIn(order = 0) {
             // No alarm: set one here. An alarm: the Clock app changes or deletes it.
             AlarmRing(
@@ -147,6 +151,7 @@ internal fun HomeContent(
         if (status is HomeStatus.Watching) {
             SpringIn(order++) { DismissAction(status.alarmAt, status.awake && !status.notYet, onDismissAlarm) }
         }
+        SpringIn(order++) { WorldClockCard(clock) }
         SpringIn(order) { RemindersCard(reminders, onEditReminder, onToggleReminder) }
         Spacer(Modifier.height(8.dp))
     }
