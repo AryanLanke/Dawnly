@@ -23,7 +23,7 @@ Only the latest release is supported. Fixes ship as a new signed APK on
 
 | Version | Supported |
 |---|---|
-| 1.8.x | Yes |
+| 1.9.x | Yes |
 | Older | No. Update to the latest release first. |
 
 ## What's in scope

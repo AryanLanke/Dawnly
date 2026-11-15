@@ -2,6 +2,16 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.9.0 (14 Nov)
+- **Dawnly keeps your alarms itself.** Set one with its own glass wheels, a name and repeat days (Weekdays and Weekends are one tap). Dawnly rings it, and watches for you waking before it, so the Clock app is no longer needed. An alarm you already made in Clock can be moved over in one tap.
+- **Timers and a stopwatch** live on their own screen. Several timers run at once, each with a name, a quick preset or a custom time, its own tone, and a choice of a notification or a ring like an alarm. Snooze from the notification without opening Dawnly, and timers keep going through a reboot.
+- **A live clock and a World Clock** on Today: the time, the date, and the cities you care about, all worked out on the phone.
+- **A calm "will Dawnly ring?" summary** in Settings (optional): the alarm, the watch window, the battery exemption and the reminders, in one place.
+- **Smarter wake detection:** two kinds of sign count, and the charger coming out is one of them.
+- **Lighter setup.** Onboarding asks only for notifications and alarms; the other steps come when they help.
+- **Fully offline.** Wake-to-music is gone, so Dawnly never needs the internet and the alarm always rings.
+- A code audit: the lint report is clean, the biggest screens are split into smaller readable files, Dependabot keeps dependencies fresh, there's a security policy, and 250+ automated tests.
+
 ## 1.8.1 (12 Nov)
 - Dawnly's opening flute plays when you open it from its icon after the phone has closed it in the background. Phones like Xiaomi, Redmi and POCO do this often, and the flute stayed silent.
 - Choices like "Custom" under a reminder's repeat shrink to fit with large system font sizes, rather than being cut off.
