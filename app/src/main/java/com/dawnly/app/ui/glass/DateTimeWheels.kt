@@ -37,15 +37,15 @@ fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         WheelCircle(label) {
             if (twelveHour) {
-                // 12, 1, 2 ... 11.
-                Wheel(12, (hour % 12), 86.dp, digits, { i -> if (i == 0) "12" else "$i" }) { i ->
+                // 12, 1, 2 ... 11, and round again.
+                Wheel(12, (hour % 12), 86.dp, digits, { i -> if (i == 0) "12" else "$i" }, wrap = true) { i ->
                     hour = i + if (hour >= 12) 12 else 0
                 }
             } else {
-                Wheel(24, hour, 86.dp, digits, { i -> "%02d".format(i) }) { hour = it }
+                Wheel(24, hour, 86.dp, digits, { i -> "%02d".format(i) }, wrap = true) { hour = it }
             }
             Text(":", style = digits, modifier = Modifier.padding(bottom = 6.dp))
-            Wheel(60, minute, 86.dp, digits, { i -> "%02d".format(i) }) { minute = it }
+            Wheel(60, minute, 86.dp, digits, { i -> "%02d".format(i) }, wrap = true) { minute = it }
             if (twelveHour) {
                 val marks = listOf(stringResource(R.string.time_am), stringResource(R.string.time_pm))
                 Wheel(
@@ -54,6 +54,7 @@ fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
                     44.dp,
                     MaterialTheme.typography.titleMedium.copy(color = DawnlyTheme.colors.textSoft, textAlign = TextAlign.Center),
                     { marks[it] },
+                    wrap = true,
                 ) { pm -> hour = hour % 12 + if (pm == 1) 12 else 0 }
             }
         }

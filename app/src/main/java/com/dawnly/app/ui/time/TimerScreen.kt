@@ -1,10 +1,23 @@
 package com.dawnly.app.ui.time
 
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +26,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -35,11 +46,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -53,7 +65,6 @@ import com.dawnly.app.domain.time.TimerPhase
 import com.dawnly.app.domain.time.TimerState
 import com.dawnly.app.notify.TimerController
 import com.dawnly.app.ui.glass.AccentPill
-import com.dawnly.app.ui.glass.CheckBadge
 import com.dawnly.app.ui.glass.FlowingBackground
 import com.dawnly.app.ui.glass.GlassButton
 import com.dawnly.app.ui.glass.GlassField
@@ -67,8 +78,8 @@ import com.dawnly.app.ui.glass.ROW_INSET
 import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
 import com.dawnly.app.ui.glass.ValueButton
+import com.dawnly.app.ui.home.SoundChoice
 import com.dawnly.app.ui.permissions.AppPermission
-import com.dawnly.app.ui.settings.rememberSoundPreview
 import com.dawnly.app.ui.theme.DawnlyTheme
 import com.dawnly.app.ui.theme.clockSaysNight
 import kotlinx.coroutines.delay
@@ -152,62 +163,102 @@ private fun TimerScreenContent(onBack: () -> Unit) {
     val anyDue = state.timers.any { it.completionPending || (it.phase == TimerPhase.Running && it.remaining(now) == 0L) }
     LaunchedEffect(anyDue) { if (anyDue) TimerController.sync(context) }
 
-    Column(
-        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 18.dp)) {
-            GlassSurface(
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                onClick = onBack,
-                onClickLabel = stringResource(R.string.timers_back),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(GlassIcons.Back, contentDescription = stringResource(R.string.timers_back), modifier = Modifier.size(22.dp))
-            }
-            Text(
-                stringResource(R.string.timers_title),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(start = 14.dp),
-            )
+    // The add-timer card rises over a frosted screen, like the alarm and reminder editors on Today.
+    val canFrost = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val editorShown by animateFloatAsState(
+        targetValue = if (adding) 1f else 0f,
+        animationSpec = tween(EDITOR_MS, easing = FastOutSlowInEasing),
+        label = "editor",
+    )
+    val frosted = if (canFrost) {
+        Modifier.graphicsLayer {
+            val radius = 18.dp.toPx() * editorShown
+            renderEffect = if (radius > 0.5f) BlurEffect(radius, radius, TileMode.Clamp) else null
         }
-        if (!exactGranted) {
-            PermissionCard(R.string.time_exact_title, R.string.time_exact_body) { openSettings(AppPermission.ExactAlarms) }
-        }
-        if (!notifGranted) {
-            PermissionCard(R.string.time_notifications_title, R.string.time_notifications_body) { openSettings(AppPermission.Notifications) }
-        }
-        error?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = DawnlyTheme.colors.textSoft) }
-
-        if (state.timers.isEmpty()) {
-            Text(
-                stringResource(R.string.timers_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = DawnlyTheme.colors.textSoft,
-                modifier = Modifier.padding(start = 6.dp),
-            )
-        }
-        state.timers.forEach { timer ->
-            TimerCard(timer, now, onResult = { result(it) }, onRefresh = { now = TimeStore.now(context) })
-        }
-
-        PrimaryButton(stringResource(R.string.timers_add), onClick = { adding = true })
-        Spacer(Modifier.height(8.dp))
+    } else {
+        Modifier
     }
 
-    if (adding) {
-        AddTimerDialog(
-            onDismiss = { adding = false },
-            onSave = { label, duration, sound, ring ->
-                val outcome = TimerController.add(context, label, duration, sound, ring)
-                result(outcome)
-                if (outcome == TimerController.Result.Success) {
-                    adding = false
-                    now = TimeStore.now(context)
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier.fillMaxSize().then(frosted).safeDrawingPadding().verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 18.dp)) {
+                GlassSurface(
+                    modifier = Modifier.size(44.dp),
+                    shape = CircleShape,
+                    onClick = onBack,
+                    onClickLabel = stringResource(R.string.timers_back),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(GlassIcons.Back, contentDescription = stringResource(R.string.timers_back), modifier = Modifier.size(22.dp))
                 }
-            },
-        )
+                Text(
+                    stringResource(R.string.timers_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(start = 14.dp),
+                )
+            }
+            if (!exactGranted) {
+                PermissionCard(R.string.time_exact_title, R.string.time_exact_body) { openSettings(AppPermission.ExactAlarms) }
+            }
+            if (!notifGranted) {
+                PermissionCard(R.string.time_notifications_title, R.string.time_notifications_body) { openSettings(AppPermission.Notifications) }
+            }
+            error?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = DawnlyTheme.colors.textSoft) }
+
+            if (state.timers.isEmpty()) {
+                Text(
+                    stringResource(R.string.timers_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = DawnlyTheme.colors.textSoft,
+                    modifier = Modifier.padding(start = 6.dp),
+                )
+            }
+            state.timers.forEach { timer ->
+                TimerCard(timer, now, onResult = { result(it) }, onRefresh = { now = TimeStore.now(context) })
+            }
+
+            PrimaryButton(stringResource(R.string.timers_add), onClick = { adding = true })
+            Spacer(Modifier.height(8.dp))
+        }
+
+        AnimatedVisibility(
+            visible = adding,
+            enter = fadeIn(tween(EDITOR_MS)),
+            exit = fadeOut(tween(EDITOR_MS)),
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                // The veil: brighter without the frost on older phones, so the card stays readable.
+                Box(
+                    Modifier.fillMaxSize()
+                        .background(DawnlyTheme.colors.wall.copy(alpha = if (canFrost) 0.25f else 0.7f))
+                        .clickable(remember { MutableInteractionSource() }, indication = null, onClick = { adding = false }),
+                )
+                Box(
+                    Modifier.fillMaxSize().safeDrawingPadding().imePadding().padding(16.dp)
+                        .animateEnterExit(
+                            enter = scaleIn(tween(EDITOR_MS, easing = FastOutSlowInEasing), initialScale = 0.92f),
+                            exit = scaleOut(tween(EDITOR_MS, easing = FastOutSlowInEasing), targetScale = 0.92f),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AddTimerCard(
+                        onDismiss = { adding = false },
+                        onSave = { label, duration, sound, ring ->
+                            val outcome = TimerController.add(context, label, duration, sound, ring)
+                            result(outcome)
+                            if (outcome == TimerController.Result.Success) {
+                                adding = false
+                                now = TimeStore.now(context)
+                            }
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -277,9 +328,9 @@ private fun PermissionCard(title: Int, body: Int, onAllow: () -> Unit) {
     }
 }
 
-/** The glass overlay for a new timer: name, quick presets or custom time, tone, and finish mode. */
+/** The glass card for a new timer: name, quick presets or custom time, tone, and finish mode. */
 @Composable
-private fun AddTimerDialog(onDismiss: () -> Unit, onSave: (String, Long, String?, Boolean) -> Unit) {
+private fun AddTimerCard(onDismiss: () -> Unit, onSave: (String, Long, String?, Boolean) -> Unit) {
     val defaultLabel = stringResource(R.string.time_timer)
     var label by rememberSaveable { mutableStateOf("") }
     var hours by rememberSaveable { mutableStateOf("0") }
@@ -289,100 +340,72 @@ private fun AddTimerDialog(onDismiss: () -> Unit, onSave: (String, Long, String?
     var ring by rememberSaveable { mutableStateOf(false) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
     var invalid by rememberSaveable { mutableStateOf(false) }
-    val preview = rememberSoundPreview()
     val presets = listOf(1, 3, 5, 10)
 
-    Dialog(onDismissRequest = onDismiss) {
-        GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
-            Column(
-                Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Text(stringResource(R.string.timers_add), style = MaterialTheme.typography.titleMedium)
-                GlassField(
-                    label = stringResource(R.string.timers_label),
-                    value = label,
-                    onValueChange = { label = it },
-                    placeholder = defaultLabel,
-                )
-                SectionLabel(stringResource(R.string.timers_quick))
-                GlassSegmented(
-                    options = presets.map { stringResource(R.string.timers_preset, it) },
-                    selected = -1,
-                    onSelect = { index -> hours = "0"; minutes = presets[index].toString(); seconds = "0"; invalid = false },
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DurationField(hours, { hours = it; invalid = false }, R.string.time_hours, 99, Modifier.weight(1f))
-                    DurationField(minutes, { minutes = it; invalid = false }, R.string.time_minutes, 59, Modifier.weight(1f))
-                    DurationField(seconds, { seconds = it; invalid = false }, R.string.time_seconds, 59, Modifier.weight(1f))
-                }
-                ValueButton(
-                    stringResource(R.string.reminder_sound),
-                    stringResource(soundLabel(sound)),
-                    Modifier.fillMaxWidth(),
-                ) { pickingSound = true }
-                SectionLabel(stringResource(R.string.timers_finish))
-                GlassSegmented(
-                    options = listOf(stringResource(R.string.reminder_alert_notify), stringResource(R.string.timers_ring)),
-                    selected = if (ring) 1 else 0,
-                    onSelect = { ring = it == 1 },
-                )
-                if (invalid) {
-                    Text(stringResource(R.string.time_invalid_duration), style = MaterialTheme.typography.bodySmall, color = DawnlyTheme.colors.tick)
-                }
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GlassButton(
-                        stringResource(R.string.reminder_save),
-                        {
-                            val duration = ((hours.toLongOrNull() ?: 0L) * 3600 + (minutes.toLongOrNull() ?: 0L) * 60 + (seconds.toLongOrNull() ?: 0L)) * 1000
-                            if (duration < 1) {
-                                invalid = true
-                            } else {
-                                invalid = false
-                                onSave(label.trim().ifEmpty { defaultLabel }, duration, sound, ring)
-                            }
-                        },
-                        Modifier.weight(1f),
+    BackHandler { if (pickingSound) pickingSound = false else onDismiss() }
+    // Taps on the card stay on the card; the veil's own tap closes everything.
+    Box(Modifier.clickable(remember { MutableInteractionSource() }, indication = null) {}) {
+        if (pickingSound) {
+            SoundChoice(
+                selected = AlertSound.entries.firstOrNull { it.name == sound } ?: AlertSound.PhoneDefault,
+                onPick = { picked -> sound = if (picked == AlertSound.PhoneDefault) null else picked.name },
+                onDone = { pickingSound = false },
+            )
+        } else {
+            GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(stringResource(R.string.timers_add), style = MaterialTheme.typography.titleMedium)
+                    GlassField(
+                        label = stringResource(R.string.timers_label),
+                        value = label,
+                        onValueChange = { label = it },
+                        placeholder = defaultLabel,
                     )
-                    GlassButton(stringResource(R.string.common_cancel), onDismiss, Modifier.weight(1f))
-                }
-            }
-        }
-    }
-    if (pickingSound) {
-        SoundChoiceDialog(
-            selected = sound,
-            onPick = { picked ->
-                sound = if (picked == AlertSound.PhoneDefault) null else picked.name
-                preview.play(picked)
-            },
-            onDone = { preview.stop(); pickingSound = false },
-        )
-    }
-}
-
-/** Dawnly's tones in a glass list; tapping one picks it and plays it, like the reminder editor. */
-@Composable
-private fun SoundChoiceDialog(selected: String?, onPick: (AlertSound) -> Unit, onDone: () -> Unit) {
-    val current = AlertSound.entries.firstOrNull { it.name == selected } ?: AlertSound.PhoneDefault
-    Dialog(onDismissRequest = onDone) {
-        GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(stringResource(R.string.reminder_sound), style = MaterialTheme.typography.titleMedium)
-                Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
-                    GlassList(Modifier.selectableGroup()) {
-                        AlertSound.entries.forEachIndexed { index, sound ->
-                            GlassRow(
-                                title = stringResource(sound.label),
-                                divider = index > 0,
-                                modifier = Modifier.selectable(selected = sound == current, role = Role.RadioButton) { onPick(sound) },
-                            ) {
-                                if (sound == current) CheckBadge()
-                            }
-                        }
+                    SectionLabel(stringResource(R.string.timers_quick))
+                    GlassSegmented(
+                        options = presets.map { stringResource(R.string.timers_preset, it) },
+                        selected = -1,
+                        onSelect = { index -> hours = "0"; minutes = presets[index].toString(); seconds = "0"; invalid = false },
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DurationField(hours, { hours = it; invalid = false }, R.string.time_hours, 99, Modifier.weight(1f))
+                        DurationField(minutes, { minutes = it; invalid = false }, R.string.time_minutes, 59, Modifier.weight(1f))
+                        DurationField(seconds, { seconds = it; invalid = false }, R.string.time_seconds, 59, Modifier.weight(1f))
+                    }
+                    ValueButton(
+                        stringResource(R.string.reminder_sound),
+                        stringResource(soundLabel(sound)),
+                        Modifier.fillMaxWidth(),
+                    ) { pickingSound = true }
+                    SectionLabel(stringResource(R.string.timers_finish))
+                    GlassSegmented(
+                        options = listOf(stringResource(R.string.reminder_alert_notify), stringResource(R.string.timers_ring)),
+                        selected = if (ring) 1 else 0,
+                        onSelect = { ring = it == 1 },
+                    )
+                    if (invalid) {
+                        Text(stringResource(R.string.time_invalid_duration), style = MaterialTheme.typography.bodySmall, color = DawnlyTheme.colors.tick)
+                    }
+                    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GlassButton(
+                            stringResource(R.string.reminder_save),
+                            {
+                                val duration = ((hours.toLongOrNull() ?: 0L) * 3600 + (minutes.toLongOrNull() ?: 0L) * 60 + (seconds.toLongOrNull() ?: 0L)) * 1000
+                                if (duration < 1) {
+                                    invalid = true
+                                } else {
+                                    invalid = false
+                                    onSave(label.trim().ifEmpty { defaultLabel }, duration, sound, ring)
+                                }
+                            },
+                            Modifier.weight(1f),
+                        )
+                        GlassButton(stringResource(R.string.common_cancel), onDismiss, Modifier.weight(1f))
                     }
                 }
-                GlassButton(stringResource(R.string.reminder_done), onDone, Modifier.fillMaxWidth())
             }
         }
     }
@@ -391,3 +414,6 @@ private fun SoundChoiceDialog(selected: String?, onPick: (AlertSound) -> Unit, o
 /** The chosen tone's name, or the phone default when nothing is picked. */
 private fun soundLabel(sound: String?): Int =
     AlertSound.entries.firstOrNull { it.name == sound }?.label ?: R.string.sound_phone_default
+
+/** The editor's ease, the same as Today's alarm and reminder cards. */
+private const val EDITOR_MS = 340

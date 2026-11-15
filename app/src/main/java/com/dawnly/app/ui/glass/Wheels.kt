@@ -83,7 +83,7 @@ fun DurationWheel(label: String, value: Duration, min: Duration, max: Duration, 
         WheelCircle(label) {
             Wheel(maxHours + 1, hours, 72.dp, digits, { i -> "$i" }) { hours = it }
             Text(stringResource(R.string.wheel_unit_hr), style = unit, modifier = Modifier.padding(end = 6.dp))
-            Wheel(60, mins, 72.dp, digits, { i -> "%02d".format(i) }) { mins = it }
+            Wheel(60, mins, 72.dp, digits, { i -> "%02d".format(i) }, wrap = true) { mins = it }
             Text(stringResource(R.string.wheel_unit_min), style = unit)
         }
         GlassButton(
@@ -97,11 +97,27 @@ fun DurationWheel(label: String, value: Duration, min: Duration, max: Duration, 
 /** Height of one row of the wheels. */
 private val WheelRow = 58.dp
 
+/** How many turns a wrapping wheel is made of: far more than any swipe could reach. */
+private const val WRAP_TURNS = 501
+
+/** The strip a wheel is drawn on: one turn, or many when it wraps. */
+internal fun wheelTurns(wrap: Boolean): Int = if (wrap) WRAP_TURNS else 1
+
+/** The strip index of the middle turn's first value, so either end of a wrapping wheel is far away. */
+internal fun wheelBase(count: Int, turns: Int): Int = count * (turns / 2)
+
+/** The value shown at strip [index]: wrapping wheels roll round and round, negatives included. */
+internal fun wheelValue(index: Int, count: Int): Int = index.mod(count)
+
 /**
  * One wheel of [count] values, three rows tall, snapping so a value sits in the middle. Values
  * fade and shrink away from the middle, done while drawing so scrolling doesn't recompose. A tick
  * as each value passes the middle while the wheel is slid by hand; taps don't tick. Tapping a value above or below the middle scrolls it there, so
  * AM to PM, or 7 to 8, is one tap instead of a swipe.
+ *
+ * With [wrap] the wheel rolls round and round like a real one: after 11 comes 12, after 59 comes
+ * 00, after PM comes AM. It's a long strip of [WRAP_TURNS] turns starting in the middle, so either
+ * end is out of reach. Values that must stop somewhere, like a date's year, leave it off.
  */
 @Composable
 fun Wheel(
@@ -110,9 +126,12 @@ fun Wheel(
     width: Dp,
     style: TextStyle,
     label: (Int) -> String,
+    wrap: Boolean = false,
     onSelect: (Int) -> Unit,
 ) {
-    val state = rememberLazyListState(initialFirstVisibleItemIndex = selected)
+    val turns = wheelTurns(wrap)
+    val base = wheelBase(count, turns)
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = base + selected)
     val haptic = rememberHaptics()
     val scope = rememberCoroutineScope()
     val rowPx = with(LocalDensity.current) { WheelRow.toPx() }
@@ -129,7 +148,7 @@ fun Wheel(
     }
     LaunchedEffect(middle) {
         if (first) first = false else if (byHand) haptic.tick()
-        onSelect(middle.coerceIn(0, count - 1))
+        onSelect(wheelValue(middle, count))
     }
     LazyColumn(
         state = state,
@@ -137,7 +156,8 @@ fun Wheel(
         contentPadding = PaddingValues(vertical = WheelRow),
         modifier = Modifier.width(width).height(WheelRow * 3),
     ) {
-        items(count) { i ->
+        items(count * turns) { i ->
+            val value = wheelValue(i, count)
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -159,7 +179,7 @@ fun Wheel(
                 contentAlignment = Alignment.Center,
             ) {
                 // One line, so a wide value like 2028 is never wrapped and cut off.
-                Text(label(i), style = style, softWrap = false, maxLines = 1)
+                Text(label(value), style = style, softWrap = false, maxLines = 1)
             }
         }
     }
