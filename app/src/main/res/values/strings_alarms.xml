@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dawnly's own alarms: the card on Today, the editor, the ring and its notices. -->
+<resources>
+    <!-- Today's card -->
+    <string name="dawnly_alarms_label">Dawnly alarms</string>
+    <string name="dawnly_alarm_add_hint">Dawnly rings it, and watches before it</string>
+    <string name="alarm_days_weekdays">Weekdays</string>
+    <string name="alarm_days_weekends">Weekends</string>
+    <string name="alarm_import_title">Move your Clock alarm to Dawnly</string>
+    <string name="alarm_import_hint">Copy its time here, then delete it in Clock</string>
+    <string name="alarm_import_toast">Your %1$s alarm is in Dawnly now. Delete it in Clock so it doesn\'t ring twice.</string>
+
+    <!-- The editor -->
+    <string name="alarm_new">New alarm</string>
+    <string name="alarm_edit">Edit alarm</string>
+    <string name="alarm_label">Label</string>
+    <string name="alarm_label_hint">Wake up</string>
+    <string name="alarm_repeat">Repeat</string>
+    <string name="alarm_delete">Delete alarm</string>
+    <string name="alarm_use_clock">Use the Clock app instead</string>
+
+    <!-- The ring and its notices -->
+    <string name="alarm_ringing_why">Rise and shine! Snooze for a little more sleep, or stop when you\'re up.</string>
+    <string name="alarm_channel_sound">Dawnly alarms: %1$s</string>
+    <string name="alarm_channel_description">The alarms you set in Dawnly. Dawnly rings them itself, until you stop or snooze.</string>
+
+    <!-- Today's ring and dismiss note -->
+    <string name="home_tap_to_edit">Tap to edit in Dawnly</string>
+    <string name="home_open_dawnly_description">Edit your Dawnly alarm</string>
+    <string name="home_dawnly_dismissed">Dawnly turned off its own alarm. You\'re all set.</string>
+</resources>

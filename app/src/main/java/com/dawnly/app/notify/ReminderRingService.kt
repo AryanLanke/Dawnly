@@ -60,10 +60,12 @@ class ReminderRingService : Service() {
             ACTION_SNOOZE -> {
                 current.value?.let {
                     val timerId = TimerController.timerIdFromRing(it.id)
+                    val alarmId = DawnlyAlarmScheduler.alarmIdFromRing(it.id)
                     when {
                         it.id == TEST_ID -> Unit
                         it.id == StillUpCheck.RING_ID -> StillUpCheck.snooze(this, SNOOZE_MINUTES)
                         timerId != null -> TimerController.snooze(this, timerId, SNOOZE_MINUTES)
+                        alarmId != null -> DawnlyAlarmScheduler.snooze(this, alarmId, SNOOZE_MINUTES)
                         else -> ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES)
                     }
                 }
@@ -95,6 +97,9 @@ class ReminderRingService : Service() {
                 } catch (e: Exception) {
                     Log.w(TAG, "Couldn't ring \"${ringing.name}\" in the foreground", e)
                     TimerController.timerIdFromRing(ringing.id)?.let { TimerNotifications.showFinished(this, it, ringing.name) }
+                    if (DawnlyAlarmScheduler.alarmIdFromRing(ringing.id) != null) {
+                        DawnlyAlarmScheduler.showFallback(this, ringing, sound)
+                    }
                     current.value = null
                     stopSelf()
                     return START_NOT_STICKY
@@ -212,7 +217,10 @@ class ReminderRingService : Service() {
         stopSound()
         current.value = null
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        if (missed && ringing != null) ReminderScheduler.showMissed(this, ringing)
+        if (missed && ringing != null) {
+            if (DawnlyAlarmScheduler.alarmIdFromRing(ringing.id) != null) DawnlyAlarmScheduler.showMissed(this, ringing)
+            else ReminderScheduler.showMissed(this, ringing)
+        }
         stopSelf()
     }
 

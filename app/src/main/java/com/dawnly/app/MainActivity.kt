@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import com.dawnly.app.data.sound.AlertSound
+import com.dawnly.app.notify.DawnlyAlarmScheduler
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.ui.DawnlyRoot
 import com.dawnly.app.ui.MainViewModel
@@ -88,6 +89,7 @@ class MainActivity : ComponentActivity() {
         // Covers a fresh install (no broadcast has arrived yet) and returning from permission settings.
         dawnly.scope.launch { dawnly.watchScheduler.reconcile() }
         dawnly.scope.launch { ReminderScheduler.sync(this@MainActivity) }
+        dawnly.scope.launch { DawnlyAlarmScheduler.sync(this@MainActivity) }
         com.dawnly.app.notify.TimerController.sync(this)
     }
 }

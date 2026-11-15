@@ -69,6 +69,7 @@ internal fun AlarmRing(
     status: HomeStatus,
     now: Instant,
     modifier: Modifier = Modifier,
+    dawnlyOwned: Boolean = false,
     onTap: () -> Unit = {},
 ) {
     val progress = (status as? HomeStatus.Watching)?.progress
@@ -76,11 +77,15 @@ internal fun AlarmRing(
         stringResource(R.string.home_progress_description, (it * 100).roundToInt())
     }
     val watching = status as? HomeStatus.Watching
-    // The whole ring is a button: set an alarm, or open the Clock app to change or delete the one
-    // there. Pressed, it sinks and a soft light rises over the glass (a ripple would be hidden
-    // under the glass), with a tick.
+    // The whole ring is a button: set an alarm, edit Dawnly's own, or open the Clock app to change
+    // or delete the one there. Pressed, it sinks and a soft light rises over the glass (a ripple
+    // would be hidden under the glass), with a tick.
     val tapLabel = stringResource(
-        if (status == HomeStatus.NoAlarm) R.string.home_set_alarm_description else R.string.home_open_clock_description,
+        when {
+            status == HomeStatus.NoAlarm -> R.string.home_set_alarm_description
+            dawnlyOwned -> R.string.home_open_dawnly_description
+            else -> R.string.home_open_clock_description
+        },
     )
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
@@ -134,7 +139,7 @@ internal fun AlarmRing(
                 label = "subtitle",
             ) { Soft(it, Modifier.padding(top = 8.dp)) }
             Text(
-                stringResource(R.string.home_tap_to_change),
+                stringResource(if (dawnlyOwned) R.string.home_tap_to_edit else R.string.home_tap_to_change),
                 style = MaterialTheme.typography.labelMedium,
                 color = DawnlyTheme.colors.accent,
                 modifier = Modifier.padding(top = 6.dp),
@@ -300,5 +305,6 @@ private fun Soft(text: String, modifier: Modifier = Modifier, align: TextAlign =
 internal fun describeDismiss(result: DismissResult) = when (result) {
     is DismissResult.OpenedClock -> stringResource(R.string.home_opened_clock, result.clock.label)
     DismissResult.NoClockApp -> stringResource(R.string.home_no_clock)
+    is DismissResult.DawnlyDismissed -> stringResource(R.string.home_dawnly_dismissed)
     is DismissResult.Requested -> ""
 }

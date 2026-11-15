@@ -2,6 +2,7 @@ package com.dawnly.app
 
 import android.app.Application
 import android.content.Context
+import com.dawnly.app.data.alarm.DawnlyAlarmStore
 import com.dawnly.app.data.alarm.NextAlarmSource
 import com.dawnly.app.data.learn.LearningStore
 import com.dawnly.app.data.reminder.ReminderStore
@@ -23,6 +24,7 @@ class DawnlyApp : Application() {
     val settings by lazy { SettingsRepository(this) }
     val watchScheduler by lazy { WatchScheduler(this, nextAlarms, settings, ArmedAlarmStore(this)) }
     val reminders by lazy { ReminderStore(this) }
+    val dawnlyAlarms by lazy { DawnlyAlarmStore(this) }
     val learning by lazy { LearningStore(this) }
 
     override fun onCreate() {

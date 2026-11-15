@@ -48,6 +48,8 @@ class DismissAlarmActivity : Activity() {
             DismissCheck.Ok -> when (val result = QuietDismiss.dismiss(this, next, backToDawnly = false, isRetry = isRetry, by = by)) {
                 // The Clock app dismisses it, then the user goes back to the app they were in.
                 is DismissResult.Requested -> Unit
+                // Dawnly dismissed its own alarm; DismissedNotice says so, with the sound.
+                is DismissResult.DawnlyDismissed -> Unit
                 is DismissResult.OpenedClock -> toast(R.string.dismiss_opened_clock, result.clock.label)
                 DismissResult.NoClockApp -> toast(R.string.dismiss_no_clock)
             }

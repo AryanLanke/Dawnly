@@ -15,17 +15,25 @@ import com.dawnly.app.domain.time.TimerState
 /** One elapsed-realtime exact alarm per timer, separate from Clock alarms and Dawnly's reminders. */
 object TimerController {
     internal const val ACTION_EXPIRED = "com.dawnly.app.action.TIMER_EXPIRED"
+    internal const val ACTION_SNOOZE = "com.dawnly.app.action.TIMER_SNOOZE"
     internal const val EXTRA_GENERATION = "com.dawnly.app.extra.TIMER_GENERATION"
     internal const val EXTRA_ID = "com.dawnly.app.extra.TIMER_ID"
     private const val REQUEST_CODE_BASE = 200_002
+
+    /** The notification's snooze length, the same as the ring's, so both behave alike. */
+    const val SNOOZE_MINUTES = ReminderRingService.SNOOZE_MINUTES
 
     enum class Result { Success, ExactAlarmRequired, InvalidDuration, StorageError, SchedulingFailed }
 
     /** A distinct ring id per timer; negative so it never collides with reminders (positive) or tests. */
     fun ringId(id: Long): Long = -(100L + id)
 
-    /** The timer behind a ring id, or null when the ring belongs to a reminder, test or still-up check. */
-    fun timerIdFromRing(ringId: Long): Long? = if (ringId <= -101L) -ringId - 100L else null
+    /**
+     * The timer behind a ring id, or null when the ring belongs to a reminder, test, still-up check
+     * or Dawnly alarm. Timer ids count up from 1, so their rings stay above the alarms' band
+     * (see [DawnlyAlarmScheduler.ringId]).
+     */
+    fun timerIdFromRing(ringId: Long): Long? = if (ringId in -1_000_000L..-101L) -ringId - 100L else null
 
     private fun requestCode(id: Long): Int = REQUEST_CODE_BASE + id.toInt()
 
@@ -211,6 +219,14 @@ object TimerController {
 
     private fun intent(context: Context, id: Long) =
         Intent(context, TimerReceiver::class.java).setAction(ACTION_EXPIRED).putExtra(EXTRA_ID, id)
+
+    /** The finished notification's Snooze button: rings [id] again [SNOOZE_MINUTES] from now. */
+    fun snoozePending(context: Context, id: Long): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        requestCode(id),
+        Intent(context, TimerReceiver::class.java).setAction(ACTION_SNOOZE).putExtra(EXTRA_ID, id),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     private fun pending(context: Context, id: Long, generation: Long): PendingIntent = PendingIntent.getBroadcast(
         context,

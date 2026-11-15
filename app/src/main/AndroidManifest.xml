@@ -138,6 +138,11 @@
             android:name=".notify.ReminderReceiver"
             android:exported="false" />
 
+        <!-- Dawnly's own alarms: each one's alarm clock when it's due. -->
+        <receiver
+            android:name=".notify.DawnlyAlarmReceiver"
+            android:exported="false" />
+
         <!-- A reminder set to ring like an alarm: plays its sound until Stop or Snooze. -->
         <service
             android:name=".notify.ReminderRingService"

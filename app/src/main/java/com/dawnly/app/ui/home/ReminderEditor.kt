@@ -342,11 +342,11 @@ private fun TimeButton(label: String, time: LocalTime, modifier: Modifier = Modi
     ValueButton(label, clock(time), modifier, onClick)
 
 /**
- * Choosing the reminder's sound: Dawnly's sounds in a glass list. Tapping one picks it and plays
- * it, so the user hears what their reminder will sound like.
+ * Choosing a sound: Dawnly's sounds in a glass list. Tapping one picks it and plays it, so the
+ * user hears what their reminder (or alarm) will sound like.
  */
 @Composable
-private fun SoundChoice(selected: AlertSound, onPick: (AlertSound) -> Unit, onDone: () -> Unit) {
+internal fun SoundChoice(selected: AlertSound, onPick: (AlertSound) -> Unit, onDone: () -> Unit) {
     val preview = rememberSoundPreview()
     GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

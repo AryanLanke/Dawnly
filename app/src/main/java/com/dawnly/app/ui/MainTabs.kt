@@ -38,10 +38,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
+import com.dawnly.app.domain.alarm.DawnlyAlarm
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.watch.WatchWindow
 import com.dawnly.app.ui.glass.GlassTabBar
 import com.dawnly.app.ui.home.AlarmWheel
+import com.dawnly.app.ui.home.CityPicker
+import com.dawnly.app.ui.home.DawnlyAlarmEditor
 import com.dawnly.app.ui.home.HomeScreen
 import com.dawnly.app.ui.home.HomeViewModel
 import com.dawnly.app.ui.home.ReminderEditor
@@ -110,6 +113,9 @@ internal fun MainTabs(
                         onRequestPermission = { permissions.request(it) },
                         onEditReminder = { editing = ReminderEdit(it) },
                         onSetAlarm = { editing = AlarmPick() },
+                        onEditDawnlyAlarm = { editing = DawnlyAlarmEdit(it) },
+                        onOpenDawnlyAlarms = { editing = DawnlyAlarmEdit(home.soonestDawnlyAlarm()) },
+                        onAddCity = { editing = CityPick() },
                         contentPadding = padding,
                     )
                     TOOLS -> TimeToolsScreen(
@@ -174,7 +180,21 @@ internal fun MainTabs(
                                 onDelete = { home.deleteReminder(it); editing = null },
                                 onClose = { editing = null },
                             )
-                            is AlarmPick -> AlarmWheel(
+                            is AlarmPick -> DawnlyAlarmEditor(
+                                initial = null,
+                                onSave = { home.addDawnlyAlarm(it); editing = null },
+                                onDelete = null,
+                                onUseClock = { editing = ClockAlarmPick() },
+                                onClose = { editing = null },
+                            )
+                            is DawnlyAlarmEdit -> DawnlyAlarmEditor(
+                                initial = edit.alarm,
+                                onSave = { home.editDawnlyAlarm(it); editing = null },
+                                onDelete = { home.deleteDawnlyAlarm(it); editing = null },
+                                onUseClock = null,
+                                onClose = { editing = null },
+                            )
+                            is ClockAlarmPick -> AlarmWheel(
                                 onDone = { time, day ->
                                     activity?.let { home.setAlarm(it, time, day) }
                                     editing = null
@@ -186,6 +206,14 @@ internal fun MainTabs(
                                 WindowWheel(
                                     window = window,
                                     onDone = { settings.setWindow(it); editing = null },
+                                    onClose = { editing = null },
+                                )
+                            }
+                            is CityPick -> {
+                                val cities by home.cities.collectAsStateWithLifecycle()
+                                CityPicker(
+                                    added = cities,
+                                    onAdd = { home.addCity(it); editing = null },
                                     onClose = { editing = null },
                                 )
                             }
@@ -209,7 +237,16 @@ private class ReminderEdit(val reminder: Reminder?) : Overlay
 /** The custom watching window's wheels. */
 private class WindowPick : Overlay
 
-/** Setting a new alarm in the Clock app, on the time wheels. */
+/** Choosing another city for Today's world clock. */
+private class CityPick : Overlay
+
+/** Setting a new alarm: Dawnly's own editor, with the Clock app one tap away. */
 private class AlarmPick : Overlay
+
+/** Editing an existing Dawnly alarm, or null to start a new one. */
+private class DawnlyAlarmEdit(val alarm: DawnlyAlarm?) : Overlay
+
+/** Setting a new alarm in the Clock app, on the time wheels. */
+private class ClockAlarmPick : Overlay
 private const val TODAY = 0
 private const val TOOLS = 1

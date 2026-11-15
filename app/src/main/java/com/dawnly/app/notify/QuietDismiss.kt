@@ -84,6 +84,21 @@ object QuietDismiss {
         pending?.cancel()
         pending = null
         val requestedAt = System.currentTimeMillis()
+        // Dawnly's own alarm: cancel it here, no Clock app involved. The watch follows through the
+        // reconcile in dismissNext; learning and the notice happen just like a Clock dismiss.
+        if (alarm != null && alarm.ownerPackage == launcher.packageName &&
+            DawnlyAlarmScheduler.dismissNext(launcher)
+        ) {
+            Log.i(TAG, "Dismissed Dawnly's own alarm at ${alarm.triggerAt}")
+            val appContext = launcher.applicationContext
+            appContext.dawnly.scope.launch {
+                appContext.dawnly.learning.answer(Answer.Up, Instant.now())
+                if (by == DismissBy.Dawnly) StillUpCheck.schedule(appContext, alarm.triggerAt)
+                val forward = appContext.dawnly.settings.dismissMode.first() == DismissMode.Instant
+                withContext(Dispatchers.Main) { DismissedNotice.post(appContext, alarm.triggerAt, forward) }
+            }
+            return DismissResult.DawnlyDismissed(alarm.triggerAt)
+        }
         val clock = ClockApp(launcher)
         val memory = DismissMemory(launcher)
         val preferred = clock.dismissHandler()?.let { memory.worked(it.packageName) }

@@ -1,12 +1,16 @@
 package com.dawnly.app.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -18,24 +22,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.dawnly.app.R
-import com.dawnly.app.data.worldclock.WorldClockStore
 import com.dawnly.app.domain.worldclock.WorldClock
 import com.dawnly.app.ui.format.clockFace
 import com.dawnly.app.ui.format.formatTime
@@ -96,18 +94,20 @@ internal fun LiveClock(clock: StateFlow<Instant>) {
 /**
  * The user's saved cities on Today: each with its current time and how far it is from home, and a
  * row to add one. The times tick with [clock]; the cities stay on the phone in [WorldClockStore].
+ * [onAdd] opens the picker, which rises over Today in the same glass frame as the other editors.
  */
 @Composable
-internal fun WorldClockCard(clock: StateFlow<Instant>) {
-    val context = LocalContext.current.applicationContext
-    val store = remember(context) { WorldClockStore(context) }
-    val zones by store.zones.collectAsStateWithLifecycle()
+internal fun WorldClockCard(
+    clock: StateFlow<Instant>,
+    cities: List<String>,
+    onRemove: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
     val now by clock.collectAsStateWithLifecycle()
-    var picking by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         SectionLabel(stringResource(R.string.worldclock_label))
         GlassList {
-            zones.forEachIndexed { index, id ->
+            cities.forEachIndexed { index, id ->
                 val zone = remember(id) { ZoneId.of(id) }
                 val name = Cities.firstOrNull { it.zoneId == id }?.let { stringResource(it.label) }
                     ?: id.substringAfterLast('/').replace('_', ' ')
@@ -125,7 +125,7 @@ internal fun WorldClockCard(clock: StateFlow<Instant>) {
                             .padding(start = 10.dp)
                             .size(32.dp)
                             .clip(CircleShape)
-                            .clickable(role = Role.Button) { store.remove(id) },
+                            .clickable(role = Role.Button) { onRemove(id) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -139,34 +139,45 @@ internal fun WorldClockCard(clock: StateFlow<Instant>) {
             }
             GlassRow(
                 title = stringResource(R.string.worldclock_add),
-                subtitle = if (zones.isEmpty()) stringResource(R.string.worldclock_add_hint) else null,
-                divider = zones.isNotEmpty(),
-                modifier = Modifier.clickable(role = Role.Button) { picking = true },
+                subtitle = if (cities.isEmpty()) stringResource(R.string.worldclock_add_hint) else null,
+                divider = cities.isNotEmpty(),
+                modifier = Modifier.clickable(role = Role.Button) { onAdd() },
             ) {
                 Icon(GlassIcons.Plus, contentDescription = null, tint = DawnlyTheme.colors.textSoft, modifier = Modifier.size(20.dp))
             }
         }
     }
-    if (picking) {
-        CityPicker(
-            added = zones,
-            onAdd = { store.add(it); picking = false },
-            onClose = { picking = false },
-        )
-    }
 }
 
-/** A glass pane of the cities not added yet; tapping one adds it and closes the picker. */
+/**
+ * A glass pane of the cities not added yet; tapping one adds it and closes the picker. It fills the
+ * screen so taps beside the card close it, with Today frosted behind (see MainTabs), like the
+ * reminder and alarm editors.
+ */
 @Composable
-private fun CityPicker(added: List<String>, onAdd: (String) -> Unit, onClose: () -> Unit) {
-    Dialog(onDismissRequest = onClose) {
-        GlassList(Modifier.widthIn(max = 480.dp)) {
+internal fun CityPicker(added: List<String>, onAdd: (String) -> Unit, onClose: () -> Unit) {
+    BackHandler(onBack = onClose)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClose)
+            .safeDrawingPadding()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        GlassList(
+            Modifier
+                .fillMaxWidth()
+                .widthIn(max = 480.dp)
+                // Taps on the card stay on the card.
+                .clickable(remember { MutableInteractionSource() }, indication = null) {},
+        ) {
             Text(
                 stringResource(R.string.worldclock_pick_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = ROW_INSET, top = 18.dp, bottom = 10.dp),
             )
-            val choices = Cities.filterNot { it.zoneId in added }
+            val choices = cityChoices(added)
             if (choices.isEmpty()) {
                 Text(
                     stringResource(R.string.worldclock_all_added),
@@ -191,10 +202,13 @@ private fun CityPicker(added: List<String>, onAdd: (String) -> Unit, onClose: ()
 }
 
 /** One city offered in the picker: its name as a string, and the zone it keeps time in. */
-private class City(val label: Int, val zoneId: String)
+internal class City(val label: Int, val zoneId: String)
+
+/** The cities still offered once [added] are on the list; ids outside the catalog leave it whole. */
+internal fun cityChoices(added: List<String>): List<City> = Cities.filterNot { it.zoneId in added }
 
 /** The major cities offered, around the world. Mumbai and Beijing share their country's one zone. */
-private val Cities = listOf(
+internal val Cities = listOf(
     City(R.string.worldclock_city_london, "Europe/London"),
     City(R.string.worldclock_city_paris, "Europe/Paris"),
     City(R.string.worldclock_city_berlin, "Europe/Berlin"),

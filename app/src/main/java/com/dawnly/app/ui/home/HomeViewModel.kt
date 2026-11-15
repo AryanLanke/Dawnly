@@ -11,9 +11,13 @@ import com.dawnly.app.R
 import com.dawnly.app.data.alarm.ClockApp
 import com.dawnly.app.domain.alarm.AlarmTimes
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.data.worldclock.WorldClockStore
+import com.dawnly.app.domain.alarm.DawnlyAlarm
+import com.dawnly.app.domain.alarm.DawnlyAlarmTimes
 import com.dawnly.app.domain.learn.Answer
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderSchedule
+import com.dawnly.app.notify.DawnlyAlarmScheduler
 import com.dawnly.app.notify.Notify
 import com.dawnly.app.notify.ReminderScheduler
 import com.dawnly.app.notify.QuietDismiss
@@ -32,6 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -63,6 +68,70 @@ class HomeViewModel(private val app: DawnlyApp) : ViewModel() {
             change()
             ReminderScheduler.sync(app)
         }
+    }
+
+    /** The user's own alarms, shown on Today under the alarm. */
+    val dawnlyAlarms: StateFlow<List<DawnlyAlarm>> =
+        app.dawnlyAlarms.alarms.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Who owns the next alarm: Dawnly's own package, the Clock app's, or null when there is none. */
+    val nextAlarmOwner: StateFlow<String?> =
+        app.nextAlarms.nextAlarm.map { it?.ownerPackage }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Adds [alarm] as a Dawnly alarm and sets its alarm clock. */
+    fun addDawnlyAlarm(alarm: DawnlyAlarm) = changeAlarms { app.dawnlyAlarms.save(alarm) }
+
+    fun editDawnlyAlarm(alarm: DawnlyAlarm) = changeAlarms { app.dawnlyAlarms.save(alarm) }
+
+    fun deleteDawnlyAlarm(id: Long) = changeAlarms { app.dawnlyAlarms.delete(id) }
+
+    fun toggleDawnlyAlarm(alarm: DawnlyAlarm, on: Boolean) = editDawnlyAlarm(alarm.copy(on = on))
+
+    private fun changeAlarms(change: suspend () -> Unit) {
+        app.scope.launch {
+            change()
+            // sync reconciles the watch, so it follows whatever is next now.
+            DawnlyAlarmScheduler.sync(app)
+        }
+    }
+
+    /** The cities on Today's world clock, kept in the usual place on the phone. */
+    private val worldClock = WorldClockStore(app)
+
+    /** The saved cities, in the order they were added. */
+    val cities: StateFlow<List<String>> = worldClock.zones
+
+    fun addCity(zoneId: String) = worldClock.add(zoneId)
+
+    fun removeCity(zoneId: String) = worldClock.remove(zoneId)
+
+    /** The Dawnly alarm that rings next, for editing straight from Today's ring. */
+    fun soonestDawnlyAlarm(): DawnlyAlarm? {
+        val now = LocalDateTime.now()
+        return dawnlyAlarms.value.filter { it.on }
+            .minByOrNull { DawnlyAlarmTimes.nextAfter(it, now) ?: LocalDateTime.MAX }
+    }
+
+    /**
+     * One tap to move the Clock alarm into Dawnly: copies its time as a daily Dawnly alarm, then
+     * opens the Clock app so the user can delete the original — until they do, both would ring.
+     */
+    fun importClockAlarm(activity: Activity) {
+        val next = app.nextAlarms.current() ?: return
+        val owner = next.ownerPackage
+        if (owner == null || owner == activity.packageName) return
+        val time = next.triggerAt.atZone(ZoneId.systemDefault()).toLocalTime().withSecond(0).withNano(0)
+        addDawnlyAlarm(
+            DawnlyAlarm(
+                id = System.currentTimeMillis(),
+                label = activity.getString(R.string.alarm_tomorrow_name),
+                time = time,
+            ),
+        )
+        ClockApp(activity).openClock(activity, owner)
+        val message = activity.getString(R.string.alarm_import_toast, Notify.time(activity, next.triggerAt))
+        Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
     }
 
     private val _dismissResult = MutableStateFlow<DismissResult?>(null)

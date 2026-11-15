@@ -33,6 +33,9 @@ sealed interface DismissResult {
      */
     data class Requested(val handler: AppRef, val request: DismissRequest) : DismissResult
 
+    /** The next alarm was Dawnly's own, so Dawnly cancelled it itself; no Clock app was involved. */
+    data class DawnlyDismissed(val alarmAt: Instant) : DismissResult
+
     /** No app can dismiss alarms, so [clock] was opened for the user to dismiss it by hand. */
     data class OpenedClock(val clock: AppRef) : DismissResult
 
