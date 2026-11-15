@@ -2,6 +2,7 @@ package com.dawnly.app.data.alarm
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import com.dawnly.app.domain.alarm.DawnlyAlarm
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -34,7 +35,7 @@ class DawnlyAlarmStore(context: Context) {
     /** Commit before scheduling: apply() could lose a change on process death (see TimeStore). */
     suspend fun update(change: (List<DawnlyAlarm>) -> List<DawnlyAlarm>) = mutex.withLock {
         val list = change(mutable.value)
-        prefs.edit().putString(LIST, encode(list)).commit()
+        prefs.edit(commit = true) { putString(LIST, encode(list)) }
         mutable.value = list
     }
 

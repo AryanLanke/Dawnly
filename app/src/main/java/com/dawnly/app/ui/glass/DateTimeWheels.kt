@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,8 +31,8 @@ import java.time.LocalTime
 @Composable
 fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
     val twelveHour = !DateFormat.is24HourFormat(LocalContext.current)
-    var hour by remember { mutableStateOf(time.hour) }
-    var minute by remember { mutableStateOf(time.minute) }
+    var hour by remember { mutableIntStateOf(time.hour) }
+    var minute by remember { mutableIntStateOf(time.minute) }
     val digits = wheelDigits()
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         WheelCircle(label) {
@@ -68,10 +68,10 @@ fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
  */
 @Composable
 fun DateWheel(label: String, date: LocalDate, today: LocalDate, onDone: (LocalDate) -> Unit) {
-    var day by remember { mutableStateOf(date.dayOfMonth) }
-    var month by remember { mutableStateOf(date.monthValue) }
+    var day by remember { mutableIntStateOf(date.dayOfMonth) }
+    var month by remember { mutableIntStateOf(date.monthValue) }
     val firstYear = minOf(today.year, date.year)
-    var year by remember { mutableStateOf(date.year) }
+    var year by remember { mutableIntStateOf(date.year) }
     val digits = wheelDigits()
     val months = remember { java.time.Month.entries.map { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) } }
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {

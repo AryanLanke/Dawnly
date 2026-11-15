@@ -75,5 +75,5 @@ dependencies {
 
     testImplementation(libs.junit)
     // Android's org.json is a stub on the PC; this is the same API, for the reminder-store tests.
-    testImplementation("org.json:json:20240303")
+    testImplementation(libs.org.json)
 }

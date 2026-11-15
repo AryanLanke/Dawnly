@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import com.dawnly.app.R
 import com.dawnly.app.data.reminder.ReminderSounds
 import com.dawnly.app.data.sound.AlertSound
@@ -84,7 +85,7 @@ object ReminderScheduler {
                 }
             }
         }
-        known.edit().putStringSet(KNOWN_IDS, kept.map { it.id.toString() }.toSet()).apply()
+        known.edit { putStringSet(KNOWN_IDS, kept.map { it.id.toString() }.toSet()) }
     }
 
     /** Sets [reminder]'s next alarm, or cancels it when it's off. */

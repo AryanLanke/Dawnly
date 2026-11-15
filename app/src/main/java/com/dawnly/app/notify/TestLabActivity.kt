@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,7 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class TestLabActivity : ComponentActivity() {
-    private var message by mutableStateOf(R.string.test_lab_detail)
+    private var message by mutableIntStateOf(R.string.test_lab_detail)
     private var busy by mutableStateOf(false)
     private var test: Job? = null
 

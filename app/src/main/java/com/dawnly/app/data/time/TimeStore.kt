@@ -1,5 +1,6 @@
 package com.dawnly.app.data.time
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.SystemClock
@@ -33,7 +34,11 @@ object TimeStore {
         return mutable.value
     }
 
-    /** Commit before scheduling or ringing: apply() could lose a cancellation on process death. */
+    /**
+     * Commit before scheduling or ringing: apply() could lose a cancellation on process death.
+     * KTX's edit() drops commit()'s result, and a failed save must reach the caller.
+     */
+    @SuppressLint("ApplySharedPref", "UseKtx")
     @Synchronized
     internal fun save(context: Context, state: TimeToolsState): Boolean {
         if (current(context) == state) return true

@@ -1,6 +1,7 @@
 package com.dawnly.app.data.worldclock
 
 import android.content.Context
+import androidx.core.content.edit
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,7 @@ class WorldClockStore(context: Context) {
     }
 
     private fun save(list: List<String>) {
-        preferences.edit().putString(KEY, list.joinToString(SEPARATOR)).apply()
+        preferences.edit { putString(KEY, list.joinToString(SEPARATOR)) }
         mutable.value = list
     }
 

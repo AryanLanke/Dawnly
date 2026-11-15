@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import com.dawnly.app.R
 import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.dawnly
@@ -62,7 +63,7 @@ object DawnlyAlarmScheduler {
             .filter { id -> alarms.none { it.id == id } }
             .forEach { cancel(context, it) }
         for (alarm in alarms) schedule(context, alarm)
-        known.edit().putStringSet(KNOWN_IDS, alarms.map { it.id.toString() }.toSet()).apply()
+        known.edit { putStringSet(KNOWN_IDS, alarms.map { it.id.toString() }.toSet()) }
         context.dawnly.watchScheduler.reconcile()
     }
 

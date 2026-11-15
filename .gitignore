@@ -14,6 +14,9 @@
 hs_err_pid*.log
 replay_pid*.log
 
+# Local working notes, never shared
+/docs/stability-audit-plan.md
+
 # Release signing: the key and its passwords never go in git
 keystore.properties
 *.jks

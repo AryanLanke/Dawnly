@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
@@ -75,7 +74,7 @@ internal fun DawnlyAlarmEditor(
         )
     }
     var picking by remember { mutableStateOf<AlarmPage?>(null) }
-    val context = LocalContext.current
+    val defaultLabel = stringResource(R.string.alarm_tomorrow_name)
 
     BackHandler { if (picking != null) picking = null else onClose() }
     Box(
@@ -131,7 +130,7 @@ internal fun DawnlyAlarmEditor(
                                     onSave(
                                         DawnlyAlarm(
                                             id = initial?.id ?: System.currentTimeMillis(),
-                                            label = label.trim().ifBlank { context.getString(R.string.alarm_tomorrow_name) },
+                                            label = label.trim().ifBlank { defaultLabel },
                                             time = time,
                                             // All seven picked is every day, kept as the empty set.
                                             days = if (days.size == 7) emptySet() else days,

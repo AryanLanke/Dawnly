@@ -7,20 +7,21 @@
     <string name="time_hours">Hours</string>
     <string name="time_minutes">Minutes</string>
     <string name="time_seconds">Seconds</string>
-    <string name="time_start_timer">Start timer</string>
     <string name="time_start_stopwatch">Start stopwatch</string>
     <string name="time_pause">Pause</string>
     <string name="time_resume">Resume</string>
     <string name="time_reset">Reset</string>
     <string name="time_running">Running</string>
     <string name="time_paused">Paused</string>
-    <string name="time_timer_ready">Set hours, minutes and seconds.</string>
     <string name="time_stopwatch_ready">Ready when you are.</string>
     <string name="time_timer_finished">Time’s up.</string>
     <string name="time_lap">Lap</string>
     <string name="time_lap_number">Lap %1$d</string>
     <string name="time_lap_split">Split %1$s</string>
-    <string name="time_lap_limit">%1$d laps saved. Reset to start a new set.</string>
+    <plurals name="time_lap_limit">
+        <item quantity="one">%1$d lap saved. Reset to start a new set.</item>
+        <item quantity="other">%1$d laps saved. Reset to start a new set.</item>
+    </plurals>
     <string name="time_allow">Allow</string>
     <string name="time_exact_title">Let the timer ring on time</string>
     <string name="time_exact_body">Allow Alarms &amp; reminders to start or resume a timer. It will ring even when Dawnly is in the background.</string>

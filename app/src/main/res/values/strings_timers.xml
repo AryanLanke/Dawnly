@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="timers_title">Timers</string>
     <string name="timers_back">Back</string>
     <string name="timers_add">Add timer</string>
     <string name="timers_none">Set multiple timers</string>
-    <string name="timers_running">%1$d running</string>
+    <!-- "running" reads the same for every count, so a plural would add nothing. -->
+    <string name="timers_running" tools:ignore="PluralsCandidate">%1$d running</string>
     <plurals name="timers_count">
         <item quantity="one">%1$d timer</item>
         <item quantity="other">%1$d timers</item>

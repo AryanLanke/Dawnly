@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,8 +76,8 @@ fun WheelCircle(label: String, wheels: @Composable () -> Unit) {
 fun DurationWheel(label: String, value: Duration, min: Duration, max: Duration, onDone: (Duration) -> Unit) {
     val maxHours = max.toHours().toInt()
     val start = value.coerceIn(min, max)
-    var hours by remember { mutableStateOf(start.toHours().toInt()) }
-    var mins by remember { mutableStateOf((start.toMinutes() % 60).toInt()) }
+    var hours by remember { mutableIntStateOf(start.toHours().toInt()) }
+    var mins by remember { mutableIntStateOf((start.toMinutes() % 60).toInt()) }
     val digits = wheelDigits()
     val unit = MaterialTheme.typography.titleMedium.copy(color = DawnlyTheme.colors.textSoft)
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {

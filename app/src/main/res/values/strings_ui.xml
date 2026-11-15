@@ -218,8 +218,6 @@
     <string name="perm_full_screen">Full-screen notifications</string>
     <string name="perm_notifications_why">So we can ask before dismissing your alarm. Unless you choose Warn first or Right away, we never dismiss it on our own.</string>
     <string name="perm_exact_alarms_why">Lets Dawnly start watching the moment your window opens. It never sets alarms of its own.</string>
-    <string name="perm_activity_why">Used only during the watch window to count steps. Nothing leaves your phone.</string>
-    <string name="perm_usage_why">Used only during the watch window to count apps you open, not what you do in them. Nothing leaves your phone.</string>
     <string name="perm_battery_why">So your phone doesn\'t stop Dawnly halfway through the window.</string>
     <string name="oem_samsung">Samsung battery settings</string>
     <string name="oem_xiaomi">Xiaomi battery settings</string>

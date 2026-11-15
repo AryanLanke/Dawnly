@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,7 +46,7 @@ internal fun AlarmWheel(onDone: (LocalTime, LocalDate?) -> Unit, onClose: () -> 
     BackHandler(onBack = onClose)
     val today = remember { LocalDate.now() }
     // 0 today, 1 tomorrow, 2 a custom date.
-    var choice by remember { mutableStateOf(0) }
+    var choice by remember { mutableIntStateOf(0) }
     var date by remember { mutableStateOf(today.plusDays(1)) }
     // A custom date is picked first; its time comes after.
     var pickingDate by remember { mutableStateOf(false) }

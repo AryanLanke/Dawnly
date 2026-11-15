@@ -41,6 +41,7 @@ import com.dawnly.app.R
 import com.dawnly.app.domain.alarm.DawnlyAlarm
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.watch.WatchWindow
+import com.dawnly.app.ui.glass.EDITOR_MS
 import com.dawnly.app.ui.glass.GlassTabBar
 import com.dawnly.app.ui.home.AlarmWheel
 import com.dawnly.app.ui.home.CityPicker
@@ -224,9 +225,6 @@ internal fun MainTabs(
         }
     }
 }
-
-/** How long the reminder editor takes to ease in or out. */
-private const val EDITOR_MS = 340
 
 /** What's drawn over the tabs, frosting them. A fresh one each time, so each opening starts anew. */
 private sealed interface Overlay

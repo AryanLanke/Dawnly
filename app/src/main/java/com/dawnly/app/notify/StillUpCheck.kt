@@ -122,10 +122,12 @@ object StillUpCheck {
         if (check == AwakeCheck.Off) return
         val now = Instant.now()
         setAlarm(context, StillUpPlan.ringAt(now), pending(context, ACTION_RING, null))
-        val text = context.getString(
-            R.string.still_up_text,
+        val minutes = StillUpPlan.ANSWER_TIME.toMinutes().toInt()
+        val text = context.resources.getQuantityString(
+            R.plurals.still_up_text,
+            minutes,
             Notify.time(context, alarmAt),
-            StillUpPlan.ANSWER_TIME.toMinutes().toInt(),
+            minutes,
         )
         val builder = NotificationCompat.Builder(context, channel(context))
             .setSmallIcon(R.drawable.ic_notification)

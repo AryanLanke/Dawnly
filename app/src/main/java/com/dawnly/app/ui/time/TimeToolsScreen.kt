@@ -189,7 +189,10 @@ fun TimeToolsScreen(
                     }
                 }
                 if (stopwatch.laps.size == StopwatchState.MAX_LAPS) {
-                    Text(stringResource(R.string.time_lap_limit, StopwatchState.MAX_LAPS), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        pluralStringResource(R.plurals.time_lap_limit, StopwatchState.MAX_LAPS, StopwatchState.MAX_LAPS),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
             for (index in stopwatch.laps.indices.reversed()) {

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -28,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,7 +39,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.dawnly.app.R
 import com.dawnly.app.data.reminder.ReminderSounds
-import com.dawnly.app.data.sound.AlertSound
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.domain.reminder.ReminderDays
 import com.dawnly.app.domain.reminder.ReminderSchedule
@@ -59,7 +58,6 @@ import com.dawnly.app.ui.glass.SectionLabel
 import com.dawnly.app.ui.glass.TextAction
 import com.dawnly.app.ui.glass.TimeWheel
 import com.dawnly.app.ui.glass.ValueButton
-import com.dawnly.app.ui.settings.rememberSoundPreview
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -99,7 +97,7 @@ internal fun ReminderEditor(
     val start = initial?.schedule
     var every by remember { mutableStateOf(start !is ReminderSchedule.Daily) }
     var at by remember { mutableStateOf((start as? ReminderSchedule.Daily)?.at ?: LocalTime.of(21, 0)) }
-    var minutes by remember { mutableStateOf((start as? ReminderSchedule.Every)?.minutes ?: 20) }
+    var minutes by remember { mutableIntStateOf((start as? ReminderSchedule.Every)?.minutes ?: 20) }
     // A repeat that isn't one of the offered ones, like every 5 minutes or every 2 hours.
     var custom by remember { mutableStateOf(minutes !in ReminderSchedule.REPEATS) }
     var from by remember { mutableStateOf((start as? ReminderSchedule.Every)?.from ?: ReminderSchedule.DAY_START) }
@@ -340,44 +338,6 @@ internal fun ReminderEditor(
 @Composable
 private fun TimeButton(label: String, time: LocalTime, modifier: Modifier = Modifier, onClick: () -> Unit) =
     ValueButton(label, clock(time), modifier, onClick)
-
-/**
- * Choosing a sound: Dawnly's sounds in a glass list. Tapping one picks it and plays it, so the
- * user hears what their reminder (or alarm) will sound like.
- */
-@Composable
-internal fun SoundChoice(selected: AlertSound, onPick: (AlertSound) -> Unit, onDone: () -> Unit) {
-    val preview = rememberSoundPreview()
-    GlassSurface(Modifier.fillMaxWidth().widthIn(max = 480.dp)) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(stringResource(R.string.reminder_sound), style = MaterialTheme.typography.titleMedium)
-            Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
-                GlassList(Modifier.selectableGroup()) {
-                    AlertSound.entries.forEachIndexed { index, sound ->
-                        GlassRow(
-                            title = stringResource(sound.label),
-                            divider = index > 0,
-                            modifier = Modifier.selectable(selected = sound == selected, role = Role.RadioButton) {
-                                onPick(sound)
-                                preview.play(sound)
-                            },
-                        ) {
-                            if (sound == selected) CheckBadge()
-                        }
-                    }
-                }
-            }
-            GlassButton(
-                stringResource(R.string.reminder_done),
-                {
-                    preview.stop()
-                    onDone()
-                },
-                Modifier.fillMaxWidth(),
-            )
-        }
-    }
-}
 
 /** A custom repeat: from a minute up to 23 hours 59 minutes. */
 private val REPEAT_MIN: Duration = Duration.ofMinutes(1)
