@@ -31,7 +31,7 @@ internal object TimerNotifications {
     private fun notificationId(id: Long): Int = NOTIFICATION_ID_BASE + id.toInt()
 
     fun showFinished(context: Context, id: Long, label: String): Boolean =
-        show(context, id, label, context.getString(R.string.time_timer_finished), resolveSound(context, id))
+        show(context, id, label, context.getString(R.string.time_timer_finished), resolveSound(context, id), snooze = true)
 
     fun showPaused(context: Context, id: Long): Boolean =
         show(context, id, context.getString(R.string.time_timer), context.getString(R.string.time_snooze_permission), resolveSound(context, id))
@@ -44,25 +44,29 @@ internal object TimerNotifications {
     }
 
     @SuppressLint("MissingPermission") // Checked via areNotificationsEnabled, and permission revocation is caught below.
-    private fun show(context: Context, id: Long, title: String, text: String, sound: AlertSound?): Boolean = try {
+    private fun show(context: Context, id: Long, title: String, text: String, sound: AlertSound?, snooze: Boolean = false): Boolean = try {
         val manager = NotificationManagerCompat.from(context)
         val channel = channelFor(context, manager, sound)
         if (!manager.areNotificationsEnabled() || manager.getNotificationChannelCompat(channel)?.importance == NotificationManager.IMPORTANCE_NONE) {
             false
         } else {
-            manager.notify(
-                notificationId(id),
-                NotificationCompat.Builder(context, channel)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle(title)
-                    .setContentText(text)
-                    .setContentIntent(Notify.openApp(context))
-                    .setCategory(NotificationCompat.CATEGORY_ALARM)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setOnlyAlertOnce(true)
-                    .setAutoCancel(true)
-                    .build(),
-            )
+            val builder = NotificationCompat.Builder(context, channel)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(Notify.openApp(context))
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setOnlyAlertOnce(true)
+                .setAutoCancel(true)
+            if (snooze) {
+                builder.addAction(
+                    0,
+                    context.getString(R.string.ring_snooze, TimerController.SNOOZE_MINUTES),
+                    TimerController.snoozePending(context, id),
+                )
+            }
+            manager.notify(notificationId(id), builder.build())
             true
         }
     } catch (e: RuntimeException) {

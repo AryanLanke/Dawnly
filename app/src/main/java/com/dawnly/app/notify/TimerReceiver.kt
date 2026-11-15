@@ -7,6 +7,11 @@ import android.content.Intent
 /** Manifest receiver must be exported=false, in the app's default process (no intent filter). */
 class TimerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == TimerController.ACTION_SNOOZE) {
+            val id = intent.getLongExtra(TimerController.EXTRA_ID, -1L)
+            if (id > 0) TimerController.snooze(context, id, TimerController.SNOOZE_MINUTES)
+            return
+        }
         if (intent.action != TimerController.ACTION_EXPIRED ||
             !intent.hasExtra(TimerController.EXTRA_ID) ||
             !intent.hasExtra(TimerController.EXTRA_GENERATION)
