@@ -53,8 +53,22 @@ class ReminderRingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> finish(missed = false)
+            ACTION_STOP_TEST -> {
+                if (current.value?.id == TEST_ID) finish(missed = false)
+                else if (current.value == null) stopSelf()
+            }
             ACTION_SNOOZE -> {
-                current.value?.let { ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES) }
+                current.value?.let {
+                    val timerId = TimerController.timerIdFromRing(it.id)
+                    val alarmId = DawnlyAlarmScheduler.alarmIdFromRing(it.id)
+                    when {
+                        it.id == TEST_ID -> Unit
+                        it.id == StillUpCheck.RING_ID -> StillUpCheck.snooze(this, SNOOZE_MINUTES)
+                        timerId != null -> TimerController.snooze(this, timerId, SNOOZE_MINUTES)
+                        alarmId != null -> DawnlyAlarmScheduler.snooze(this, alarmId, SNOOZE_MINUTES)
+                        else -> ReminderScheduler.snooze(this, it.id, SNOOZE_MINUTES)
+                    }
+                }
                 finish(missed = false)
             }
             else -> {
@@ -65,6 +79,7 @@ class ReminderRingService : Service() {
                 )
                 val sound = AlertSound.entries.firstOrNull { it.name == intent?.getStringExtra(EXTRA_SOUND) }
                     ?: ReminderSounds.DEFAULT
+                if (ringing.id == TEST_ID && current.value != null) return START_NOT_STICKY
                 // A second reminder while one is ringing takes its place.
                 stopSound()
                 current.value = ringing
@@ -81,6 +96,10 @@ class ReminderRingService : Service() {
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "Couldn't ring \"${ringing.name}\" in the foreground", e)
+                    TimerController.timerIdFromRing(ringing.id)?.let { TimerNotifications.showFinished(this, it, ringing.name) }
+                    if (DawnlyAlarmScheduler.alarmIdFromRing(ringing.id) != null) {
+                        DawnlyAlarmScheduler.showFallback(this, ringing, sound)
+                    }
                     current.value = null
                     stopSelf()
                     return START_NOT_STICKY
@@ -93,13 +112,15 @@ class ReminderRingService : Service() {
 
     private fun ring(sound: AlertSound) {
         startedAt = System.currentTimeMillis()
+        wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "dawnly:reminderRing")
             .apply { acquire(TIMEOUT_MS + 10_000L) }
         play(soundUri(sound))
         vibrate()
         handler.post(rampVolume)
-        handler.postDelayed({ finish(missed = true) }, TIMEOUT_MS)
+        val testing = current.value?.id == TEST_ID
+        handler.postDelayed({ finish(missed = !testing) }, if (testing) TEST_TIMEOUT_MS else TIMEOUT_MS)
     }
 
     /**
@@ -196,7 +217,10 @@ class ReminderRingService : Service() {
         stopSound()
         current.value = null
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        if (missed && ringing != null) ReminderScheduler.showMissed(this, ringing)
+        if (missed && ringing != null) {
+            if (DawnlyAlarmScheduler.alarmIdFromRing(ringing.id) != null) DawnlyAlarmScheduler.showMissed(this, ringing)
+            else ReminderScheduler.showMissed(this, ringing)
+        }
         stopSelf()
     }
 
@@ -217,8 +241,12 @@ class ReminderRingService : Service() {
             .setOngoing(true)
             .setSilent(true)
             .setContentIntent(ringScreen(this))
-            .setFullScreenIntent(ringScreen(this), true)
-            .addAction(0, getString(R.string.ring_snooze, SNOOZE_MINUTES), command(this, ACTION_SNOOZE))
+            .apply {
+                if (ringing.id != TEST_ID) {
+                    setFullScreenIntent(ringScreen(this@ReminderRingService), true)
+                    addAction(0, getString(R.string.ring_snooze, SNOOZE_MINUTES), command(this@ReminderRingService, ACTION_SNOOZE))
+                }
+            }
             .addAction(0, getString(R.string.ring_stop), command(this, ACTION_STOP))
             .build()
 
@@ -235,6 +263,9 @@ class ReminderRingService : Service() {
         private const val EXTRA_WHY = "com.dawnly.app.extra.RING_WHY"
         private const val EXTRA_SOUND = "com.dawnly.app.extra.RING_SOUND"
 
+        private const val ACTION_STOP_TEST = "com.dawnly.app.action.STOP_TEST_RING"
+        const val TEST_ID = -3L
+        const val TEST_TIMEOUT_MS = 10_000L
         const val SNOOZE_MINUTES = 10
 
         /** Rings for at most five minutes, like most alarms. */
@@ -257,18 +288,28 @@ class ReminderRingService : Service() {
         val ringing: StateFlow<Ringing?> = current.asStateFlow()
 
         /** Starts ringing [reminder]. False if Android wouldn't allow it, so the caller can notify instead. */
-        fun start(context: Context, reminder: Reminder): Boolean = try {
+        fun start(context: Context, reminder: Reminder): Boolean =
+            start(context, reminder.id, reminder.name, reminder.why, ReminderSounds.of(reminder))
+
+        fun test(context: Context, sound: AlertSound): Boolean = current.value == null && start(
+            context, TEST_ID, context.getString(R.string.test_ring_title), context.getString(R.string.test_ring_detail), sound,
+        )
+
+        fun stopTest(context: Context) = send(context, ACTION_STOP_TEST)
+
+        /** Rings anything, not only a reminder: [id] comes back to Snooze. */
+        fun start(context: Context, id: Long, name: String, why: String, sound: AlertSound): Boolean = try {
             val intent = Intent(context, ReminderRingService::class.java)
                 .setAction(ACTION_RING)
-                .putExtra(EXTRA_ID, reminder.id)
-                .putExtra(EXTRA_NAME, reminder.name)
-                .putExtra(EXTRA_WHY, reminder.why)
-                .putExtra(EXTRA_SOUND, ReminderSounds.of(reminder).name)
+                .putExtra(EXTRA_ID, id)
+                .putExtra(EXTRA_NAME, name)
+                .putExtra(EXTRA_WHY, why)
+                .putExtra(EXTRA_SOUND, sound.name)
             ContextCompat.startForegroundService(context, intent)
             true
         } catch (e: Exception) {
             // ForegroundServiceStartNotAllowedException (Android 12+), e.g. after an inexact alarm.
-            Log.w(TAG, "Not allowed to ring \"${reminder.name}\"; showing a notification instead", e)
+            Log.w(TAG, "Not allowed to ring \"$name\"; showing a notification instead", e)
             false
         }
 

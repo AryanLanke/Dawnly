@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Today's world clock card and its city picker. -->
+    <string name="worldclock_label">World clock</string>
+    <string name="worldclock_add">Add a city</string>
+    <string name="worldclock_add_hint">Keep an eye on the places you care about</string>
+    <string name="worldclock_pick_title">Add a city</string>
+    <string name="worldclock_remove">Remove %1$s</string>
+    <string name="worldclock_all_added">Every city is already on your list.</string>
+
+    <!-- The cities offered in the picker, each mapped to a java.time zone id. -->
+    <string name="worldclock_city_london">London</string>
+    <string name="worldclock_city_paris">Paris</string>
+    <string name="worldclock_city_berlin">Berlin</string>
+    <string name="worldclock_city_moscow">Moscow</string>
+    <string name="worldclock_city_cairo">Cairo</string>
+    <string name="worldclock_city_dubai">Dubai</string>
+    <string name="worldclock_city_mumbai">Mumbai</string>
+    <string name="worldclock_city_kathmandu">Kathmandu</string>
+    <string name="worldclock_city_bangkok">Bangkok</string>
+    <string name="worldclock_city_singapore">Singapore</string>
+    <string name="worldclock_city_beijing">Beijing</string>
+    <string name="worldclock_city_tokyo">Tokyo</string>
+    <string name="worldclock_city_seoul">Seoul</string>
+    <string name="worldclock_city_sydney">Sydney</string>
+    <string name="worldclock_city_auckland">Auckland</string>
+    <string name="worldclock_city_honolulu">Honolulu</string>
+    <string name="worldclock_city_los_angeles">Los Angeles</string>
+    <string name="worldclock_city_chicago">Chicago</string>
+    <string name="worldclock_city_new_york">New York</string>
+    <string name="worldclock_city_sao_paulo">São Paulo</string>
+</resources>

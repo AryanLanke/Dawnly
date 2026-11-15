@@ -1,5 +1,11 @@
 package com.dawnly.app.ui.settings
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.dawnly.app.notify.TestLabActivity
+import com.dawnly.app.ui.glass.GlassList
+import com.dawnly.app.ui.glass.GlassRow
+import com.dawnly.app.ui.glass.GlassSwitch
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -33,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.settings.Appearance
+import com.dawnly.app.data.settings.AwakeCheck
 import com.dawnly.app.data.settings.DismissMode
 import com.dawnly.app.domain.wake.Sensitivity
 import com.dawnly.app.domain.wake.WakeSignalSettings
@@ -42,6 +49,7 @@ import com.dawnly.app.ui.glass.SpringIn
 import com.dawnly.app.ui.permissions.AppPermission
 import com.dawnly.app.ui.permissions.OemBattery
 import com.dawnly.app.ui.permissions.PermissionState
+import com.dawnly.app.ui.theme.DawnlyTheme
 import java.time.Duration
 
 @Composable
@@ -56,6 +64,8 @@ fun SettingsScreen(
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value ?: return
     val learning by viewModel.learning.collectAsStateWithLifecycle()
+    val awakeCheck by viewModel.awakeCheck.collectAsStateWithLifecycle()
+    val startupSound by viewModel.startupSound.collectAsStateWithLifecycle()
     val latest by rememberUpdatedState(state)
     var deniedSign by remember { mutableStateOf<Sign?>(null) }
     var pickingSound by rememberSaveable { mutableStateOf(false) }
@@ -121,6 +131,10 @@ fun SettingsScreen(
                 learning = learning,
                 onLearnChange = viewModel::setLearn,
                 onResetLearning = viewModel::resetLearning,
+                awakeCheck = awakeCheck,
+                onAwakeCheckChange = viewModel::setAwakeCheck,
+                startupSound = startupSound,
+                onStartupSoundChange = viewModel::setStartupSound,
             )
         }
     }
@@ -148,6 +162,10 @@ internal fun SettingsContent(
     learning: LearningUi = LearningUi.Start,
     onLearnChange: (Boolean) -> Unit = {},
     onResetLearning: () -> Unit = {},
+    awakeCheck: AwakeCheck = AwakeCheck.Off,
+    onAwakeCheckChange: (AwakeCheck) -> Unit = {},
+    startupSound: Boolean = true,
+    onStartupSoundChange: (Boolean) -> Unit = {},
 ) {
     Column(
         Modifier
@@ -164,16 +182,43 @@ internal fun SettingsContent(
         SpringIn(order = 0) { WindowSection(state.window, onWindowChange, onPickWindow) }
         Gap()
         SpringIn(order = 1) {
-            DismissModeSection(
-                mode = state.dismissMode,
-                overlayAllowed = AppPermission.Overlay in permissions,
-                fullScreenAllowed = AppPermission.FullScreen in permissions,
-                onChange = onDismissModeChange,
-                onAllowOverlay = onAllowOverlay,
-            )
+            Column {
+                DismissModeSection(
+                    mode = state.dismissMode,
+                    overlayAllowed = AppPermission.Overlay in permissions,
+                    fullScreenAllowed = AppPermission.FullScreen in permissions,
+                    onChange = onDismissModeChange,
+                    onAllowOverlay = onAllowOverlay,
+                )
+                // Only Dawnly's own dismisses get checked; with Ask me, the user tapped it themselves.
+                AnimatedVisibility(visible = state.dismissMode != DismissMode.Ask) {
+                    Column {
+                        Gap()
+                        AwakeCheckSection(
+                            check = awakeCheck,
+                            fullScreenAllowed = AppPermission.FullScreen in permissions,
+                            onChange = onAwakeCheckChange,
+                            onAllowFullScreen = { onRequestPermission(AppPermission.FullScreen) },
+                        )
+                    }
+                }
+            }
         }
         Gap()
-        SpringIn(order = 2) { SoundRow(state.sound, onOpenSounds) }
+        SpringIn(order = 2) {
+            Column {
+                SoundRow(state.sound, onOpenSounds)
+                Gap()
+                GlassList {
+                    GlassRow(
+                        title = stringResource(R.string.startup_sound_title),
+                        subtitle = stringResource(R.string.startup_sound_detail),
+                    ) {
+                        GlassSwitch(startupSound, onStartupSoundChange)
+                    }
+                }
+            }
+        }
         Gap()
         SpringIn(order = 3) {
             Column {
@@ -210,11 +255,36 @@ internal fun SettingsContent(
                     )
                 }
                 Gap()
+                Column {
+                    SectionLabel(stringResource(R.string.settings_signs_needed_label))
+                    val counts = listOf(1, 2, 3)
+                    GlassSegmented(
+                        options = counts.map { it.toString() },
+                        selected = counts.indexOf(state.signals.signsNeeded).coerceAtLeast(0),
+                        onSelect = { onSignalsChange(state.signals.copy(signsNeeded = counts[it])) },
+                    )
+                    Text(
+                        stringResource(R.string.settings_signs_needed_detail),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DawnlyTheme.colors.textSoft,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp),
+                    )
+                }
+                Gap()
                 LearningSection(learning, onLearnChange, onResetLearning)
                 Gap()
                 PermissionsSection(permissions, state.dismissMode, state.signals, oemBattery, onRequestPermission, onOpenOemBattery)
             }
         }
+        Gap()
+        val context = LocalContext.current
+        AlarmReadinessSection(
+            permissions = permissions,
+            oemBattery = oemBattery,
+            onRequestPermission = onRequestPermission,
+            onOpenOemBattery = onOpenOemBattery,
+            onOpenTestLab = { context.startActivity(Intent(context, TestLabActivity::class.java)) },
+        )
         Gap()
         SpringIn(order = 5) { FeedbackRow() }
         Spacer(Modifier.height(12.dp))

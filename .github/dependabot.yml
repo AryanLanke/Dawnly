@@ -1,0 +1,32 @@
+# Keeps Gradle plugins, libraries and the CI's own actions current, so a security fix
+# reaches the app without anyone having to watch release notes.
+version: 2
+
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      # AGP, Kotlin and Compose move together; one pull request per group stays reviewable.
+      android:
+        patterns:
+          - "com.android.*"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin.*"
+      compose:
+        patterns:
+          - "androidx.compose.*"
+      androidx:
+        patterns:
+          - "androidx.*"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5

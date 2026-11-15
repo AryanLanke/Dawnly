@@ -35,6 +35,9 @@ enum class DismissMode {
     Instant,
 }
 
+/** After Dawnly turns an alarm off by itself, whether it checks the user didn't fall back asleep (see `StillUpCheck`). */
+enum class AwakeCheck { Off, Notification, FullScreen }
+
 /** The user's settings. */
 class SettingsRepository(context: Context) {
     private val store = context.applicationContext.settingsStore
@@ -76,6 +79,7 @@ class SettingsRepository(context: Context) {
                     ?: level.movementGoal,
                 useMusic = prefs[USE_MUSIC] ?: default.useMusic,
                 useCharger = prefs[USE_CHARGER] ?: default.useCharger,
+                signsNeeded = prefs[SIGNS_NEEDED] ?: default.signsNeeded,
             )
         }
         .distinctUntilChanged()
@@ -92,6 +96,7 @@ class SettingsRepository(context: Context) {
             prefs[MOVEMENT_GOAL_MINUTES] = settings.movementGoal.toMinutes().toInt()
             prefs[USE_MUSIC] = settings.useMusic
             prefs[USE_CHARGER] = settings.useCharger
+            prefs[SIGNS_NEEDED] = settings.signsNeeded
             // "Phone unlocked" was dropped as a sign: the phone can be unlocked while asleep.
             prefs.remove(OLD_USE_UNLOCK)
         }
@@ -112,6 +117,16 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    val awakeCheck: Flow<AwakeCheck> = store.safeData
+        .map { prefs ->
+            prefs[AWAKE_CHECK]?.let { name -> AwakeCheck.entries.firstOrNull { it.name == name } } ?: AwakeCheck.Off
+        }
+        .distinctUntilChanged()
+
+    suspend fun setAwakeCheck(check: AwakeCheck) {
+        store.edit { it[AWAKE_CHECK] = check.name }
+    }
+
     /** Learning from the user's answers (see `Learning`). On until they turn it off. */
     val learn: Flow<Boolean> = store.safeData
         .map { it[LEARN] ?: true }
@@ -119,6 +134,14 @@ class SettingsRepository(context: Context) {
 
     suspend fun setLearn(on: Boolean) {
         store.edit { it[LEARN] = on }
+    }
+
+    val startupSound: Flow<Boolean> = store.safeData
+        .map { it[STARTUP_SOUND] ?: true }
+        .distinctUntilChanged()
+
+    suspend fun setStartupSound(on: Boolean) {
+        store.edit { it[STARTUP_SOUND] = on }
     }
 
     val appearance: Flow<Appearance> = store.safeData
@@ -145,8 +168,11 @@ class SettingsRepository(context: Context) {
         val MOVEMENT_GOAL_MINUTES = intPreferencesKey("movement_goal_minutes")
         val USE_MUSIC = booleanPreferencesKey("use_music")
         val USE_CHARGER = booleanPreferencesKey("use_charger")
+        val SIGNS_NEEDED = intPreferencesKey("signs_needed")
         val OLD_AUTO_DISMISS = booleanPreferencesKey("auto_dismiss")
         val DISMISS_MODE = stringPreferencesKey("dismiss_mode")
+        val AWAKE_CHECK = stringPreferencesKey("awake_check")
+        val STARTUP_SOUND = booleanPreferencesKey("startup_sound")
         val APPEARANCE = stringPreferencesKey("appearance")
         val LEARN = booleanPreferencesKey("learn")
     }

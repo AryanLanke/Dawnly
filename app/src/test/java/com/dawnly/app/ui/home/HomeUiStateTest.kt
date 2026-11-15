@@ -70,7 +70,7 @@ class HomeUiStateTest {
             steps = 42,
             movingTime = Duration.ofSeconds(70),
             musicTime = Duration.ofSeconds(59),
-            unplugged = true,
+            chargerChanged = true,
         )
         val rows = HomeUiState.from(watching, live, allSigns, halfHourBefore).signals
         assertEquals(
@@ -128,7 +128,7 @@ class HomeUiStateTest {
     @Test
     fun `after Not yet in this window, Today knows, and an older one doesn't count`() {
         val now = windowStart.plus(Duration.ofMinutes(20))
-        val up = WakeSignals(screenOnTime = Duration.ofMinutes(6)).going()
+        val up = WakeSignals(screenOnTime = Duration.ofMinutes(6), movingTime = Duration.ofMinutes(2)).going()
         val said = HomeUiState.from(watching, up, allSigns, now, notYetAt = now.minusSeconds(60)).status as HomeStatus.Watching
         assertTrue(said.awake)
         assertTrue(said.notYet)

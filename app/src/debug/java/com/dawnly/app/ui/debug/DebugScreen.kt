@@ -163,7 +163,7 @@ private fun DebugContent(
                     },
                 )
                 ValueRow(stringResource(R.string.debug_music), durationText(signals.musicTime))
-                ValueRow(stringResource(R.string.debug_charger), yesNo(signals.unplugged))
+                ValueRow(stringResource(R.string.debug_charger), yesNo(signals.chargerChanged))
                 ValueRow(
                     stringResource(R.string.debug_stretch),
                     stringResource(

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="timers_title">Timers</string>
+    <string name="timers_back">Back</string>
+    <string name="timers_add">Add timer</string>
+    <string name="timers_none">Set multiple timers</string>
+    <!-- "running" reads the same for every count, so a plural would add nothing. -->
+    <string name="timers_running" tools:ignore="PluralsCandidate">%1$d running</string>
+    <plurals name="timers_count">
+        <item quantity="one">%1$d timer</item>
+        <item quantity="other">%1$d timers</item>
+    </plurals>
+    <string name="timers_empty">No timers yet. Add one to get started.</string>
+    <string name="timers_ready">Ready</string>
+    <string name="timers_start">Start</string>
+    <string name="timers_delete">Delete</string>
+    <string name="timers_label">Label</string>
+    <string name="timers_quick">Quick presets</string>
+    <string name="timers_preset">%1$d min</string>
+    <string name="timers_finish">When time is up</string>
+    <string name="timers_ring">Ring like an alarm</string>
+</resources>

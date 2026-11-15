@@ -114,7 +114,21 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- The prompt's "Not yet" button. -->
+        <receiver
+            android:name=".notify.TimerReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".notify.TestLabActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Dawnly" />
+
+        <!-- Several timers at once, opened from the Tools tab. -->
+        <activity
+            android:name=".ui.time.TimerScreen"
+            android:exported="false"
+            android:theme="@style/Theme.Dawnly" />
+
         <receiver
             android:name=".notify.NotYetReceiver"
             android:exported="false" />
@@ -122,6 +136,11 @@
         <!-- The user's reminders on Today: each one's alarm when it's due. -->
         <receiver
             android:name=".notify.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Dawnly's own alarms: each one's alarm clock when it's due. -->
+        <receiver
+            android:name=".notify.DawnlyAlarmReceiver"
             android:exported="false" />
 
         <!-- A reminder set to ring like an alarm: plays its sound until Stop or Snooze. -->
@@ -147,6 +166,19 @@
         <receiver
             android:name=".notify.AutoDismissReceiver"
             android:exported="false" />
+
+        <!-- Opt-in "Still up?" after an auto-dismiss: asks, then rings if nobody answers. -->
+        <receiver
+            android:name=".notify.StillUpReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".notify.StillUpActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Dawnly" />
     </application>
 
 </manifest>

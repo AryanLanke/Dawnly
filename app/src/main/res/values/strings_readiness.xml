@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="readiness_label">Alarm readiness</string>
+    <string name="readiness_ready_title">Ready to ring</string>
+    <string name="readiness_ready_detail">Alarms and reminders can ring on time. Tap Test ring to hear it.</string>
+    <string name="readiness_attention_title">Needs a little help</string>
+    <string name="readiness_attention_detail">A tap or two so Dawnly can ring reliably.</string>
+    <string name="readiness_exact_detail">Lets Dawnly ring at the exact minute, not late.</string>
+    <string name="readiness_battery_detail">Stops the phone from freezing Dawnly in the background.</string>
+    <string name="readiness_notifications_detail">Needed for the ring notice and its Stop button.</string>
+    <string name="readiness_volume_title">Alarm volume</string>
+    <string name="readiness_volume_detail">The alarm volume is muted. Turn it up so you can hear it.</string>
+    <string name="readiness_fullscreen_detail">Off on this phone — alarms ring as a notification instead.</string>
+    <string name="readiness_test">Test ring</string>
+</resources>

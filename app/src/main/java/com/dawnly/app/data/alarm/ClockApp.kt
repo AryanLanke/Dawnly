@@ -33,6 +33,9 @@ sealed interface DismissResult {
      */
     data class Requested(val handler: AppRef, val request: DismissRequest) : DismissResult
 
+    /** The next alarm was Dawnly's own, so Dawnly cancelled it itself; no Clock app was involved. */
+    data class DawnlyDismissed(val alarmAt: Instant) : DismissResult
+
     /** No app can dismiss alarms, so [clock] was opened for the user to dismiss it by hand. */
     data class OpenedClock(val clock: AppRef) : DismissResult
 
@@ -41,7 +44,8 @@ sealed interface DismissResult {
 
 /**
  * Talks to the user's Clock app through the public [AlarmClock] intents. Dawnly never touches the
- * alarm itself; it only asks the Clock app.
+ * alarm itself; it only asks the Clock app. Android has no public API to enumerate or edit exact
+ * third-party alarms, so editing stays in the Clock app's own UI.
  */
 class ClockApp(context: Context) {
     private val packageManager = context.applicationContext.packageManager
@@ -89,14 +93,16 @@ class ClockApp(context: Context) {
         return if (launcher.tryStart(intent)) handler else null
     }
 
-    /** Opens the alarm list, or else the app that owns the alarm. Returns the app opened. */
+    /** Prefers the alarm owner's list, then a generic list, then the owner's launcher. */
     fun openClock(launcher: Context, ownerPackage: String?): AppRef? {
         val candidates = listOfNotNull(
+            ownerPackage?.let { Intent(AlarmClock.ACTION_SHOW_ALARMS).setPackage(it) },
             Intent(AlarmClock.ACTION_SHOW_ALARMS),
             ownerPackage?.let(packageManager::getLaunchIntentForPackage),
         )
         for (intent in candidates) {
             val app = resolve(intent) ?: continue
+            if (launcher !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             if (launcher.tryStart(intent)) return app
         }
         return null

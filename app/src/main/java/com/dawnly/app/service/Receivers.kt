@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.dawnly.app.dawnly
+import com.dawnly.app.notify.DawnlyAlarmScheduler
 import com.dawnly.app.notify.ReminderScheduler
 
 /** Our own check alarm, set by [WatchScheduler]: the window opens, or the alarm is due. */
@@ -30,7 +31,14 @@ class SystemEventsReceiver : BroadcastReceiver() {
 /** Runs inside [goAsync], so the process isn't killed before the reminders are set again. */
 private fun BroadcastReceiver.reconcileAsync(context: Context, fromCheckAlarm: Boolean, resetReminders: Boolean) {
     launchAsync(context) {
-        if (resetReminders) ReminderScheduler.sync(context)
+        com.dawnly.app.notify.TimerController.sync(context)
+        if (resetReminders) {
+            ReminderScheduler.sync(context)
+            // Only on boot/update, not on every next-alarm change: sync sets alarm clocks, which
+            // would send that change again. It reconciles the watch itself; the one below is a
+            // harmless second pass (reconcile is safe to repeat).
+            DawnlyAlarmScheduler.sync(context)
+        }
         context.dawnly.watchScheduler.reconcile(fromCheckAlarm)
     }
 }

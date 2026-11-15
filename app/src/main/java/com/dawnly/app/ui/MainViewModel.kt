@@ -9,8 +9,6 @@ import com.dawnly.app.data.onboarding.OnboardingStore
 import com.dawnly.app.data.settings.Appearance
 import com.dawnly.app.data.sound.SoundStore
 import com.dawnly.app.notify.AwakeNotifier
-import com.dawnly.app.ui.settings.Sign
-import com.dawnly.app.ui.settings.withSign
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +34,6 @@ class MainViewModel(private val app: DawnlyApp) : ViewModel() {
 
     fun completeOnboarding() {
         app.scope.launch(Dispatchers.Main.immediate) { onboarding.setCompleted() }
-    }
-
-    /** [sign]'s permission was just allowed during onboarding, so start counting it. */
-    fun useSign(sign: Sign) {
-        app.scope.launch(Dispatchers.Main.immediate) {
-            val signals = app.settings.wakeSignals.first()
-            signals.withSign(sign, true)?.let { app.settings.setWakeSignals(it) }
-        }
     }
 
     companion object {

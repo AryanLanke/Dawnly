@@ -56,7 +56,7 @@ import kotlinx.coroutines.withContext
 /**
  * Watches for signs the user is awake before the alarm at [alarmAt]: screen use from system
  * broadcasts, apps opened from Usage access, steps from the step counter, movement from the
- * accelerometer, the charger being unplugged, and whether music is playing. Feeds them into a [WakeTracker], publishes the
+ * accelerometer, the charger being plugged in or unplugged, and whether music is playing. Feeds them into a [WakeTracker], publishes the
  * readings to [WatchSession], and calls [AwakeNotifier] once the [WakeScore] says the user is up.
  * That happens at most once per window, even if the process is killed and restarted, because the
  * progress is kept in [WakeProgressStore].
@@ -122,7 +122,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 when (event) {
                     is WakeEvent.Unlocked -> tracker.onUnlocked(event.at)
                     is WakeEvent.ScreenOff -> tracker.onScreenOff(event.at)
-                    is WakeEvent.Unplugged -> tracker.onUnplugged(event.at)
+                    is WakeEvent.ChargerChanged -> tracker.onChargerChanged(event.at)
                     is WakeEvent.Steps -> tracker.onStepCounter(event.totalSinceBoot, event.at)
                     WakeEvent.StepsStopped -> tracker.onStepCounterStopped()
                     is WakeEvent.StepsAvailable -> tracker.stepsAvailable = event.available
@@ -155,7 +155,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                 if (awakeNow) {
                     // Nothing is recorded while the user has learning off.
                     if (app.settings.learn.first()) app.learning.asked(Instant.now(), score.shares)
-                    onAwake(signals, score.musicTippedIt)
+                    onAwake(signals)
                 }
             }
         } finally {
@@ -165,9 +165,9 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
         }
     }
 
-    private fun onAwake(signals: WakeSignals, musicTippedIt: Boolean) {
-        Log.i(TAG, "Awake before the $alarmAt alarm: $signals (music tipped it: $musicTippedIt)")
-        AwakeNotifier.onUserAwake(app, alarmAt, musicTippedIt)
+    private fun onAwake(signals: WakeSignals) {
+        Log.i(TAG, "Awake before the $alarmAt alarm: $signals")
+        AwakeNotifier.onUserAwake(app, alarmAt)
         // Not in v1: a "Still awake?" nudge, for falling back asleep after dismissing, would start
         // here. The service stops once the alarm is dismissed, so WatchScheduler would also need to
         // keep it running for a while; a fresh WakeTracker could then watch for a long screen-off.
@@ -183,7 +183,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
                     // lock delay. Android doesn't send USER_PRESENT then.
                     Intent.ACTION_SCREEN_ON -> if (!keyguard.isKeyguardLocked) trySend(WakeEvent.Unlocked(now))
                     Intent.ACTION_SCREEN_OFF -> trySend(WakeEvent.ScreenOff(now))
-                    Intent.ACTION_POWER_DISCONNECTED -> trySend(WakeEvent.Unplugged(now))
+                    Intent.ACTION_POWER_CONNECTED, Intent.ACTION_POWER_DISCONNECTED -> trySend(WakeEvent.ChargerChanged(now))
                 }
             }
         }
@@ -191,6 +191,7 @@ internal class WakeWatcher(context: Context, private val alarmAt: Instant) {
             addAction(Intent.ACTION_USER_PRESENT)
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
         // USER_PRESENT and the screen broadcasts can't be declared in the manifest. They're system

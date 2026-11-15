@@ -56,8 +56,7 @@ object AutoDismissPlan {
      * Turns the user's [mode] into what happens now. Every automatic choice fails safe to asking:
      * Dawnly has to be able to reach the Clock app from the background ([reach]), a full-screen
      * notification needs notifications, and a warning needs time, an exact alarm, and notifications
-     * to be seen and stopped. When music made the difference ([musicTippedIt]), it always asks:
-     * people fall asleep to music, and an unanswered question lets the alarm ring.
+     * to be seen and stopped.
      */
     fun decide(
         mode: DismissMode,
@@ -66,10 +65,8 @@ object AutoDismissPlan {
         reach: ClockReach,
         canTimeExactly: Boolean,
         canNotify: Boolean,
-        musicTippedIt: Boolean = false,
     ): AwakeAction {
-        // Music can play while someone sleeps: ask, so silence lets the alarm ring.
-        if (mode == DismissMode.Ask || reach == ClockReach.None || musicTippedIt) return AwakeAction.Ask
+        if (mode == DismissMode.Ask || reach == ClockReach.None) return AwakeAction.Ask
         if (reach == ClockReach.WhenLocked && !canNotify) return AwakeAction.Ask
         if (mode == DismissMode.Instant) return AwakeAction.DismissNow
         val dismissAt = dismissAt(now, alarmAt)

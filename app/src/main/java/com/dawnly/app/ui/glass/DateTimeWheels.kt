@@ -9,7 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,21 +31,21 @@ import java.time.LocalTime
 @Composable
 fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
     val twelveHour = !DateFormat.is24HourFormat(LocalContext.current)
-    var hour by remember { mutableStateOf(time.hour) }
-    var minute by remember { mutableStateOf(time.minute) }
+    var hour by remember { mutableIntStateOf(time.hour) }
+    var minute by remember { mutableIntStateOf(time.minute) }
     val digits = wheelDigits()
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         WheelCircle(label) {
             if (twelveHour) {
-                // 12, 1, 2 ... 11.
-                Wheel(12, (hour % 12), 86.dp, digits, { i -> if (i == 0) "12" else "$i" }) { i ->
+                // 12, 1, 2 ... 11, and round again.
+                Wheel(12, (hour % 12), 86.dp, digits, { i -> if (i == 0) "12" else "$i" }, wrap = true) { i ->
                     hour = i + if (hour >= 12) 12 else 0
                 }
             } else {
-                Wheel(24, hour, 86.dp, digits, { i -> "%02d".format(i) }) { hour = it }
+                Wheel(24, hour, 86.dp, digits, { i -> "%02d".format(i) }, wrap = true) { hour = it }
             }
             Text(":", style = digits, modifier = Modifier.padding(bottom = 6.dp))
-            Wheel(60, minute, 86.dp, digits, { i -> "%02d".format(i) }) { minute = it }
+            Wheel(60, minute, 86.dp, digits, { i -> "%02d".format(i) }, wrap = true) { minute = it }
             if (twelveHour) {
                 val marks = listOf(stringResource(R.string.time_am), stringResource(R.string.time_pm))
                 Wheel(
@@ -54,6 +54,7 @@ fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
                     44.dp,
                     MaterialTheme.typography.titleMedium.copy(color = DawnlyTheme.colors.textSoft, textAlign = TextAlign.Center),
                     { marks[it] },
+                    wrap = true,
                 ) { pm -> hour = hour % 12 + if (pm == 1) 12 else 0 }
             }
         }
@@ -67,10 +68,10 @@ fun TimeWheel(label: String, time: LocalTime, onDone: (LocalTime) -> Unit) {
  */
 @Composable
 fun DateWheel(label: String, date: LocalDate, today: LocalDate, onDone: (LocalDate) -> Unit) {
-    var day by remember { mutableStateOf(date.dayOfMonth) }
-    var month by remember { mutableStateOf(date.monthValue) }
+    var day by remember { mutableIntStateOf(date.dayOfMonth) }
+    var month by remember { mutableIntStateOf(date.monthValue) }
     val firstYear = minOf(today.year, date.year)
-    var year by remember { mutableStateOf(date.year) }
+    var year by remember { mutableIntStateOf(date.year) }
     val digits = wheelDigits()
     val months = remember { java.time.Month.entries.map { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) } }
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {

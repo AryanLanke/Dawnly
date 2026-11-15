@@ -53,11 +53,13 @@ enum class AppPermission {
     ;
 
     /**
-     * Asked in onboarding and always listed in Settings. The two Android can lock aren't:
-     * [UsageAccess] only matters with the apps-opened sign on, [Overlay] only with auto-dismiss on.
+     * Asked in onboarding and always listed in Settings: only what Dawnly can't work without (and
+     * the battery steps brand phones need). The rest are asked when the feature that needs them is
+     * turned on: [ActivityRecognition] with the steps sign, [UsageAccess] with apps opened,
+     * [Overlay] and [FullScreen] with auto-dismiss.
      */
     val askedUpFront: Boolean
-        get() = this != Overlay && this != UsageAccess && this != FullScreen
+        get() = this == Notifications || this == ExactAlarms || this == Battery
 
     /** False on Android versions where this permission doesn't exist (it's granted already). */
     val isApplicable: Boolean
@@ -102,8 +104,10 @@ enum class AppPermission {
      * alarms, usage access, battery and overlays, and the fallback once a runtime permission has
      * been denied for good. Some phones accept a screen's intent and then show nothing, so the
      * later ones are tried when the first doesn't appear ([PermissionsController]). The last is
-     * always Dawnly's own App info page.
+     * always Dawnly's own App info page. Suppresses BatteryLife: the Play policy it cites doesn't
+     * apply to a side-loaded app, and an alarm that Doze can delay is worse than the exemption.
      */
+    @SuppressLint("BatteryLife")
     fun settingsIntents(context: Context): List<Intent> {
         val packageUri = "package:${context.packageName}".toUri()
         val screens = when (this) {

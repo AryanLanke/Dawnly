@@ -1,6 +1,7 @@
 package com.dawnly.app.data.alarm
 
 import android.content.Context
+import androidx.core.content.edit
 
 /**
  * Which form of the dismiss request ([DismissRequest]) last worked with each Clock app, so it's
@@ -14,6 +15,6 @@ class DismissMemory(context: Context) {
         prefs.getString(clockPackage, null)?.let { name -> DismissRequest.entries.firstOrNull { it.name == name } }
 
     fun remember(clockPackage: String, request: DismissRequest) {
-        prefs.edit().putString(clockPackage, request.name).apply()
+        prefs.edit { putString(clockPackage, request.name) }
     }
 }

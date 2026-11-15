@@ -21,12 +21,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dawnly.app.R
 import com.dawnly.app.data.alarm.DismissResult
+import com.dawnly.app.domain.alarm.DawnlyAlarm
 import com.dawnly.app.domain.reminder.Reminder
 import com.dawnly.app.ui.glass.AccentPill
 import com.dawnly.app.ui.glass.SpringIn
@@ -43,12 +45,19 @@ fun HomeScreen(
     onRequestPermission: (AppPermission) -> Unit,
     onEditReminder: (Reminder?) -> Unit,
     onSetAlarm: () -> Unit,
+    onEditDawnlyAlarm: (DawnlyAlarm?) -> Unit,
+    onOpenDawnlyAlarms: () -> Unit,
+    onAddCity: () -> Unit,
     contentPadding: PaddingValues,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val dismissResult by viewModel.dismissResult.collectAsStateWithLifecycle()
     val reminders by viewModel.reminders.collectAsStateWithLifecycle()
+    val dawnlyAlarms by viewModel.dawnlyAlarms.collectAsStateWithLifecycle()
+    val nextOwner by viewModel.nextAlarmOwner.collectAsStateWithLifecycle()
+    val cities by viewModel.cities.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
+    val packageName = LocalContext.current.packageName
     HomeContent(
         state = state,
         permissions = permissions,
@@ -62,6 +71,16 @@ fun HomeScreen(
         contentPadding = contentPadding,
         onSetAlarm = onSetAlarm,
         onOpenClock = { activity?.let(viewModel::openClock) },
+        dawnlyAlarms = dawnlyAlarms,
+        nextIsDawnly = nextOwner == packageName,
+        canImportClock = nextOwner != null && nextOwner != packageName,
+        onEditDawnlyAlarm = onEditDawnlyAlarm,
+        onToggleDawnlyAlarm = viewModel::toggleDawnlyAlarm,
+        onOpenDawnlyAlarms = onOpenDawnlyAlarms,
+        onImportClockAlarm = { activity?.let(viewModel::importClockAlarm) },
+        cities = cities,
+        onAddCity = onAddCity,
+        onRemoveCity = viewModel::removeCity,
     )
 }
 
@@ -80,8 +99,21 @@ internal fun HomeContent(
     now: Instant = Instant.now(),
     onSetAlarm: () -> Unit = {},
     onOpenClock: () -> Unit = {},
+    dawnlyAlarms: List<DawnlyAlarm> = emptyList(),
+    nextIsDawnly: Boolean = false,
+    canImportClock: Boolean = false,
+    onEditDawnlyAlarm: (DawnlyAlarm?) -> Unit = {},
+    onToggleDawnlyAlarm: (DawnlyAlarm, Boolean) -> Unit = { _, _ -> },
+    onOpenDawnlyAlarms: () -> Unit = {},
+    onImportClockAlarm: () -> Unit = {},
+    cities: List<String> = emptyList(),
+    onAddCity: () -> Unit = {},
+    onRemoveCity: (String) -> Unit = {},
 ) {
     val status = state.status
+    // One heartbeat for Today's clocks. Only the clocks read it, so the rest of the screen
+    // doesn't recompose each second.
+    val clock = rememberTodayClock()
     if (status == HomeStatus.Loading) return
     Column(
         modifier = Modifier
@@ -93,13 +125,22 @@ internal fun HomeContent(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Spacer(Modifier.height(20.dp))
+        SpringIn(order = 0) { LiveClock(clock) }
         SpringIn(order = 0) {
-            // No alarm: set one here. An alarm: the Clock app changes or deletes it.
+            // No alarm: set one here. Dawnly's own: edit it here. A Clock alarm: the Clock app
+            // changes or deletes it.
             AlarmRing(
                 status,
                 now,
                 Modifier.fillMaxWidth(0.72f).widthIn(max = 320.dp),
-                onTap = { if (status.ringsAt == null) onSetAlarm() else onOpenClock() },
+                dawnlyOwned = nextIsDawnly,
+                onTap = {
+                    when {
+                        status.ringsAt == null -> onSetAlarm()
+                        nextIsDawnly -> onOpenDawnlyAlarms()
+                        else -> onOpenClock()
+                    }
+                },
             )
         }
         // With an alarm already set, another one is still a tap away.
@@ -146,6 +187,10 @@ internal fun HomeContent(
         }
         if (status is HomeStatus.Watching) {
             SpringIn(order++) { DismissAction(status.alarmAt, status.awake && !status.notYet, onDismissAlarm) }
+        }
+        SpringIn(order++) { WorldClockCard(clock, cities, onRemoveCity, onAddCity) }
+        SpringIn(order++) {
+            DawnlyAlarmsCard(dawnlyAlarms, canImportClock, onEditDawnlyAlarm, onToggleDawnlyAlarm, onImportClockAlarm)
         }
         SpringIn(order) { RemindersCard(reminders, onEditReminder, onToggleReminder) }
         Spacer(Modifier.height(8.dp))
