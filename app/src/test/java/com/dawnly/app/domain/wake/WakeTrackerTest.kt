@@ -64,6 +64,41 @@ class WakeTrackerTest {
     }
 
     @Test
+    fun `the session in use is known and ends when the screen goes off`() {
+        val tracker = WakeTracker()
+        tracker.onUnlocked(now = 0)
+        assertEquals(Duration.ofMinutes(4), tracker.signals(now = 4 * minute).inUseFor)
+
+        tracker.onScreenOff(now = 5 * minute)
+        val after = tracker.signals(now = 6 * minute)
+        assertEquals(Duration.ZERO, after.inUseFor)
+        assertEquals(Duration.ofMinutes(5), after.screenOnTime)
+    }
+
+    @Test
+    fun `a phone already in use when watching starts begins a session`() {
+        val tracker = WakeTracker()
+        tracker.onUnlocked(now = 10 * second)
+        tracker.onUnlocked(now = 20 * second) // the same session, not a new one
+        assertEquals(Duration.ofSeconds(50), tracker.signals(now = minute).inUseFor)
+    }
+
+    @Test
+    fun `sleep media playing is known from the music check`() {
+        val tracker = WakeTracker()
+        tracker.onMusicCheck(playing = true, now = 0)
+        assertTrue(tracker.signals(now = 0).sleepMediaPlaying)
+
+        tracker.onMusicCheck(playing = false, now = 5 * second)
+        assertFalse(tracker.signals(now = 5 * second).sleepMediaPlaying)
+
+        // A video started once the sleep media has ended is the user's own morning.
+        tracker.onMusicCheck(playing = false, now = 40 * second)
+        tracker.onMusicCheck(playing = true, now = 45 * second)
+        assertFalse(tracker.signals(now = 45 * second).sleepMediaPlaying)
+    }
+
+    @Test
     fun `opening different apps counts each one`() {
         val tracker = WakeTracker(ignoredApps = setOf("launcher"))
         tracker.onAppResumed("mail")

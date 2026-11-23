@@ -175,6 +175,8 @@ class WakeTracker(
         val openMillis = inUseSince?.let { (now - it).coerceAtLeast(0) } ?: 0
         return WakeSignals(
             screenOnTime = Duration.ofMillis(closedScreenMillis + openMillis),
+            inUseFor = Duration.ofMillis(openMillis),
+            sleepMediaPlaying = musicPlaying && sleepMusic == true,
             appsOpened = appsOpened,
             appsAvailable = appsAvailable,
             steps = closedSteps + currentSteps(),

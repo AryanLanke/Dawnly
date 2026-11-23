@@ -181,7 +181,7 @@
     <string name="sensitivity_medium">Medium</string>
     <string name="sensitivity_high">High</string>
     <string name="settings_signs_needed_label">Signs needed</string>
-    <string name="settings_signs_needed_detail">How many different signs before Dawnly believes you\'re up</string>
+    <string name="settings_signs_needed_detail">How many different signs before Dawnly believes you\'re up. A long, uninterrupted session on the phone counts on its own.</string>
     <string name="settings_dismiss_label">When you\'re up</string>
     <string name="dismiss_mode_ask">Ask me</string>
     <string name="dismiss_mode_warn">Warn first</string>

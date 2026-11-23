@@ -152,6 +152,8 @@ private fun DebugContent(
                         durationText(settings.screenTimeGoal),
                     ),
                 )
+                ValueRow(stringResource(R.string.debug_session), durationText(signals.inUseFor))
+                ValueRow(stringResource(R.string.debug_sleep_media), yesNo(signals.sleepMediaPlaying))
                 ValueRow(stringResource(R.string.debug_apps), appsText(signals, settings))
                 ValueRow(stringResource(R.string.debug_steps), stepsText(signals, settings))
                 ValueRow(
@@ -372,6 +374,7 @@ private fun DebugContentPreview() {
                     serviceRunning = true,
                     signals = WakeSignals(
                         screenOnTime = Duration.ofSeconds(200),
+                        inUseFor = Duration.ofSeconds(200),
                         appsOpened = 2,
                         steps = 42,
                         movingTime = Duration.ofSeconds(75),

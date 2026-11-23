@@ -137,6 +137,18 @@ class HomeUiStateTest {
     }
 
     @Test
+    fun `scrolling in bed is awake, the morning that got missed`() {
+        // Four minutes in one go, 10 minutes before the alarm, with the default two kinds asked for.
+        val scrolling = WakeSignals(screenOnTime = Duration.ofMinutes(4), inUseFor = Duration.ofMinutes(4)).going()
+        val state = HomeUiState.from(watching, scrolling, WakeSignalSettings(), alarm.minus(Duration.ofMinutes(10)))
+        assertTrue((state.status as HomeStatus.Watching).awake)
+
+        // The same four minutes broken into short checks: the screen timed out in between, so no.
+        val short = HomeUiState.from(watching, scrolling.copy(inUseFor = Duration.ofMinutes(1)), WakeSignalSettings(), alarm.minus(Duration.ofMinutes(10)))
+        assertFalse((short.status as HomeStatus.Watching).awake)
+    }
+
+    @Test
     fun `the same activity counts for more close to the alarm`() {
         val settings = WakeSignalSettings(useMovement = false, useMusic = false, useCharger = false)
         val live = WakeSignals(screenOnTime = Duration.ofMinutes(4)).going()

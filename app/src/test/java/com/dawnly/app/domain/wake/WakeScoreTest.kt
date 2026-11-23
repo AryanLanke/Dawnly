@@ -1,5 +1,6 @@
 package com.dawnly.app.domain.wake
 
+import com.dawnly.app.domain.learn.SignWeights
 import java.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +16,8 @@ class WakeScoreTest {
 
     private fun signals(
         screen: Duration = Duration.ZERO,
+        inUseFor: Duration = Duration.ZERO,
+        sleepMediaPlaying: Boolean = false,
         apps: Int = 0,
         steps: Int = 0,
         moving: Duration = Duration.ZERO,
@@ -25,6 +28,8 @@ class WakeScoreTest {
         idle: Duration? = Duration.ZERO,
     ) = WakeSignals(
         screenOnTime = screen,
+        inUseFor = inUseFor,
+        sleepMediaPlaying = sleepMediaPlaying,
         appsOpened = apps,
         steps = steps,
         movingTime = moving,
@@ -49,6 +54,44 @@ class WakeScoreTest {
         val score = WakeScore.of(signals(screen = seconds(30), moving = seconds(3)), defaults)
         assertFalse(score.isAwake)
         assertEquals(0.125f, score.value, 0.001f)
+    }
+
+    @Test
+    fun `one long uninterrupted phone session is enough on its own`() {
+        // The morning that got missed: up early, in one app for minutes, no steps, no walking.
+        val scrolling = signals(screen = minutes(5), inUseFor = minutes(5), stretch = minutes(5))
+        assertEquals(1, WakeScore.of(scrolling, defaults).kindsShown)
+        assertTrue(WakeScore.of(scrolling, defaults).isAwake)
+        // Even when the user asked for three kinds of sign.
+        assertTrue(WakeScore.of(scrolling, defaults.copy(signsNeeded = 3)).isAwake)
+    }
+
+    @Test
+    fun `learning screen time for less doesn't stop a long session counting`() {
+        // Answers that taught Dawnly to distrust screen use used to cap the total below 1, which
+        // would have kept the very morning this rule is for from ever counting.
+        val scrolling = signals(screen = minutes(5), inUseFor = minutes(5), stretch = minutes(5))
+        val score = WakeScore.of(scrolling, defaults, SignWeights(screen = 0.7f))
+        assertTrue(score.isAwake)
+        assertEquals(1f, score.value, 0.001f)
+        assertFalse(WakeScore.of(scrolling.copy(inUseFor = minutes(1)), defaults, SignWeights(screen = 0.7f)).isAwake)
+    }
+
+    @Test
+    fun `short sessions on the phone, added up, still need another sign`() {
+        // Six minutes in total, but the screen timed out between: the current session is a minute.
+        val interrupted = signals(screen = minutes(6), inUseFor = minutes(1))
+        assertEquals(1, WakeScore.of(interrupted, defaults).kindsShown)
+        assertFalse(WakeScore.of(interrupted, defaults).isAwake)
+    }
+
+    @Test
+    fun `sleep media keeps a long screen session from counting alone`() {
+        // Asleep over a video: the screen stays on without being touched.
+        val video = signals(screen = minutes(30), inUseFor = minutes(30), stretch = minutes(30), sleepMediaPlaying = true)
+        assertFalse(WakeScore.of(video, defaults).isAwake)
+        // But music started after waking is a sign of its own, so the pair still counts.
+        assertTrue(WakeScore.of(video.copy(musicTime = minutes(1)), defaults).isAwake)
     }
 
     @Test

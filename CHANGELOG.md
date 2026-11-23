@@ -2,6 +2,9 @@
 
 What changed in each version of Dawnly, newest first. Dates are 2026.
 
+## 1.9.1 (23 Nov)
+- **A long, uninterrupted phone session now counts on its own.** Dawnly asks for two kinds of sign by default, so lying in bed scrolling in one app only ever produced one (screen use, with no steps or walking) and the alarm rang even though Dawnly was watching. Now a whole screen goal's worth of use in one unbroken session is enough; a video that was already playing when watching started (and so may be keeping a sleeping person's screen on) doesn't count this way, and neither do several short checks added up.
+
 ## 1.9.0 (14 Nov)
 - **Dawnly keeps your alarms itself.** Set one with its own glass wheels, a name and repeat days (Weekdays and Weekends are one tap). Dawnly rings it, and watches for you waking before it, so the Clock app is no longer needed. An alarm you already made in Clock can be moved over in one tap.
 - **Timers and a stopwatch** live on their own screen. Several timers run at once, each with a name, a quick preset or a custom time, its own tone, and a choice of a notification or a ring like an alarm. Snooze from the notification without opening Dawnly, and timers keep going through a reboot.

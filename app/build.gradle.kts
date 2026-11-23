@@ -19,8 +19,8 @@ android {
         applicationId = "com.aryanlanke.dawnly"
         minSdk = 26
         targetSdk = 37
-        versionCode = 30
-        versionName = "1.9.0"
+        versionCode = 31
+        versionName = "1.9.1"
     }
 
     signingConfigs {

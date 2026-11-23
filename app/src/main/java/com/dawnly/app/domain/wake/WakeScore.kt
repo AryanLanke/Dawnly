@@ -2,6 +2,7 @@ package com.dawnly.app.domain.wake
 
 import com.dawnly.app.domain.learn.SignShares
 import com.dawnly.app.domain.learn.SignWeights
+import java.time.Duration
 
 /**
  * How close the user is to counting as awake, sign by sign. Each progress value runs from 0 to 1
@@ -18,6 +19,14 @@ import com.dawnly.app.domain.learn.SignWeights
  *
  * The activity also has to be still going and have lasted a few minutes ([keptGoing], from
  * [WakeSignals.keptGoing]), so one burst that stopped doesn't count.
+ *
+ * One sign can be enough on its own: a whole screen goal's worth of phone use in one uninterrupted
+ * session, with no sleep media playing ([longPhoneSession]). The screen could not have timed out
+ * without being touched, and a person asleep with a video playing is left out because the video
+ * keeps the screen on for them. So lying in bed scrolling for five minutes counts, where five
+ * minutes spread over several short checks does not. It meets both the total and the kinds asked
+ * for, however little learning has come to trust screen time: what it rests on is the screen
+ * staying lit, not the weight.
  */
 data class WakeScore(
     val screenTime: Float?,
@@ -27,17 +36,25 @@ data class WakeScore(
     val music: Float?,
     val charger: Float? = null,
     val keptGoing: Boolean = true,
+    /**
+     * The phone has been in use for the whole screen goal in one uninterrupted session, and no
+     * sleep media is playing. That is strong enough on its own: see the class comment.
+     */
+    val longPhoneSession: Boolean = false,
     /** How many different kinds of sign have to show, out of those that can count. */
     val needed: Int = 1,
 ) {
-    /** The sum of the counted signs' progress. 1 or more means awake (with enough kinds). */
+    /** The sum of the counted signs' progress, as learning weighs them. */
     val total: Float get() = listOfNotNull(screenTime, phoneUse, steps, movement, music, charger).sum()
 
     /** Each sign's part, for learning which signs show on the user's real mornings. */
     val shares: SignShares get() = SignShares(screenTime, phoneUse, steps, movement)
 
-    /** How close to awake, from 0 to 1. */
-    val value: Float get() = total.coerceIn(0f, 1f)
+    /**
+     * How close to awake, from 0 to 1. A long uninterrupted session meets the bar by itself, even
+     * when learning counts screen time for less.
+     */
+    val value: Float get() = if (longPhoneSession) 1f else total.coerceIn(0f, 1f)
 
     /** Screen time and apps opened are one kind: both are using the phone. */
     private val phone: Float?
@@ -56,9 +73,8 @@ data class WakeScore(
     /** Never true when no sign counts: then Dawnly has nothing to go on. */
     val isAwake: Boolean
         get() = keptGoing &&
-            total >= 1f - EPSILON &&
             mainKinds.any { it.shown() } &&
-            kindsShown >= kindsNeeded
+            (longPhoneSession || (total >= 1f - EPSILON && kindsShown >= kindsNeeded))
 
     private fun Float?.shown() = this != null && this >= SHOWN - EPSILON
 
@@ -95,6 +111,10 @@ data class WakeScore(
             music = settings.useMusic.then { progress(signals.musicTime.toMillis(), MUSIC_GOAL_MILLIS) },
             charger = settings.useCharger.then { if (signals.chargerChanged) CHARGER_SHARE else 0f },
             keptGoing = signals.keptGoing,
+            longPhoneSession = settings.useScreenTime &&
+                !signals.sleepMediaPlaying &&
+                settings.screenTimeGoal > Duration.ZERO &&
+                signals.inUseFor >= settings.screenTimeGoal,
             needed = settings.signsNeeded,
         )
 

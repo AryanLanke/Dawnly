@@ -14,6 +14,8 @@
     <string name="debug_live_signals">Live signals</string>
     <string name="debug_not_watching">Not watching. Readings appear while the watch window is open.</string>
     <string name="debug_screen_use">Screen use</string>
+    <string name="debug_session">This session</string>
+    <string name="debug_sleep_media">Sleep media playing</string>
     <string name="debug_apps">Apps opened</string>
     <string name="debug_steps">Steps</string>
     <string name="debug_movement">Movement</string>

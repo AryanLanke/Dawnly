@@ -11,6 +11,19 @@ data class WakeSignals(
     /** Time the phone was in use: from unlocking until the screen went off. */
     val screenOnTime: Duration = Duration.ZERO,
     /**
+     * How long the current unlocked session has run, right now. Zero while the screen is off. A
+     * session that long without a screen-off means the screen never timed out, so someone kept
+     * touching it (see `WakeScore.longPhoneSession`). Not carried across a restart.
+     */
+    val inUseFor: Duration = Duration.ZERO,
+    /**
+     * Media that was already playing when watching started (sleep music, or a video someone fell
+     * asleep to) is still playing. It matters because a video can keep a sleeping person's screen
+     * on, which would otherwise look like a long session of use. Media started after the window
+     * opened is the user's own morning, and doesn't hold anything back.
+     */
+    val sleepMediaPlaying: Boolean = false,
+    /**
      * Apps opened, from Usage access: the closest safe stand-in for touches. A lit screen can stay
      * on while someone dozes off over a video; opening apps takes someone awake.
      */
